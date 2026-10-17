@@ -12,275 +12,423 @@
   [hidden]{display:none!important}
 </style>
 <title>Goal Console</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 
 <style>
+/* ── Goal Console ──────────────────────────────────────────────────────
+   Layout: a status page for the systems you run. Slim sticky header, one
+   instrument panel reading adherence for the current cadence, then each
+   system as a wide row whose availability strip spans the full width.
+   Type: Bricolage Grotesque carries the headline figures, IBM Plex Sans
+   the prose, IBM Plex Mono every number and label that wants a grid.
+   Colour: cool indigo-biased neutrals, one indigo accent, and a reserved
+   status triad kept separate from the accent and validated for
+   colour-vision separation against both grounds.
+   ──────────────────────────────────────────────────────────────────── */
 :root{
-  --bg:#F3F6F7; --surface:#FFFFFF; --surface-2:#E9EEF1; --surface-3:#DFE7EB;
-  --ink:#0E1A21; --ink-2:#33454F; --muted:#5E727D; --faint:#8A9BA5;
-  --line:#D5E0E5; --line-strong:#BCCBD2;
-  --accent:#1F5673; --accent-2:#2E7BA6; --accent-soft:#E2EDF3; --on-accent:#FFFFFF;
-  --ok:#2E7D5B; --ok-soft:#E1F1EA;
-  --warn:#9C6A12; --warn-soft:#F7ECD8;
-  --bad:#A93D35; --bad-soft:#F7E4E2;
-  --done:#546A76; --done-soft:#E6ECEF;
-  --shadow:0 1px 2px rgba(14,26,33,.06), 0 6px 18px -12px rgba(14,26,33,.25);
-  --r:10px;
-  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --paper:#EEF1F6; --surface:#FFFFFF; --sunken:#F4F6FA; --raised:#FFFFFF;
+  --ink:#0B1020; --ink-2:#2D3650; --muted:#5C6880; --faint:#8E99AE;
+  --line:#DFE4EE; --line-2:#C7D0E0;
+
+  --accent:#3A4FC4; --accent-ink:#3A4FC4; --accent-soft:#E7EAFB; --on-accent:#FFFFFF;
+
+  /* reserved status marks — validated light, surface ~#fff */
+  --hold:#0F7A55;  --hold-ink:#0F7A55;  --hold-soft:#E2F2EC;
+  --slip:#B07D00;  --slip-ink:#8A6300;  --slip-soft:#F8EFD9;
+  --stall:#C0203F; --stall-ink:#C0203F; --stall-soft:#FBE6EA;
+  --off:#7A869E;   --off-ink:#5C6880;   --off-soft:#EDF0F5;
+  --on-hold:#FFFFFF;
+
+  --shadow-1:0 1px 1px rgba(11,16,32,.04), 0 2px 6px -2px rgba(11,16,32,.08);
+  --shadow-2:0 2px 4px rgba(11,16,32,.05), 0 14px 28px -16px rgba(11,16,32,.22);
+  --r-lg:16px; --r-md:11px; --r-sm:7px;
+
+  --display:"Bricolage Grotesque","Archivo","Helvetica Neue",Arial,sans-serif;
   --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#0C1418; --surface:#131E24; --surface-2:#1A272E; --surface-3:#22323A;
-    --ink:#E7EEF1; --ink-2:#C2D2DA; --muted:#93A6B0; --faint:#6E838E;
-    --line:#24353D; --line-strong:#33474F;
-    --accent:#4E9BC4; --accent-2:#6FB4D8; --accent-soft:#162C39; --on-accent:#08141B;
-    --ok:#5CBE92; --ok-soft:#12291F;
-    --warn:#D8A34A; --warn-soft:#2B2213;
-    --bad:#E0776D; --bad-soft:#2E1A18;
-    --done:#8098A5; --done-soft:#1B262B;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 22px -14px rgba(0,0,0,.8);
+    color-scheme:dark;
+    --paper:#080B14; --surface:#121826; --sunken:#0D1220; --raised:#192030;
+    --ink:#E9EDF7; --ink-2:#C3CBDD; --muted:#8E99B2; --faint:#68738C;
+    --line:#212A3D; --line-2:#2E3850;
+    --accent:#6478DE; --accent-ink:#9AA8F6; --accent-soft:#1A2142; --on-accent:#070A14;
+    --hold:#0FA37E;  --hold-ink:#45D3A8;  --hold-soft:#0E2A24;
+    --slip:#BE7A1E;  --slip-ink:#E0A94B;  --slip-soft:#2B2113;
+    --stall:#DC4A72; --stall-ink:#F2819C; --stall-soft:#2E1620;
+    --off:#5C6882;   --off-ink:#8E99B2;   --off-soft:#171E2D;
+    --on-hold:#06231A;
+    --shadow-1:0 1px 1px rgba(0,0,0,.5), 0 2px 8px -2px rgba(0,0,0,.6);
+    --shadow-2:0 2px 6px rgba(0,0,0,.5), 0 18px 34px -18px rgba(0,0,0,.9);
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0C1418; --surface:#131E24; --surface-2:#1A272E; --surface-3:#22323A;
-  --ink:#E7EEF1; --ink-2:#C2D2DA; --muted:#93A6B0; --faint:#6E838E;
-  --line:#24353D; --line-strong:#33474F;
-  --accent:#4E9BC4; --accent-2:#6FB4D8; --accent-soft:#162C39; --on-accent:#08141B;
-  --ok:#5CBE92; --ok-soft:#12291F;
-  --warn:#D8A34A; --warn-soft:#2B2213;
-  --bad:#E0776D; --bad-soft:#2E1A18;
-  --done:#8098A5; --done-soft:#1B262B;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 22px -14px rgba(0,0,0,.8);
+  color-scheme:dark;
+  --paper:#080B14; --surface:#121826; --sunken:#0D1220; --raised:#192030;
+  --ink:#E9EDF7; --ink-2:#C3CBDD; --muted:#8E99B2; --faint:#68738C;
+  --line:#212A3D; --line-2:#2E3850;
+  --accent:#6478DE; --accent-ink:#9AA8F6; --accent-soft:#1A2142; --on-accent:#070A14;
+  --hold:#0FA37E;  --hold-ink:#45D3A8;  --hold-soft:#0E2A24;
+  --slip:#BE7A1E;  --slip-ink:#E0A94B;  --slip-soft:#2B2113;
+  --stall:#DC4A72; --stall-ink:#F2819C; --stall-soft:#2E1620;
+  --off:#5C6882;   --off-ink:#8E99B2;   --off-soft:#171E2D;
+    --on-hold:#06231A;
+  --shadow-1:0 1px 1px rgba(0,0,0,.5), 0 2px 8px -2px rgba(0,0,0,.6);
+  --shadow-2:0 2px 6px rgba(0,0,0,.5), 0 18px 34px -18px rgba(0,0,0,.9);
 }
 
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
-h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.015em}
 button,input,select,textarea{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px;border-radius:4px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:5px}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lbl,.k,.vlabel,.plabel,.thead h3,.field label,.scell .k{
+  font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint)}
 
-/* ---------- shell ---------- */
-.shell{max-width:1120px;margin:0 auto;padding-inline:18px;padding-block:0 64px}
+/* ── shell ─────────────────────────────────────────────────────────── */
+.shell{max-width:1100px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 76px}
 
-.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-.topbar-in{max-width:1120px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto}
-.brand h1{font-size:19px;font-weight:700}
-.brand .tag{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;
+  background:color-mix(in srgb,var(--paper) 86%,transparent);
+  backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:13px}
+.brand{display:flex;align-items:baseline;gap:11px;margin-right:auto;min-width:0}
+.brand h1{font-size:20px;font-weight:800;letter-spacing:-.03em}
+.brand .tag{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
 
-.btn{border:1px solid var(--line-strong);background:var(--surface);padding:7px 13px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:500;transition:background .12s,border-color .12s}
-.btn:hover{background:var(--surface-2)}
-.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.btn-primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
-.btn-ghost{border-color:transparent;background:transparent;color:var(--muted);padding:5px 8px}
-.btn-ghost:hover{background:var(--surface-2);color:var(--ink)}
-.btn-sm{font-size:12.5px;padding:5px 10px}
+.btn{border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);
+  padding:8px 14px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:500;
+  transition:background .14s,border-color .14s,color .14s,transform .08s}
+.btn:hover{background:var(--sunken);color:var(--ink);border-color:var(--muted)}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.btn-primary:hover{background:var(--accent);border-color:var(--accent);color:var(--on-accent);filter:brightness(1.08)}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--muted);padding:6px 9px}
+.btn-ghost:hover{background:var(--sunken);color:var(--ink);border-color:transparent}
+.btn-sm{font-size:12.5px;padding:6px 11px}
 
-.savepill{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;letter-spacing:.04em;padding:6px 10px;border-radius:7px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);white-space:nowrap}
-.savepill .sdot{width:6px;height:6px;border-radius:50%;background:var(--ok);flex:none}
-.savepill[data-s="saving"]{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
-.savepill[data-s="saving"] .sdot{background:var(--accent);animation:pulse 1s ease-in-out infinite}
-.savepill[data-s="error"]{color:var(--bad);background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 35%,transparent)}
-.savepill[data-s="error"] .sdot{background:var(--bad)}
-.savepill[data-s="local"]{color:var(--warn);background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
-.savepill[data-s="local"] .sdot{background:var(--warn)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.savepill{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.06em;padding:7px 11px;border-radius:999px;border:1px solid var(--line);
+  background:var(--surface);color:var(--muted);white-space:nowrap}
+.savepill .sdot{width:6px;height:6px;border-radius:50%;background:var(--hold);flex:none}
+.savepill[data-s="saving"]{color:var(--accent-ink);border-color:var(--accent)}
+.savepill[data-s="saving"] .sdot{background:var(--accent);animation:pulse 1.1s ease-in-out infinite}
+.savepill[data-s="error"]{color:var(--stall-ink);background:var(--stall-soft);border-color:var(--stall)}
+.savepill[data-s="error"] .sdot{background:var(--stall)}
+.savepill[data-s="local"]{color:var(--slip-ink);background:var(--slip-soft);border-color:var(--slip)}
+.savepill[data-s="local"] .sdot{background:var(--slip)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* ---------- horizon switch ---------- */
-.horizons{display:flex;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px;max-width:100%;overflow-x:auto;scrollbar-width:thin}
-.horizons button{border:0;background:transparent;padding:6px 11px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px;white-space:nowrap;flex:0 0 auto}
-.horizons button .cnt{font-family:var(--mono);font-size:11px;color:var(--faint)}
-.horizons button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
-.horizons button[aria-pressed="true"] .cnt{color:var(--accent)}
+.pagenav{display:flex;gap:3px;background:var(--sunken);border:1px solid var(--line);border-radius:10px;padding:3px}
+.pagenav button{border:0;background:transparent;padding:7px 15px;border-radius:7px;cursor:pointer;
+  font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap;transition:color .14s}
+.pagenav button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-1);font-weight:600}
 
-/* ---------- readouts ---------- */
-.readouts{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden;margin-top:22px}
-.readout{padding:14px 16px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:3px;min-width:0}
-.readout:last-child{border-right:0}
-.readout .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
-.readout .v{font-family:var(--display);font-size:26px;font-weight:600;line-height:1.1;letter-spacing:-.02em}
-.readout .v small{font-size:13px;font-weight:500;color:var(--muted);letter-spacing:0}
-.readout .sub{font-size:11.5px;color:var(--muted)}
-.spark{display:flex;gap:2px;align-items:flex-end;height:18px;margin-top:2px}
-.spark i{flex:1;background:var(--surface-3);border-radius:1px;min-height:2px}
+/* ── cadence rail ──────────────────────────────────────────────────── */
+.horizons{display:flex;gap:0;margin-top:26px;border-bottom:1px solid var(--line);
+  max-width:100%;overflow-x:auto;scrollbar-width:none}
+.horizons::-webkit-scrollbar{display:none}
+.horizons button{border:0;background:transparent;cursor:pointer;flex:0 0 auto;
+  padding:11px 17px 13px;font-size:13.5px;font-weight:500;color:var(--muted);
+  display:flex;align-items:baseline;gap:8px;white-space:nowrap;position:relative;transition:color .14s}
+.horizons button:hover{color:var(--ink-2)}
+.horizons button .cnt{font-family:var(--mono);font-size:10.5px;color:var(--faint);
+  background:var(--sunken);border-radius:999px;padding:1px 7px}
+.horizons button[aria-pressed="true"]{color:var(--ink);font-weight:600}
+.horizons button[aria-pressed="true"]::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;
+  height:2px;background:var(--accent);border-radius:2px}
+.horizons button[aria-pressed="true"] .cnt{background:var(--accent-soft);color:var(--accent-ink)}
+
+/* ── instrument panel ──────────────────────────────────────────────── */
+.readouts{display:flex;gap:28px;align-items:center;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-1);padding:22px 24px;margin-top:22px}
+.dial{display:flex;align-items:center;gap:18px;flex:0 0 auto}
+.dial svg{display:block;flex:none}
+.dial .dial-read{display:flex;flex-direction:column;gap:2px}
+.dial .dial-num{font-family:var(--display);font-size:42px;font-weight:800;line-height:.95;
+  letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.dial .dial-sub{font-size:12.5px;color:var(--muted);max-width:21ch;line-height:1.35}
+.facts{display:flex;gap:26px;flex-wrap:wrap;flex:1 1 300px;min-width:0;
+  border-left:1px solid var(--line);padding-left:26px}
+.fact{min-width:0;display:flex;flex-direction:column;gap:5px}
+.fact .fv{font-family:var(--display);font-size:23px;font-weight:700;line-height:1;letter-spacing:-.025em;
+  font-variant-numeric:tabular-nums}
+.fact .fv small{font-size:12.5px;font-weight:500;color:var(--muted);letter-spacing:0}
+.fact .fs{font-size:11.5px;color:var(--muted);line-height:1.35}
+.legend{display:flex;gap:11px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.legend i{width:7px;height:7px;border-radius:2px;flex:none}
+.legend .l-hold i{background:var(--hold)} .legend .l-slip i{background:var(--slip)} .legend .l-stall i{background:var(--stall)}
+.spark{display:flex;gap:2px;align-items:flex-end;height:22px;margin-top:3px}
+.spark i{flex:1;min-width:3px;background:var(--line-2);border-radius:2px 2px 0 0;min-height:3px}
 .spark i.on{background:var(--accent)}
-
-/* ---------- controls ---------- */
-.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:22px 0 12px}
-.controls .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
-select,input[type=text],input[type=number],input[type=date],textarea{background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;font-size:13.5px;width:100%}
-textarea{resize:vertical;min-height:62px;line-height:1.45}
-.controls select{width:auto;min-width:130px}
-
-/* ---------- goal ---------- */
-.list{display:flex;flex-direction:column;gap:12px}
-.goal{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;display:flex}
-.stripe{width:4px;flex:none;background:var(--done)}
-.goal[data-s="ok"] .stripe{background:var(--ok)}
-.goal[data-s="warn"] .stripe{background:var(--warn)}
-.goal[data-s="bad"] .stripe{background:var(--bad)}
-.goal[data-s="done"] .stripe{background:var(--done)}
-.goal-in{flex:1;min-width:0;padding:15px 17px}
-
-.ghead{display:flex;gap:14px;align-items:flex-start}
-.gmain{flex:1;min-width:0}
-.gtitle{font-family:var(--display);font-size:16.5px;font-weight:600;line-height:1.3;margin-bottom:4px;word-break:break-word}
-.goal[data-done="1"] .gtitle{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px}
-.gwhy{font-size:13px;color:var(--muted);line-height:1.45;margin-bottom:9px;max-width:62ch}
-.goutcome{font-size:12.5px;color:var(--accent);line-height:1.4;margin-bottom:5px;max-width:62ch}
-.goutcome::before{content:"";display:inline-block;width:14px;height:1px;background:var(--accent);vertical-align:middle;margin-right:7px;opacity:.6}
-.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:2.5px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
-.chip.status{font-weight:600}
-.chip.ok{background:var(--ok-soft);color:var(--ok)}
-.chip.warn{background:var(--warn-soft);color:var(--warn)}
-.chip.bad{background:var(--bad-soft);color:var(--bad)}
-.chip.done{background:var(--done-soft);color:var(--done)}
-.chip.cat{background:var(--accent-soft);color:var(--accent)}
-.gactions{display:flex;gap:2px;flex:none}
-
-/* meter */
-.meter-wrap{margin-top:12px;display:flex;align-items:center;gap:12px}
-.meter{flex:1;height:7px;background:var(--surface-3);border-radius:4px;overflow:hidden;position:relative;min-width:60px}
-.meter .fill{height:100%;background:var(--accent);border-radius:4px;transition:width .3s ease}
-.goal[data-s="ok"] .meter .fill{background:var(--ok)}
-.goal[data-s="warn"] .meter .fill{background:var(--warn)}
-.goal[data-s="bad"] .meter .fill{background:var(--bad)}
-.goal[data-s="done"] .meter .fill{background:var(--done)}
-.meter .pace{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.45;border-radius:1px}
-.meter-val{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink-2);flex:none;min-width:84px;text-align:right}
-.meter-val b{font-weight:600;color:var(--ink)}
-
-/* period grid */
-.periods{margin-top:13px}
-.periods .plabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.pgrid{display:flex;gap:4px;flex-wrap:wrap}
-.pcell{width:30px;height:30px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface-2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:0;line-height:1;transition:transform .1s,background .12s}
-.pcell:hover{transform:translateY(-1px)}
-.pcell .pd{font-family:var(--mono);font-size:9.5px;color:var(--faint)}
-.pcell.on{background:var(--ok);border-color:var(--ok)}
-.pcell.on .pd{color:#fff}
-.pcell.today{box-shadow:0 0 0 2px var(--accent)}
-.pcell.future{opacity:.4;cursor:not-allowed}
-.pcell.future:hover{transform:none}
-
-/* tactics */
-.tactics{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
-.thead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
-.thead h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:500}
-.thead .tcount{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
-.tlist{display:flex;flex-direction:column;gap:1px}
-.tactic{display:flex;align-items:flex-start;gap:9px;padding:6px 8px;border-radius:7px;background:transparent}
-.tactic:hover{background:var(--surface-2)}
-.tactic input[type=checkbox]{margin:3px 0 0;width:15px;height:15px;accent-color:var(--accent);flex:none;cursor:pointer}
-.tactic .ttext{flex:1;min-width:0;font-size:13.5px;line-height:1.45;word-break:break-word;cursor:text}
-.tactic.done .ttext{color:var(--faint);text-decoration:line-through;text-decoration-thickness:1px}
-.tactic .tdel{opacity:0;transition:opacity .12s}
-.tactic:hover .tdel,.tactic:focus-within .tdel{opacity:1}
-.tadd{display:flex;gap:7px;margin-top:7px}
-.tadd input{flex:1}
-
-.empty{border:1px dashed var(--line-strong);border-radius:var(--r);padding:34px 22px;text-align:center;color:var(--muted);background:var(--surface)}
-.empty h2{font-size:17px;color:var(--ink);margin-bottom:6px}
-.empty p{font-size:13.5px;max-width:46ch;margin:0 auto 14px}
-
-.samplebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);color:var(--warn);border-radius:9px;padding:9px 13px;font-size:13px;margin-top:18px}
-.samplebar strong{font-weight:600}
-.samplebar .btn{margin-left:auto;background:transparent;border-color:color-mix(in srgb,var(--warn) 40%,transparent);color:var(--warn)}
-
-.statusline{margin-top:20px;font-size:12px;color:var(--faint);display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--mono)}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--ok);flex:none}
-.dot.off{background:var(--warn)}
-
-/* ---------- page nav ---------- */
-.pagenav{display:flex;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px}
-.pagenav button{border:0;background:transparent;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap}
-.pagenav button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
-#pageGoals .horizons{margin-top:20px}
-
-/* ---------- vision board ---------- */
-.vhero{margin-top:22px;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow);padding:20px 22px;display:flex;flex-direction:column;gap:16px}
-.vyear{display:flex;align-items:center;gap:6px}
-.vy{font-family:var(--display);font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1;color:var(--accent)}
-.vlabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);display:block;margin-bottom:6px}
-.vheadline{font-family:var(--display);font-size:22px;font-weight:600;line-height:1.35;letter-spacing:-.015em;border:0;border-left:3px solid var(--accent);border-radius:0;background:transparent;padding:2px 0 2px 14px;width:100%;resize:vertical;min-height:62px}
-.vheadline::placeholder{color:var(--faint);font-weight:500}
-.vmeta{display:flex;gap:18px;flex-wrap:wrap}
-.vfield{display:flex;flex-direction:column;min-width:150px}
-.vgrow{flex:1 1 260px}
-.vword{font-family:var(--display);font-size:17px;font-weight:600;letter-spacing:.01em}
-.vchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.vchip{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:5px;background:var(--accent-soft);color:var(--accent)}
-
-.vbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:24px 0 12px}
-.vbar .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
-.vcount{font-size:12px;color:var(--muted)}
-.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(224px,1fr));gap:14px}
-.vcard{border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
-.vcard img{display:block;width:100%;max-width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--surface-3)}
-.vcard .vbody{padding:12px 13px;display:flex;flex-direction:column;gap:6px;flex:1}
-.vcard .vtitle{font-family:var(--display);font-size:15px;font-weight:600;line-height:1.3;word-break:break-word}
-.vcard .vnote{font-size:12.5px;color:var(--muted);line-height:1.45;word-break:break-word}
-.vcard .vfoot{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:8px}
-.vcard .vlink{font-family:var(--mono);font-size:10.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
-.vacts{display:flex;gap:1px;margin-left:auto}
-.vempty{grid-column:1/-1;border:1px dashed var(--line-strong);border-radius:12px;padding:34px 22px;text-align:center;color:var(--muted);background:var(--surface)}
-.vempty h3{font-family:var(--display);font-size:16px;color:var(--ink);margin-bottom:6px}
-.vempty p{font-size:13.5px;max-width:48ch;margin:0 auto 14px}
-.vprev{width:100%;max-width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;background:var(--surface-3);display:block}
-
-/* ---------- storage panel ---------- */
-.storage{margin-top:26px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
-.shead{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);flex-wrap:wrap}
-.shead h2{font-size:14px;font-weight:600}
-.shead .engine{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:var(--accent-soft);color:var(--accent)}
-.shead .engine.bad{background:var(--bad-soft);color:var(--bad)}
-.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0}
-.scell{padding:12px 16px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-width:0}
-.scell .k{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin-bottom:3px}
-.scell .v{font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;color:var(--ink);word-break:break-word}
-.scell .v.dim{color:var(--muted)}
-.sactions{padding:13px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.switch{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);cursor:pointer}
-.switch input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
-.btn-wipe{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,transparent)}
-.btn-wipe:hover{background:var(--bad-soft)}
-.snote{padding:0 16px 14px;margin:0;font-size:12px;color:var(--muted);max-width:74ch}
-
-/* ---------- modal ---------- */
-.scrim{position:fixed;inset:0;background:rgba(6,14,18,.55);backdrop-filter:blur(3px);z-index:90;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}
-.modal{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 60px -20px rgba(0,0,0,.5);width:100%;max-width:560px;margin:auto}
-.mhead{padding:18px 20px 0;display:flex;align-items:flex-start;gap:12px}
-.mhead h2{font-size:18px;flex:1}
-.mbody{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
-.field{display:flex;flex-direction:column;gap:5px}
-.field label{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
-.field .hint{font-size:11.5px;color:var(--faint)}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.commit{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-2)}
-.commit input{width:66px;flex:0 0 auto;text-align:center;font-family:var(--mono);font-variant-numeric:tabular-nums}
-.seg{display:flex;flex-wrap:wrap;gap:3px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px}
-.seg button{flex:1 1 76px;border:0;background:transparent;padding:7px 4px;border-radius:6px;cursor:pointer;font-size:12.5px;font-weight:500;color:var(--muted);white-space:nowrap}
-.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
-.mfoot{padding:14px 20px 18px;display:flex;gap:9px;justify-content:flex-end;border-top:1px solid var(--line);flex-wrap:wrap}
-.mfoot .btn-danger{margin-right:auto;border-color:transparent;color:var(--bad);background:transparent}
-.mfoot .btn-danger:hover{background:var(--bad-soft)}
+.spark i.last{background:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
 
 @media (max-width:760px){
-  .readouts{grid-template-columns:1fr 1fr}
-  .readout:nth-child(2){border-right:0}
-  .readout:nth-child(1),.readout:nth-child(2){border-bottom:1px solid var(--line)}
+  .facts{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:18px;flex:1 1 100%}
+}
+
+/* ── filters ───────────────────────────────────────────────────────── */
+.controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:26px 0 14px}
+select,input[type=text],input[type=number],input[type=date],textarea{
+  background:var(--surface);border:1px solid var(--line-2);border-radius:9px;padding:8px 11px;
+  font-size:13.5px;width:100%;transition:border-color .14s}
+select:hover,input:hover{border-color:var(--muted)}
+textarea{resize:vertical;min-height:66px;line-height:1.5}
+.controls select{width:auto;min-width:132px}
+
+/* ── system row ────────────────────────────────────────────────────── */
+.list{display:flex;flex-direction:column;gap:14px}
+.goal{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-1);overflow:hidden;transition:box-shadow .18s,border-color .18s}
+.goal:hover{box-shadow:var(--shadow-2);border-color:var(--line-2)}
+.goal[data-done="1"]{opacity:.62}
+.stripe{display:none}
+.goal-in{padding:20px 22px 0}
+
+.ghead{display:flex;gap:18px;align-items:flex-start}
+.gmain{flex:1;min-width:0}
+.statusline-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.sdotl{width:8px;height:8px;border-radius:50%;flex:none}
+.sword{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;font-weight:600}
+.goal[data-s="ok"]   .sdotl{background:var(--hold)}  .goal[data-s="ok"]   .sword{color:var(--hold-ink)}
+.goal[data-s="warn"] .sdotl{background:var(--slip)}  .goal[data-s="warn"] .sword{color:var(--slip-ink)}
+.goal[data-s="bad"]  .sdotl{background:var(--stall)} .goal[data-s="bad"]  .sword{color:var(--stall-ink)}
+.goal[data-s="done"] .sdotl{background:var(--off)}   .goal[data-s="done"] .sword{color:var(--off-ink)}
+.gtitle{font-family:var(--display);font-size:20px;font-weight:700;line-height:1.22;letter-spacing:-.025em;
+  margin-bottom:6px;word-break:break-word}
+.goal[data-done="1"] .gtitle{text-decoration:line-through;text-decoration-thickness:1.5px;color:var(--muted)}
+.goutcome{font-size:13px;color:var(--accent-ink);line-height:1.45;margin-bottom:6px;max-width:64ch;font-weight:500}
+.gwhy{font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:11px;max-width:64ch}
+.chips{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.chip{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 8px;border-radius:5px;background:var(--sunken);color:var(--muted);white-space:nowrap;
+  border:1px solid var(--line)}
+.chip.cat{background:var(--accent-soft);color:var(--accent-ink);border-color:transparent}
+.chip.streak{background:var(--accent-soft);color:var(--accent-ink);border-color:transparent}
+.gactions{display:flex;gap:2px;flex:none}
+
+/* the adherence figure sits with the strip, not floating above it */
+.strip-wrap{margin-top:16px;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap}
+.strip-fig{flex:0 0 auto;display:flex;flex-direction:column;gap:1px}
+.strip-fig .sf-num{font-family:var(--display);font-size:30px;font-weight:800;line-height:1;
+  letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+.goal[data-s="ok"]   .sf-num{color:var(--hold-ink)}
+.goal[data-s="warn"] .sf-num{color:var(--slip-ink)}
+.goal[data-s="bad"]  .sf-num{color:var(--stall-ink)}
+.goal[data-s="done"] .sf-num{color:var(--off-ink)}
+.strip-fig .sf-sub{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.04em}
+.strip-main{flex:1 1 260px;min-width:0}
+.strip-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:7px}
+.strip-head .hint{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.pgrid{display:flex;gap:3px;align-items:stretch}
+.pcell{flex:1 1 22px;min-width:22px;max-width:92px;height:36px;border:0;border-radius:3px;background:var(--line);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;
+  color:var(--faint);font-family:var(--mono);font-size:9.5px;letter-spacing:.02em;
+  transition:transform .12s,background .14s,color .14s}
+.pcell:hover{transform:translateY(-2px)}
+.pcell.on{background:var(--hold);color:var(--on-hold);font-weight:500}
+.goal[data-s="done"] .pcell.on{background:var(--off)}
+.pcell.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.pcell.today:not(.on){background:var(--sunken)}
+.commit-rule{position:relative;height:0}
+.commit-rule i{position:absolute;top:-44px;bottom:-2px;width:2px;background:var(--ink);opacity:.3;border-radius:2px}
+
+/* ── protocol, inset ───────────────────────────────────────────────── */
+.tactics{margin:18px -22px 0;padding:15px 22px 18px;background:var(--sunken);border-top:1px solid var(--line)}
+.thead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:9px}
+.thead .tcount{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.tlist{display:flex;flex-direction:column;gap:2px}
+.tactic{display:flex;align-items:flex-start;gap:10px;padding:7px 9px;border-radius:8px;transition:background .12s}
+.tactic:hover{background:var(--surface)}
+.tactic input[type=checkbox]{margin:3px 0 0;width:16px;height:16px;accent-color:var(--hold);flex:none;cursor:pointer}
+.tactic .ttext{flex:1;min-width:0;font-size:13.5px;line-height:1.5;word-break:break-word;cursor:text}
+.tactic.done .ttext{color:var(--faint);text-decoration:line-through;text-decoration-thickness:1.5px}
+.tactic .tdel{opacity:0;transition:opacity .12s}
+.tactic:hover .tdel,.tactic:focus-within .tdel{opacity:1}
+.tadd{display:flex;gap:8px;margin-top:9px}
+.tadd input{flex:1;background:var(--surface)}
+
+.empty{border:1px dashed var(--line-2);border-radius:var(--r-lg);padding:40px 24px;text-align:center;
+  color:var(--muted);background:var(--surface)}
+.empty h2{font-size:19px;color:var(--ink);margin-bottom:8px}
+.empty p{font-size:14px;max-width:48ch;margin:0 auto 16px;line-height:1.55}
+
+.samplebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--slip-soft);
+  border:1px solid color-mix(in srgb,var(--slip) 32%,transparent);color:var(--slip-ink);
+  border-radius:var(--r-md);padding:11px 15px;font-size:13px;margin-top:18px}
+.samplebar strong{font-weight:600}
+.samplebar .btn{margin-left:auto;background:transparent;border-color:color-mix(in srgb,var(--slip) 42%,transparent);color:var(--slip-ink)}
+
+.statusline{margin-top:24px;font-size:11.5px;color:var(--faint);display:flex;gap:9px;align-items:center;
+  flex-wrap:wrap;font-family:var(--mono)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--hold);flex:none}
+.dot.off{background:var(--slip)}
+
+/* ── vision board ──────────────────────────────────────────────────── */
+.vhero{margin-top:24px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);
+  box-shadow:var(--shadow-1);padding:24px 26px;display:flex;flex-direction:column;gap:18px}
+.vyear{display:flex;align-items:center;gap:7px}
+.vy{font-family:var(--display);font-size:36px;font-weight:800;letter-spacing:-.045em;line-height:1;color:var(--accent-ink)}
+.vlabel{display:block;margin-bottom:7px}
+.vheadline{font-family:var(--display);font-size:25px;font-weight:600;line-height:1.3;letter-spacing:-.025em;
+  border:0;border-left:3px solid var(--accent);border-radius:0;background:transparent;
+  padding:2px 0 2px 16px;width:100%;resize:vertical;min-height:66px}
+.vheadline::placeholder{color:var(--faint);font-weight:500}
+.vheadline:hover{border-color:var(--accent)}
+.vmeta{display:flex;gap:20px;flex-wrap:wrap}
+.vfield{display:flex;flex-direction:column;min-width:150px}
+.vgrow{flex:1 1 260px;min-width:0}
+.vword{font-family:var(--display);font-size:18px;font-weight:600}
+.vchips{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.vchip{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 10px;border-radius:5px;background:var(--accent-soft);color:var(--accent-ink)}
+.vbar{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin:26px 0 14px}
+.vcount{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:16px}
+.vcard{border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);
+  box-shadow:var(--shadow-1);overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .18s,transform .18s}
+.vcard:hover{box-shadow:var(--shadow-2);transform:translateY(-2px)}
+.vcard img{display:block;width:100%;max-width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--sunken)}
+.vcard .vbody{padding:13px 14px;display:flex;flex-direction:column;gap:7px;flex:1}
+.vcard .vtitle{font-family:var(--display);font-size:16px;font-weight:600;line-height:1.3;letter-spacing:-.015em;word-break:break-word}
+.vcard .vnote{font-size:12.5px;color:var(--muted);line-height:1.5;word-break:break-word}
+.vcard .vfoot{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:auto;padding-top:9px}
+.vcard .vlink{font-family:var(--mono);font-size:10px;color:var(--accent-ink);text-transform:uppercase;letter-spacing:.06em}
+.vacts{display:flex;gap:1px;margin-left:auto}
+.vempty{grid-column:1/-1;border:1px dashed var(--line-2);border-radius:var(--r-md);padding:40px 24px;
+  text-align:center;color:var(--muted);background:var(--surface)}
+.vempty h3{font-family:var(--display);font-size:18px;color:var(--ink);margin-bottom:8px}
+.vempty p{font-size:14px;max-width:50ch;margin:0 auto 16px;line-height:1.55}
+.vprev{width:100%;max-width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;background:var(--sunken);display:block}
+
+/* ── storage panel ─────────────────────────────────────────────────── */
+.storage{margin-top:30px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
+.shead{display:flex;align-items:center;gap:11px;padding:15px 18px;border-bottom:1px solid var(--line);
+  background:var(--sunken);flex-wrap:wrap}
+.shead h2{font-size:14.5px;font-weight:600;letter-spacing:-.01em}
+.shead .engine{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 9px;border-radius:5px;background:var(--accent-soft);color:var(--accent-ink)}
+.shead .engine.bad{background:var(--stall-soft);color:var(--stall-ink)}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(152px,1fr));gap:0}
+.scell{padding:14px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-width:0}
+.scell .k{margin-bottom:4px}
+.scell .v{font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums;color:var(--ink);word-break:break-word}
+.scell .v.dim{color:var(--muted)}
+.sactions{padding:15px 18px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.switch{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-2);cursor:pointer}
+.switch input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.btn-wipe{color:var(--stall-ink);border-color:color-mix(in srgb,var(--stall) 38%,transparent)}
+.btn-wipe:hover{background:var(--stall-soft);color:var(--stall-ink);border-color:var(--stall)}
+.snote{padding:0 18px 16px;margin:0;font-size:12.5px;color:var(--muted);max-width:76ch;line-height:1.6}
+
+/* ── modal ─────────────────────────────────────────────────────────── */
+.scrim{position:fixed;inset:0;background:rgba(5,8,18,.6);backdrop-filter:blur(4px);z-index:90;
+  display:flex;align-items:flex-start;justify-content:center;overflow:auto;
+  padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-left,0px)) 24px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:18px;
+  box-shadow:0 30px 70px -22px rgba(0,0,0,.6);width:100%;max-width:580px;margin:auto}
+.mhead{padding:22px 24px 0;display:flex;align-items:flex-start;gap:12px}
+.mhead h2{font-size:21px;flex:1;font-weight:700;letter-spacing:-.025em}
+.mbody{padding:18px 24px;display:flex;flex-direction:column;gap:17px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field .hint{font-size:11.5px;color:var(--faint);line-height:1.45}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.commit{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-2)}
+.commit input{width:68px;flex:0 0 auto;text-align:center;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.seg{display:flex;flex-wrap:wrap;gap:3px;background:var(--sunken);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{flex:1 1 78px;border:0;background:transparent;padding:8px 5px;border-radius:7px;cursor:pointer;
+  font-size:12.5px;font-weight:500;color:var(--muted);white-space:nowrap;transition:color .14s}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-1);font-weight:600}
+.mfoot{padding:16px 24px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line);flex-wrap:wrap}
+.mfoot .btn-danger{margin-right:auto;border-color:transparent;color:var(--stall-ink);background:transparent}
+.mfoot .btn-danger:hover{background:var(--stall-soft);border-color:transparent;color:var(--stall-ink)}
+
+
+/* ── goal rollup and nested systems ────────────────────────────────── */
+.kindtag{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--faint);border:1px solid var(--line);border-radius:4px;padding:2px 7px;margin-left:4px}
+.rollup{margin-top:15px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.rbar{flex:1 1 200px;min-width:120px;height:7px;background:var(--line);border-radius:4px;overflow:hidden}
+.rfill{height:100%;border-radius:4px;background:var(--accent);transition:width .3s ease}
+.goal[data-s="ok"] .rfill{background:var(--hold)}
+.goal[data-s="warn"] .rfill{background:var(--slip)}
+.goal[data-s="bad"] .rfill{background:var(--stall)}
+.rval{font-family:var(--mono);font-size:12px;color:var(--muted);flex:none}
+.rval b{color:var(--ink);font-weight:600;font-size:13.5px}
+
+.syswrap{margin:18px -22px 0;padding:15px 22px 18px;background:var(--sunken);border-top:1px solid var(--line)}
+.syswrap .thead{align-items:center}
+.sysempty{font-size:13px;color:var(--muted);padding:6px 0 2px;line-height:1.5}
+.syslist{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+.sysrow{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:13px 15px}
+.sysrow-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:11px}
+.sysrow-id{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1 1 220px;min-width:0}
+.sysname{font-family:var(--display);font-size:15px;font-weight:600;letter-spacing:-.015em;word-break:break-word}
+.sysrow[data-s="ok"]   .sdotl{background:var(--hold)}
+.sysrow[data-s="warn"] .sdotl{background:var(--slip)}
+.sysrow[data-s="bad"]  .sdotl{background:var(--stall)}
+.sysrow[data-s="done"] .sdotl{background:var(--off)}
+.sysrow-act{display:flex;align-items:center;gap:8px;flex:none;margin-left:auto}
+.syspct{font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums}
+.sysrow[data-s="ok"]   .syspct{color:var(--hold-ink)}
+.sysrow[data-s="warn"] .syspct{color:var(--slip-ink)}
+.sysrow[data-s="bad"]  .syspct{color:var(--stall-ink)}
+.sysrow[data-s="done"] .syspct{color:var(--off-ink)}
+.sysrow .pcell{height:30px}
+.protocol{margin-top:13px;border-top:1px solid var(--line);padding-top:11px}
+.phead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:7px}
+.sysrow .tactic:hover{background:var(--sunken)}
+.sysrow .tadd input{background:var(--sunken)}
+.goal.loose{border-style:dashed}
+.goal.loose .syslist{margin-top:14px}
+
+/* ── period navigator ──────────────────────────────────────────────── */
+.periodnav{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:16px}
+.stepper{display:inline-flex;align-items:center;gap:2px;background:var(--surface);
+  border:1px solid var(--line);border-radius:10px;padding:3px}
+.stepnav{border:0;background:transparent;cursor:pointer;color:var(--muted);
+  width:28px;height:28px;border-radius:7px;font-size:17px;line-height:1;display:flex;
+  align-items:center;justify-content:center;transition:background .14s,color .14s}
+.stepnav:hover{background:var(--sunken);color:var(--ink)}
+.steplab{font-family:var(--display);font-size:14.5px;font-weight:600;letter-spacing:-.01em;
+  padding:0 8px;min-width:88px;text-align:center}
+.navcount{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.yearsel{width:auto;min-width:92px;font-family:var(--display);font-weight:600;font-size:14.5px;
+  padding:7px 10px;letter-spacing:-.01em}
+
+/* dense day grids scroll rather than crushing the labels */
+.pgrid{overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
+.pcell{flex:1 1 22px;min-width:22px}
+.pgrid--dense .pcell{font-size:8.5px;letter-spacing:0}
+.pcell.weekend:not(.on){background:var(--sunken);box-shadow:inset 0 0 0 1px var(--line)}
+.pcell.future{background:transparent;box-shadow:inset 0 0 0 1px var(--line);color:var(--faint);
+  opacity:.55;cursor:default}
+.pcell.future:hover{transform:none}
+
+@media (max-width:760px){
   .brand{width:100%;margin-right:0}
-  .horizons{width:100%;overflow-x:auto}
-  .horizons button{flex:1;justify-content:center;white-space:nowrap}
+  .readouts{padding:18px;gap:18px}
+  .dial .dial-num{font-size:36px}
   .row2{grid-template-columns:1fr}
-  .meter-wrap{flex-wrap:wrap}
-  .meter-val{text-align:left;min-width:0}
+  .goal-in{padding:17px 17px 0}
+  .tactics,.syswrap{margin-left:-17px;margin-right:-17px;padding-left:17px;padding-right:17px}
+  .sysrow{padding:12px}
+  .gtitle{font-size:18px}
+  .strip-wrap{gap:12px}
+  .pcell{height:34px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -297,17 +445,18 @@ textarea{resize:vertical;min-height:62px;line-height:1.45}
     <div class="pagenav" id="pagenav" role="group" aria-label="Section"></div>
     <span class="savepill" id="savepill" data-s="saved" role="status" aria-live="polite"><span class="sdot"></span><span id="savetext">Saved</span></span>
     <button class="btn" id="exportBtn" title="Download a copy of everything as JSON">Export</button>
-    <button class="btn btn-primary" id="newBtn">New system</button>
+    <button class="btn btn-primary" id="newBtn">New goal</button>
   </div>
 </div>
 
 <div class="shell">
 
 <div id="pageGoals">
-  <div class="horizons" id="horizons" role="group" aria-label="Goal horizon"></div>
+  <div class="horizons" id="horizons" role="group" aria-label="Cadence"></div>
+  <div class="periodnav" id="periodnav"></div>
   <div class="readouts" id="readouts"></div>
   <div class="samplebar" id="samplebar" hidden>
-    <span><strong>These are example systems.</strong> They show how the console works. Replace or clear them when you are ready.</span>
+    <span><strong>These are example goals and systems.</strong> They show how the console works. Replace or clear them when you are ready.</span>
     <button class="btn btn-sm" id="clearSamples">Clear examples</button>
   </div>
 
@@ -396,25 +545,30 @@ textarea{resize:vertical;min-height:62px;line-height:1.45}
     <div class="mhead"><h2 id="mTitle">New system</h2></div>
     <div class="mbody">
       <div class="field">
-        <label for="fTitle">The system</label>
+        <label for="fTitle" id="fTitleLab">The goal</label>
         <input type="text" id="fTitle" placeholder="Friday afternoon platform review">
-        <span class="hint">Name the process you run, not the result you want.</span>
+        <span class="hint" id="fTitleHint">Name the outcome you are after.</span>
       </div>
       <div class="field">
-        <label for="fOutcome">Outcome it serves</label>
+        <label for="fOutcome" id="fOutcomeLab">Done means</label>
         <input type="text" id="fOutcome" placeholder="A platform that stops surprising us">
-        <span class="hint">Recorded for context. Never used to score you.</span>
+        <span class="hint" id="fOutcomeHint">What has to be true for this to count as achieved.</span>
       </div>
       <div class="field">
-        <label for="fWhy">Why this process</label>
+        <label for="fWhy" id="fWhyLab">Why it matters</label>
         <textarea id="fWhy" placeholder="What running this reliably actually changes."></textarea>
       </div>
       <div class="field">
-        <label>Cadence</label>
+        <label id="fHorizonLab">Horizon</label>
         <div class="seg" id="fHorizon" role="group" aria-label="Cadence"></div>
         <span class="hint" id="horizonHint"></span>
       </div>
-      <div class="field">
+      <div class="field" id="parentWrap" hidden>
+        <label for="fParent">Goal it serves</label>
+        <select id="fParent"></select>
+        <span class="hint">Every system hangs off one outcome.</span>
+      </div>
+      <div class="field" id="commitWrap">
         <label for="fCommitN">Commitment</label>
         <div class="commit">
           <span>Run it</span>
@@ -432,9 +586,9 @@ textarea{resize:vertical;min-height:62px;line-height:1.45}
           <datalist id="catList"></datalist>
         </div>
         <div class="field">
-          <label for="fTarget">Review on</label>
+          <label for="fTarget" id="fTargetLab">Target date</label>
           <input type="date" id="fTarget">
-          <span class="hint">Optional. A date to revisit the system.</span>
+          <span class="hint" id="fTargetHint">When this should be true by.</span>
         </div>
       </div>
       <div class="field">
@@ -456,9 +610,9 @@ textarea{resize:vertical;min-height:62px;line-height:1.45}
       </div>
     </div>
     <div class="mfoot">
-      <button class="btn btn-danger" id="mDelete" hidden>Delete system</button>
+      <button class="btn btn-danger" id="mDelete" hidden>Delete</button>
       <button class="btn" id="mCancel">Cancel</button>
-      <button class="btn btn-primary" id="mSave">Save system</button>
+      <button class="btn btn-primary" id="mSave">Save</button>
     </div>
   </div>
 </div>
@@ -515,10 +669,33 @@ var HORIZONS = [
 ];
 var HMAP = {}; HORIZONS.forEach(function(h){HMAP[h.k]=h;});
 
+/* Two tiers. A GOAL is the outcome you are after and lives on a monthly,
+   quarterly or yearly horizon. A SYSTEM is a daily or weekly action that
+   produces it, and hangs off exactly one goal. Cadence decides which is
+   which, so nothing has to be classified by hand. */
+var GOAL_HORIZONS=["monthly","quarterly","yearly"];
+var SYS_HORIZONS=["daily","weekly"];
+function isSystem(r){ return r.kind==="system" || (!r.kind && SYS_HORIZONS.indexOf(r.horizon)>=0); }
+function isGoalRec(r){ return !isSystem(r); }
+function systemsFor(id){ return goals.filter(function(r){ return isSystem(r) && r.parentId===id; }); }
+function orphanSystems(){ return goals.filter(function(r){ return isSystem(r) && !r.parentId; }); }
+function allGoalRecs(){ return goals.filter(isGoalRec); }
+/* a goal reads as its systems do; with none attached it falls back to its own log */
+function rollupOf(g){
+  var kids=systemsFor(g.id).filter(function(k){ return statusOf(k)!=="done"; });
+  if(!kids.length) return null;
+  var ran=0,avail=0,exp=0,hold=0;
+  kids.forEach(function(k){ var a=adherenceOf(k); ran+=a.ran; avail+=a.available; exp+=a.expected;
+    if(statusOf(k)==="ok") hold++; });
+  return {ran:ran,available:avail,expected:exp,rate:avail?ran/avail:0,
+          target:avail?exp/avail:1,count:kids.length,holding:hold};
+}
+
 /* ============================ state ============================ */
 var db = null, unsub = null;
 var goals = [];                 // array of {id, ...body}
-var view  = {horizon:"weekly", cat:"all", status:"open", sort:"progress"};
+var view  = {horizon:"monthly", cat:"all", status:"open", sort:"progress",
+             year:new Date().getFullYear(), month:new Date().getMonth()};
 var editing = null;             // goal id being edited, or null for new
 var draft = {};
 var persistMode = "loading";    // loading | db | local | none
@@ -544,6 +721,44 @@ function isoWeek(d){
   return {y:t.getFullYear(),w:n};
 }
 function quarterOf(d){ return Math.floor(d.getMonth()/3)+1; }
+function daysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
+
+/* The grid is a calendar container, not a rolling window: the days of a month,
+   the weeks of a month, the months or quarters of a year, or a span of years. */
+function periodsInView(h){
+  var y=view.year, m=view.month, out=[], i;
+  if(h==="daily"){
+    for(i=1;i<=daysInMonth(y,m);i++) out.push(new Date(y,m,i));
+  } else if(h==="weekly"){
+    var cur=startOfWeek(new Date(y,m,1));
+    if(cur.getMonth()!==m||cur.getFullYear()!==y) cur=shiftPeriod(cur,"weekly",1);
+    while(cur.getMonth()===m&&cur.getFullYear()===y){ out.push(new Date(cur)); cur=shiftPeriod(cur,"weekly",1); }
+  } else if(h==="monthly"){
+    for(i=0;i<12;i++) out.push(new Date(y,i,1));
+  } else if(h==="quarterly"){
+    for(i=0;i<4;i++) out.push(new Date(y,i*3,1));
+  } else {
+    for(i=0;i<YEAR_SPAN;i++) out.push(new Date(view.year+i,0,1));
+  }
+  return out;
+}
+function periodIndex(d,h){
+  if(h==="daily")     return Math.floor(new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()/86400000);
+  if(h==="weekly")    return Math.floor(startOfWeek(d).getTime()/86400000);
+  if(h==="monthly")   return d.getFullYear()*12+d.getMonth();
+  if(h==="quarterly") return d.getFullYear()*4+quarterOf(d);
+  return d.getFullYear();
+}
+function periodIsFuture(d,h){ return periodIndex(d,h)>periodIndex(new Date(),h); }
+function periodIsNow(d,h){ return periodKey(d,h)===periodKey(new Date(),h); }
+function containerLabel(h){
+  var M=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  if(h==="daily"||h==="weekly") return M[view.month]+" "+view.year;
+  if(h==="yearly") return view.year+"\u2013"+(view.year+YEAR_SPAN-1);
+  return ""+view.year;
+}
+var YEAR_SPAN=4;   /* the selected year and the three that follow */
+
 function periodKey(d,h){
   if(h==="daily")     return ymd(d);
   if(h==="weekly")    { var i=isoWeek(d); return i.y+"-W"+pad(i.w); }
@@ -632,30 +847,30 @@ function loggedPeriods(g){
 /* Adherence over the visible window — what you see in the grid is what is
    measured. Periods before the system existed do not count against it. */
 function adherenceOf(g){
-  var h=HMAP[g.horizon]||HMAP.weekly;
-  var win=h.back;
+  var cells=periodsInView(g.horizon);
   var start=parseYmd(g.startDate)||parseYmd(g.createdAt&&g.createdAt.slice(0,10));
   var log=g.log||{}, ran=0, available=0;
-  var now=new Date();
-  for(var i=win-1;i>=0;i--){
-    var d=shiftPeriod(now,g.horizon,-i);
-    if(start){
-      var pEnd=shiftPeriod(d,g.horizon,1);
-      if(pEnd<=start) continue;              // period finished before the system began
-    }
+  cells.forEach(function(d){
+    if(periodIsFuture(d,g.horizon)) return;              // the future is not a miss
+    if(start && shiftPeriod(d,g.horizon,1)<=start) return; // period closed before the system began
     available++;
     if(log[periodKey(d,g.horizon)]) ran++;
-  }
+  });
   var c=commitOf(g);
-  var expected=Math.max(1,Math.round(available*c.ratio));
-  return {
-    ran:ran, available:available, expected:Math.min(expected,available),
-    rate: available>0 ? ran/available : 0,
-    target: c.ratio, commit:c, window:win
-  };
+  return {ran:ran, available:available,
+          expected:Math.min(Math.max(1,Math.round(available*c.ratio)),available),
+          rate: available>0?ran/available:0, target:c.ratio, commit:c, cells:cells.length};
 }
 function statusOf(g){
   if(g.status==="done"||g.status==="retired") return "done";
+  /* a goal is read through the systems under it, never through a log of its own */
+  if(isGoalRec(g)){
+    var r=rollupOf(g);
+    if(!r || r.available===0) return "ok";               // no systems yet, or nothing to judge
+    if(r.rate>=r.target-0.001) return "ok";
+    if(r.rate>=r.target*0.6) return "warn";
+    return "bad";
+  }
   var a=adherenceOf(g);
   if(a.available===0) return "ok";                       // brand new, nothing to judge yet
   if(a.rate>=a.target-0.001) return "ok";                // meeting the commitment
@@ -663,6 +878,7 @@ function statusOf(g){
   return "bad";
 }
 var STATUS_TEXT={ok:"Holding",warn:"Slipping",bad:"Stalled",done:"Retired"};
+var GOAL_STATUS_TEXT={ok:"On track",warn:"Slipping",bad:"Stalled",done:"Achieved"};
 function streakOf(g){
   var log=g.log||{}, n=0, d=new Date();
   if(!log[periodKey(d,g.horizon)]) d=shiftPeriod(d,g.horizon,-1); // this period not run yet is fine
@@ -829,7 +1045,7 @@ function applySnapshot(snap){
    NOT bump updatedAt: the records mean the same thing, so there is nothing
    for the other devices to resolve. Every accessor already tolerates the
    old shape, so this is cleanup rather than a gate. */
-var SCHEMA=3;
+var SCHEMA=4;
 function migrateToSystems(){
   var written=[];
   records.forEach(function(r,i){
@@ -845,6 +1061,8 @@ function migrateToSystems(){
       delete m.tactics;
     }
     m.stepLog=m.stepLog||{};
+    if(!m.kind) m.kind = SYS_HORIZONS.indexOf(m.horizon)>=0 ? "system" : "goal";
+    if(m.kind==="system" && typeof m.parentId!=="string") m.parentId="";
     if(!(m.commitN>0)) m.commitN=1;
     if(!(m.commitM>0)) m.commitM=1;
     if(typeof m.outcome!=="string") m.outcome="";
@@ -992,60 +1210,82 @@ function prepareImage(file){
 function sampleSystems(){
   var today=new Date();
   function back(h,n){ return ymd(shiftPeriod(today,h,-n)); }
-  var L1={},L2={},L3={},L4={},L5={};
-  for(var i=1;i<=11;i++){ if(i%4!==0) L1[periodKey(shiftPeriod(today,"daily",-i),"daily")]=true; }
-  L1[periodKey(today,"daily")]=true;
-  for(var j=1;j<=6;j++){ if(j!==3) L2[periodKey(shiftPeriod(today,"weekly",-j),"weekly")]=true; }
-  for(var m=1;m<=4;m++){ L3[periodKey(shiftPeriod(today,"monthly",-m),"monthly")]= m===1?3:2; }
-  L5[periodKey(shiftPeriod(today,"quarterly",-1),"quarterly")]=true;
-  L5[periodKey(shiftPeriod(today,"quarterly",-2),"quarterly")]=true;
-  L4[periodKey(shiftPeriod(today,"yearly",-1),"yearly")]=true;
-  function sys(o){ o.sample=true; o.status="active"; o.stepLog={}; o.schema=SCHEMA;
-                   o.createdAt=new Date().toISOString(); return o; }
+  var D1={},D2={},W1={},W2={},W3={};
+  for(var i=1;i<=13;i++){ if(i%5!==0) D1[periodKey(shiftPeriod(today,"daily",-i),"daily")]=true; }
+  D1[periodKey(today,"daily")]=true;
+  for(var k=1;k<=11;k++){ if(k%4!==0) D2[periodKey(shiftPeriod(today,"daily",-k),"daily")]=true; }
+  for(var j=1;j<=7;j++){ W1[periodKey(shiftPeriod(today,"weekly",-j),"weekly")]=true; }
+  for(var m=1;m<=6;m++){ if(m!==3) W2[periodKey(shiftPeriod(today,"weekly",-m),"weekly")]=true; }
+  for(var q=1;q<=5;q++){ if(q!==2&&q!==4) W3[periodKey(shiftPeriod(today,"weekly",-q),"weekly")]=true; }
+
+  function goal(o){ o.kind="goal"; o.parentId=""; o.sample=true; o.status="active";
+                    o.metric=o.metric||"binary"; o.targetValue=o.targetValue||0; o.unit=o.unit||"";
+                    o.commitN=1; o.commitM=1; o.log={}; o.steps=o.steps||[]; o.stepLog={};
+                    o.schema=SCHEMA; o.createdAt=new Date().toISOString(); return o; }
+  function sys(o){ o.kind="system"; o.sample=true; o.status="active";
+                   o.metric=o.metric||"binary"; o.targetValue=o.targetValue||0; o.unit=o.unit||"";
+                   o.stepLog={}; o.schema=SCHEMA; o.createdAt=new Date().toISOString(); return o; }
+
   return [
-    sys({id:"sample-1",title:"Thirty minutes of reading before the day starts",
-      outcome:"Staying ahead of platform architecture instead of catching up on it",
-      why:"The reading never survives a contact with the working day, so it has to happen before the day begins. Five mornings out of seven is the honest bar.",
-      horizon:"daily",category:"Learning",metric:"binary",targetValue:0,unit:"",
-      commitN:5,commitM:7,startDate:back("daily",30),targetDate:"",log:L1,
-      steps:[{id:"t1",text:"06:45-07:15 held in the calendar as busy"},
-             {id:"t2",text:"Current book left on the desk the night before"},
-             {id:"t3",text:"One paragraph of notes before closing it"}]}),
-    sys({id:"sample-2",title:"Thursday draft, Sunday publish",
-      outcome:"A public body of writing that makes the case for principal scope",
-      why:"Writing only happens when it has a slot. Splitting draft and publish across two fixed evenings removes the decision.",
-      horizon:"weekly",category:"Career",metric:"binary",targetValue:0,unit:"",
-      commitN:1,commitM:1,startDate:back("weekly",7),targetDate:"",log:L2,
+    /* ---- monthly goal + the two systems that produce it ---- */
+    goal({id:"sample-g1",title:"Every property walked and the works list empty this month",
+      outcome:"All four properties inspected, every fault found either fixed or booked with a date",
+      why:"Damp, alarm faults and wear are cheap early and expensive late. The month is the unit the portfolio actually runs on.",
+      horizon:"monthly",category:"Property",targetDate:ymd(new Date(today.getFullYear(),today.getMonth()+1,0))}),
+    sys({id:"sample-1",parentId:"sample-g1",title:"Saturday property round",
+      outcome:"Repairs caught at ninety pounds instead of two thousand",
+      why:"A fixed Saturday beats reacting to tenant calls. One property a week clears the portfolio inside the month.",
+      horizon:"weekly",category:"Property",metric:"quantity",targetValue:4,unit:"inspections",
+      commitN:1,commitM:1,startDate:back("weekly",10),targetDate:"",log:W1,
+      steps:[{id:"t1",text:"Saturday morning blocked out before the week starts"},
+             {id:"t2",text:"Walk the checklist: damp, alarms, windows, externals, meters"},
+             {id:"t3",text:"Photograph every room, file to the property record same day"},
+             {id:"t4",text:"Anything found goes into the works list with a date against it"}]}),
+    sys({id:"sample-2",parentId:"sample-g1",title:"Fifteen minutes on the works list before the day starts",
+      outcome:"Nothing sits on the list longer than a week without a contractor or a date",
+      why:"The list only rots when nobody looks at it. Fifteen minutes is short enough to survive a bad morning.",
+      horizon:"daily",category:"Property",metric:"binary",
+      commitN:5,commitM:7,startDate:back("daily",30),targetDate:"",log:D1,
+      steps:[{id:"t1",text:"Open the works list before email"},
+             {id:"t2",text:"Chase anything older than seven days"},
+             {id:"t3",text:"Book one job, however small"}]}),
+
+    /* ---- quarterly goal + its system ---- */
+    goal({id:"sample-g2",title:"Next quarter's platform priorities agreed on evidence",
+      outcome:"A costed top-three, circulated and signed off before the quarter turns",
+      why:"Without a fixed review the quarter just ends and the roadmap goes to whoever shouted most recently.",
+      horizon:"quarterly",category:"Platform"}),
+    sys({id:"sample-5",parentId:"sample-g2",title:"Friday numbers pull",
+      outcome:"The quarter-close review writes itself because the evidence is already there",
+      why:"Gathering a quarter of data in the final week is how reviews slip. Twenty minutes a Friday makes it a formality.",
+      horizon:"weekly",category:"Platform",metric:"binary",
+      commitN:3,commitM:4,startDate:back("weekly",8),targetDate:"",log:W3,
+      steps:[{id:"t1",text:"Incident count and change-failure rate into the sheet"},
+             {id:"t2",text:"Error budget burn against each SLO"},
+             {id:"t3",text:"One line on what moved and why"}]}),
+
+    /* ---- yearly goal + its systems ---- */
+    goal({id:"sample-g3",title:"A public body of writing that makes the case for principal scope",
+      outcome:"Forty published pieces and three talks by the end of the year",
+      why:"The work is invisible outside the team unless it is written down. A year is long enough to build a record that argues for itself.",
+      horizon:"yearly",category:"Career",metric:"quantity",targetValue:40,unit:"pieces"}),
+    sys({id:"sample-3",parentId:"sample-g3",title:"Thursday draft, Sunday publish",
+      outcome:"One piece out every week without a decision to make",
+      why:"Writing only happens when it has a slot. Splitting draft and publish across two fixed evenings removes the choice.",
+      horizon:"weekly",category:"Career",metric:"binary",
+      commitN:1,commitM:1,startDate:back("weekly",7),targetDate:"",log:W2,
       steps:[{id:"t1",text:"Pick one problem off the running list"},
              {id:"t2",text:"Draft it Thursday evening, badly, in one sitting"},
              {id:"t3",text:"Edit and publish Sunday"},
              {id:"t4",text:"Cross-post to the internal engineering channel"}]}),
-    sys({id:"sample-3",title:"First-Saturday portfolio round",
-      outcome:"Repairs caught at ninety pounds instead of two thousand",
-      why:"Damp, alarm faults and wear are cheap early and expensive late. A fixed Saturday beats reacting to tenant calls.",
-      horizon:"monthly",category:"Property",metric:"quantity",targetValue:12,unit:"inspections",
-      commitN:1,commitM:1,startDate:back("monthly",5),targetDate:"",log:L3,
-      steps:[{id:"t1",text:"First Saturday blocked out for the London round"},
-             {id:"t2",text:"Walk the checklist: damp, alarms, windows, externals, meters"},
-             {id:"t3",text:"Photograph every room, file to the property record same day"},
-             {id:"t4",text:"Anything found goes straight into the works list with a date"}]}),
-    sys({id:"sample-5",title:"Quarter-close platform review",
-      outcome:"A roadmap driven by evidence rather than by whoever shouted most recently",
-      why:"Without a fixed review the quarter just ends. Pulling the numbers in the last week is what turns firefighting into a plan.",
-      horizon:"quarterly",category:"Platform",metric:"binary",targetValue:0,unit:"",
-      commitN:1,commitM:1,startDate:back("quarterly",3),targetDate:"",log:L5,
-      steps:[{id:"t1",text:"Pull incident and change-failure numbers in the final week"},
-             {id:"t2",text:"Review error budget burn against the SLOs"},
-             {id:"t3",text:"Name the top three sources of toil and cost a fix for each"},
-             {id:"t4",text:"Circulate it and agree next quarter's priorities"}]}),
-    sys({id:"sample-4",title:"Year-end reset week",
-      outcome:"Starting each year with explicit priorities instead of inherited momentum",
-      why:"One week, once a year, to close the books properly and decide what the next twelve months are actually for.",
-      horizon:"yearly",category:"Career",metric:"binary",targetValue:0,unit:"",
-      commitN:1,commitM:1,startDate:back("yearly",2),targetDate:"",log:L4,
-      steps:[{id:"t1",text:"Read back the year's notes and write what actually changed"},
-             {id:"t2",text:"Retire the systems that stopped earning their slot"},
-             {id:"t3",text:"Set next year's vision board before the first working day"}]})
+    sys({id:"sample-4",parentId:"sample-g3",title:"Thirty minutes of reading before the day starts",
+      outcome:"Staying ahead of platform architecture instead of catching up on it",
+      why:"The reading never survives contact with the working day, so it has to happen before the day begins. Five mornings out of seven is the honest bar.",
+      horizon:"daily",category:"Learning",metric:"binary",
+      commitN:5,commitM:7,startDate:back("daily",26),targetDate:"",log:D2,
+      steps:[{id:"t1",text:"06:45-07:15 held in the calendar as busy"},
+             {id:"t2",text:"Current book left on the desk the night before"},
+             {id:"t3",text:"One paragraph of notes before closing it"}]})
   ];
 }
 function sampleGoals(){ return sampleSystems(); }
@@ -1055,80 +1295,165 @@ var $=function(s){return document.querySelector(s);};
 function el(tag,cls,txt){ var e=document.createElement(tag); if(cls)e.className=cls; if(txt!=null)e.textContent=txt; return e; }
 
 function visibleGoals(){
-  var out=goals.filter(function(g){return g.horizon===view.horizon;});
+  var out=allGoalRecs().filter(function(g){return g.horizon===view.horizon;});
   if(view.cat!=="all") out=out.filter(function(g){return (g.category||"Uncategorised")===view.cat;});
   if(view.status==="open")   out=out.filter(function(g){return statusOf(g)!=="done";});
   if(view.status==="done")   out=out.filter(function(g){return statusOf(g)==="done";});
-  if(view.status==="behind") out=out.filter(function(g){var s=statusOf(g);return s==="bad"||s==="warn";});
-  var s=view.sort;
+  if(view.status==="behind") out=out.filter(function(g){var st=statusOf(g);return st==="bad"||st==="warn";});
+  var k=view.sort;
   out.sort(function(a,b){
-    if(s==="title")    return (a.title||"").localeCompare(b.title||"");
-    if(s==="created")  return (b.createdAt||"").localeCompare(a.createdAt||"");
-    if(s==="progress") return adherenceOf(a).rate-adherenceOf(b).rate;   // weakest first
-    return streakOf(b)-streakOf(a);                                      // longest streak first
+    if(k==="title")   return (a.title||"").localeCompare(b.title||"");
+    if(k==="created") return (b.createdAt||"").localeCompare(a.createdAt||"");
+    if(k==="progress"){
+      var ra=rollupOf(a), rb=rollupOf(b);
+      return (ra?ra.rate:adherenceOf(a).rate)-(rb?rb.rate:adherenceOf(b).rate);
+    }
+    return (a.targetDate||"9999").localeCompare(b.targetDate||"9999");
   });
   return out;
 }
 
+/* every live system under the goals currently in view */
+function systemsInView(){
+  var ids=allGoalRecs().filter(function(g){return g.horizon===view.horizon;}).map(function(g){return g.id;});
+  return goals.filter(function(r){
+    return isSystem(r) && statusOf(r)!=="done" && (ids.indexOf(r.parentId)>=0 || !r.parentId);
+  });
+}
+
 function renderHorizons(){
   var box=$("#horizons"); box.textContent="";
-  HORIZONS.forEach(function(h){
-    var n=goals.filter(function(g){return g.horizon===h.k && statusOf(g)!=="done";}).length;
+  GOAL_HORIZONS.forEach(function(k){
+    var h=HMAP[k];
+    var n=allGoalRecs().filter(function(g){return g.horizon===k && statusOf(g)!=="done";}).length;
     var b=el("button",null); b.type="button";
-    b.setAttribute("aria-pressed",view.horizon===h.k?"true":"false");
-    b.appendChild(el("span",null,h.label));
+    b.setAttribute("aria-pressed",view.horizon===k?"true":"false");
+    b.appendChild(el("span",null,h.label+" goals"));
     b.appendChild(el("span","cnt",String(n)));
-    b.onclick=function(){ view.horizon=h.k; render(); };
+    b.onclick=function(){ view.horizon=k; render(); };
     box.appendChild(b);
   });
 }
 
+function renderPeriodNav(){
+  var box=$("#periodnav"); if(!box) return;
+  box.textContent="";
+  var now=new Date();
+  var MM=["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  /* goals sit on a year; the daily and weekly systems under them sit in a month */
+  var step=el("div","stepper");
+  var prev=el("button","stepnav","\u2039"); prev.type="button";
+  prev.setAttribute("aria-label","Previous month"); prev.title="Previous month";
+  prev.onclick=function(){ if(view.month===0){view.month=11;view.year--;} else view.month--; render(); };
+  var lab=el("span","steplab",MM[view.month]);
+  var next=el("button","stepnav","\u203a"); next.type="button";
+  next.setAttribute("aria-label","Next month"); next.title="Next month";
+  next.onclick=function(){ if(view.month===11){view.month=0;view.year++;} else view.month++; render(); };
+  step.appendChild(prev); step.appendChild(lab); step.appendChild(next);
+  box.appendChild(step);
+  box.appendChild(el("span","navcount","system strips show this month"));
+
+  var ysel=document.createElement("select");
+  ysel.id="yearSel"; ysel.className="yearsel"; ysel.setAttribute("aria-label","Year");
+  for(var i=0;i<YEAR_SPAN;i++){
+    var y=now.getFullYear()+i;
+    var o=document.createElement("option"); o.value=String(y); o.textContent=String(y);
+    ysel.appendChild(o);
+  }
+  if(view.year<now.getFullYear()||view.year>now.getFullYear()+YEAR_SPAN-1){
+    var o2=document.createElement("option"); o2.value=String(view.year); o2.textContent=String(view.year);
+    ysel.insertBefore(o2,ysel.firstChild);
+  }
+  ysel.value=String(view.year);
+  ysel.onchange=function(){ view.year=parseInt(this.value,10); render(); };
+
+  var spacer=el("span"); spacer.style.flex="1 1 10px";
+  box.appendChild(spacer);
+  if(!(view.year===now.getFullYear() && view.month===now.getMonth())){
+    var today=el("button","btn btn-sm","Today");
+    today.onclick=function(){ view.year=now.getFullYear(); view.month=now.getMonth(); render(); };
+    box.appendChild(today);
+  }
+  box.appendChild(ysel);
+}
+
 function renderReadouts(){
   var box=$("#readouts"); box.textContent="";
-  var inH=goals.filter(function(g){return g.horizon===view.horizon;});
-  var live=inH.filter(function(g){return statusOf(g)!=="done";});
-  var holding=live.filter(function(g){return statusOf(g)==="ok";}).length;
-  var slipping=live.filter(function(g){return statusOf(g)==="warn";}).length;
-  var stalled=live.filter(function(g){return statusOf(g)==="bad";}).length;
   var h=HMAP[view.horizon];
+  var gls=allGoalRecs().filter(function(g){return g.horizon===view.horizon && statusOf(g)!=="done";});
+  var sys=systemsInView();
+  var holding=sys.filter(function(g){return statusOf(g)==="ok";}).length;
+  var slipping=sys.filter(function(g){return statusOf(g)==="warn";}).length;
+  var stalled=sys.filter(function(g){return statusOf(g)==="bad";}).length;
 
-  // adherence across every live system on this cadence
   var ran=0, avail=0;
-  live.forEach(function(g){ var a=adherenceOf(g); ran+=a.ran; avail+=a.available; });
-  var rate=avail>0?Math.round(ran/avail*100):0;
+  sys.forEach(function(g){ var a=adherenceOf(g); ran+=a.ran; avail+=a.available; });
+  var rate=avail>0?ran/avail:0, pct=Math.round(rate*100);
 
   var bestStreak=0,bestName="";
-  inH.forEach(function(g){ var s=streakOf(g); if(s>bestStreak){bestStreak=s;bestName=g.title;} });
+  sys.forEach(function(g){ var sk=streakOf(g); if(sk>bestStreak){bestStreak=sk;bestName=g.title;} });
 
-  var curKey=periodKey(new Date(),view.horizon);
-  var runNow=live.filter(function(g){return (g.log||{})[curKey];}).length;
-
-  function add(k,v,small,sub,sparkOn){
-    var r=el("div","readout");
-    r.appendChild(el("div","k",k));
-    var vv=el("div","v"); vv.appendChild(document.createTextNode(v));
-    if(small){ var sm=el("small",null," "+small); vv.appendChild(sm); }
-    r.appendChild(vv);
-    if(sub) r.appendChild(el("div","sub",sub));
-    if(sparkOn){
-      var sp=el("div","spark");
-      for(var i=h.back-1;i>=0;i--){
-        var key=periodKey(shiftPeriod(new Date(),view.horizon,-i),view.horizon);
-        var n=live.filter(function(g){return (g.log||{})[key];}).length;
-        var bar=el("i"); if(n) bar.className="on";
-        bar.style.height=(live.length?Math.max(12,Math.round(n/live.length*100)):12)+"%";
-        sp.appendChild(bar);
-      }
-      r.appendChild(sp);
-    }
-    box.appendChild(r);
+  var R=46, C=2*Math.PI*R;
+  var tone = pct>=85?"var(--hold)" : pct>=55?"var(--slip)" : pct>0?"var(--stall)" : "var(--line-2)";
+  var dial=el("div","dial");
+  var NS="http://www.w3.org/2000/svg";
+  var svg=document.createElementNS(NS,"svg");
+  svg.setAttribute("width","112"); svg.setAttribute("height","112");
+  svg.setAttribute("viewBox","0 0 112 112"); svg.setAttribute("role","img");
+  svg.setAttribute("aria-label","System adherence "+pct+" per cent across "+sys.length+" systems");
+  function ring(stroke,dash,offset,w){
+    var c=document.createElementNS(NS,"circle");
+    c.setAttribute("cx","56"); c.setAttribute("cy","56"); c.setAttribute("r",String(R));
+    c.setAttribute("fill","none"); c.setAttribute("stroke",stroke);
+    c.setAttribute("stroke-width",String(w)); c.setAttribute("stroke-linecap","round");
+    if(dash!=null){ c.setAttribute("stroke-dasharray",dash); c.setAttribute("stroke-dashoffset",String(offset)); }
+    c.setAttribute("transform","rotate(-90 56 56)");
+    return c;
   }
-  add("Live "+h.label.toLowerCase()+" systems", String(live.length), null,
-      holding+" holding · "+slipping+" slipping · "+stalled+" stalled");
-  add("Run this "+h.unitLabel, String(runNow), "of "+live.length, periodTitle(new Date(),view.horizon));
-  add("Adherence", String(rate)+"%", null,
-      avail?ran+" of "+avail+" "+h.plural+" run":"nothing to measure yet");
-  add("Longest streak", String(bestStreak), h.plural, bestName?trunc(bestName,34):"run a system to start one", true);
+  svg.appendChild(ring("var(--line)",null,0,11));
+  if(rate>0) svg.appendChild(ring(tone,C.toFixed(1)+" "+C.toFixed(1),(C*(1-rate)).toFixed(1),11));
+  dial.appendChild(svg);
+  var dr=el("div","dial-read");
+  var dn=el("div","dial-num",pct+"%"); dn.style.color=tone;
+  dr.appendChild(dn);
+  dr.appendChild(el("div","lbl","System adherence"));
+  dr.appendChild(el("div","dial-sub", avail
+    ? containerLabel("daily")+" — "+ran+" of "+avail+" runs across "+sys.length+" system"+(sys.length===1?"":"s")
+    : "No systems running under these goals yet"));
+  dial.appendChild(dr);
+  box.appendChild(dial);
+
+  var facts=el("div","facts");
+  function fact(label,value,small,subNode){
+    var f=el("div","fact");
+    f.appendChild(el("div","lbl",label));
+    var v=el("div","fv"); v.appendChild(document.createTextNode(value));
+    if(small) v.appendChild(el("small",null," "+small));
+    f.appendChild(v);
+    if(subNode) f.appendChild(subNode);
+    facts.appendChild(f); return f;
+  }
+  fact(h.label+" goals",String(gls.length),null,
+       el("div","fs",containerLabel(view.horizon)));
+
+  var leg=el("div","legend");
+  [["l-hold",holding,"holding"],["l-slip",slipping,"slipping"],["l-stall",stalled,"stalled"]]
+    .forEach(function(t){
+      var sp=el("span",t[0]); sp.appendChild(el("i"));
+      sp.appendChild(document.createTextNode(t[1]+" "+t[2])); leg.appendChild(sp);
+    });
+  fact("Systems",String(sys.length),null,leg);
+
+  var dkey=periodKey(new Date(),"daily");
+  var dueToday=sys.filter(function(g){return g.horizon==="daily";});
+  var doneToday=dueToday.filter(function(g){return (g.log||{})[dkey];}).length;
+  fact("Run today",String(doneToday),"of "+dueToday.length,
+       el("div","fs",periodTitle(new Date(),"daily")));
+
+  fact("Longest streak",String(bestStreak),null,
+       el("div","fs",bestName?trunc(bestName,30):"run a system to start one"));
+  box.appendChild(facts);
 }
 function trunc(s,n){ return s.length>n?s.slice(0,n-1)+"…":s; }
 
@@ -1138,159 +1463,202 @@ function renderList(){
   var h=HMAP[view.horizon];
   if(!items.length){
     var e=el("div","empty");
-    e.appendChild(el("h2",null,"No "+h.label.toLowerCase()+" systems yet"));
-    e.appendChild(el("p",null,goals.length?"Nothing matches this filter. Change the filter above, or add a system on this cadence.":"Build the first one. A system is the process you run every "+h.unitLabel+" — name the protocol, set how often you intend to run it, and log each "+h.unitLabel+" you do."));
-    var b=el("button","btn btn-primary","New "+h.label.toLowerCase()+" system"); b.onclick=openNew;
-    e.appendChild(b); box.appendChild(e); return;
+    e.appendChild(el("h2",null,"No "+h.label.toLowerCase()+" goals yet"));
+    e.appendChild(el("p",null, allGoalRecs().length
+      ? "Nothing matches this filter. Change it above, or set a goal on this horizon."
+      : "Set the outcome first, then hang the daily and weekly actions that produce it underneath it."));
+    var b2=el("button","btn btn-primary","New "+h.label.toLowerCase()+" goal");
+    b2.onclick=function(){ openNewGoal(); };
+    e.appendChild(b2); box.appendChild(e);
+  } else {
+    items.forEach(function(g){ box.appendChild(goalCard(g)); });
   }
-  items.forEach(function(g){ box.appendChild(goalCard(g)); });
+
+  var loose=orphanSystems().filter(function(r){return statusOf(r)!=="done";});
+  if(loose.length){
+    var w=el("div","goal loose");
+    var inr=el("div","goal-in");
+    var hd=el("div","ghead");
+    var mn=el("div","gmain");
+    mn.appendChild(el("div","gtitle","Systems with no goal"));
+    mn.appendChild(el("div","gwhy","These are running but not attached to an outcome. Edit one to pick the goal it serves."));
+    hd.appendChild(mn); inr.appendChild(hd);
+    var sl=el("div","syslist");
+    loose.forEach(function(sy){ sl.appendChild(systemRow(sy)); });
+    inr.appendChild(sl); w.appendChild(inr); box.appendChild(w);
+  }
 }
 
 function goalCard(g){
-  var st=statusOf(g), ad=adherenceOf(g), ps=protocolStats(g), h=HMAP[g.horizon]||HMAP.weekly;
+  var st=statusOf(g), roll=rollupOf(g), h=HMAP[g.horizon]||HMAP.monthly;
   var card=el("div","goal"); card.dataset.s=st; card.dataset.done=st==="done"?"1":"0";
-  card.appendChild(el("div","stripe"));
   var inr=el("div","goal-in");
 
-  /* head */
   var head=el("div","ghead");
   var main=el("div","gmain");
-  main.appendChild(el("div","gtitle",g.title||"Untitled system"));
-  if(g.outcome) main.appendChild(el("div","goutcome","Serves: "+g.outcome));
+  var srow=el("div","statusline-row");
+  srow.appendChild(el("span","sdotl"));
+  srow.appendChild(el("span","sword",GOAL_STATUS_TEXT[st]));
+  srow.appendChild(el("span","kindtag",h.label+" goal"));
+  main.appendChild(srow);
+  main.appendChild(el("div","gtitle",g.title||"Untitled goal"));
+  if(g.outcome) main.appendChild(el("div","goutcome","Done means: "+g.outcome));
   if(g.why) main.appendChild(el("div","gwhy",g.why));
   var chips=el("div","chips");
-  chips.appendChild(el("span","chip status "+st,STATUS_TEXT[st]));
   if(g.category) chips.appendChild(el("span","chip cat",g.category));
-  chips.appendChild(el("span","chip",commitLabel(g)));
-  var sk=streakOf(g);
-  if(sk>1) chips.appendChild(el("span","chip",sk+" "+h.plural+" running"));
+  if(g.targetDate) chips.appendChild(el("span","chip","by "+fmtDate(g.targetDate)));
   main.appendChild(chips);
   head.appendChild(main);
 
   var acts=el("div","gactions");
   var retired=(g.status==="done"||g.status==="retired");
-  var doneBtn=el("button","btn btn-ghost btn-sm",retired?"Restart":"Retire");
-  doneBtn.title=retired?"Put this system back into rotation":"Stop running this system, keep its history";
-  doneBtn.onclick=function(){ var c=clone(g); c.status=retired?"active":"retired"; saveGoal(c); };
+  var doneBtn=el("button","btn btn-ghost btn-sm",retired?"Reopen":"Mark achieved");
+  doneBtn.onclick=function(){ var c=clone(g); c.status=retired?"active":"done"; saveGoal(c); };
   var editBtn=el("button","btn btn-ghost btn-sm","Edit");
   editBtn.onclick=function(){ openEdit(g); };
   acts.appendChild(doneBtn); acts.appendChild(editBtn);
   head.appendChild(acts);
   inr.appendChild(head);
 
-  /* adherence */
-  var mw=el("div","meter-wrap");
-  var m=el("div","meter");
-  var fill=el("div","fill"); fill.style.width=Math.round(ad.rate*100)+"%"; m.appendChild(fill);
-  if(ad.target>0 && ad.target<1){
-    var pm=el("div","pace"); pm.style.left="calc("+(ad.target*100)+"% - 1px)";
-    pm.title="Your commitment: "+commitLabel(g);
-    m.appendChild(pm);
+  /* the goal reads as its systems do */
+  var kids=systemsFor(g.id);
+  if(roll){
+    var rw=el("div","rollup");
+    var bar=el("div","rbar");
+    var fill=el("div","rfill"); fill.style.width=Math.round(roll.rate*100)+"%";
+    bar.appendChild(fill); rw.appendChild(bar);
+    var rv=el("div","rval");
+    rv.appendChild(el("b",null,Math.round(roll.rate*100)+"%"));
+    rv.appendChild(document.createTextNode("  "+roll.holding+"/"+roll.count+" systems holding"));
+    rw.appendChild(rv);
+    inr.appendChild(rw);
   }
-  mw.appendChild(m);
-  var mv=el("div","meter-val");
-  mv.appendChild(el("b",null,Math.round(ad.rate*100)+"%"));
-  mv.appendChild(document.createTextNode("  "+ad.ran+"/"+ad.available+" "+h.plural));
-  mw.appendChild(mv);
-  inr.appendChild(mw);
 
-  /* period grid */
-  var per=el("div","periods");
-  var pl=el("div","plabel");
-  pl.appendChild(el("span",null,"Last "+h.back+" "+h.plural+" · adherence window"));
-  pl.appendChild(el("span",null,g.metric==="quantity"?"tap to add one "+(g.unit||"unit"):"tap to log a run"));
-  per.appendChild(pl);
+  var sw=el("div","syswrap");
+  var sh=el("div","thead");
+  sh.appendChild(el("h3",null,kids.length?"Systems that produce it":"No systems yet"));
+  var add=el("button","btn btn-sm","Add a system");
+  add.onclick=function(){ openNewSystem(g.id); };
+  sh.appendChild(add);
+  sw.appendChild(sh);
+  if(!kids.length){
+    sw.appendChild(el("div","sysempty","A goal with no system is a wish. Add the daily or weekly action that moves it."));
+  } else {
+    var sl=el("div","syslist");
+    kids.forEach(function(k){ sl.appendChild(systemRow(k)); });
+    sw.appendChild(sl);
+  }
+  inr.appendChild(sw);
+  card.appendChild(inr);
+  return card;
+}
+
+/* one system: its strip, its adherence, and its protocol for this cycle */
+function systemRow(g){
+  var st=statusOf(g), ad=adherenceOf(g), ps=protocolStats(g), h=HMAP[g.horizon]||HMAP.daily;
+  var row=el("div","sysrow"); row.dataset.s=st;
+
+  var top=el("div","sysrow-top");
+  var left=el("div","sysrow-id");
+  var dot=el("span","sdotl"); left.appendChild(dot);
+  left.appendChild(el("span","sysname",g.title||"Untitled system"));
+  left.appendChild(el("span","chip",h.label));
+  left.appendChild(el("span","chip",commitLabel(g)));
+  var sk=streakOf(g);
+  if(sk>1) left.appendChild(el("span","chip streak",sk+" "+h.plural));
+  top.appendChild(left);
+
+  var right=el("div","sysrow-act");
+  var pctEl=el("span","syspct",Math.round(ad.rate*100)+"%");
+  pctEl.title=ad.ran+" of "+ad.available+" "+h.plural+" run — "+STATUS_TEXT[st];
+  right.appendChild(pctEl);
+  var ed=el("button","btn btn-ghost btn-sm","Edit");
+  ed.onclick=function(){ openEdit(g); };
+  right.appendChild(ed);
+  top.appendChild(right);
+  row.appendChild(top);
+
+  var cells=periodsInView(g.horizon);
   var grid=el("div","pgrid");
-  var now=new Date();
-  for(var i=h.back-1;i>=0;i--){
-    (function(off){
-      var d=shiftPeriod(now,g.horizon,-off);
-      var key=periodKey(d,g.horizon);
-      var v=(g.log||{})[key];
-      var c=el("button","pcell"); c.type="button";
-      if(v) c.classList.add("on");
-      if(off===0) c.classList.add("today");
-      c.title=periodTitle(d,g.horizon)+(v?(typeof v==="number"?" — "+v+" "+(g.unit||""):" — ran it"):" — not run");
-      c.setAttribute("aria-label",c.title);
-      var lab=el("span","pd", (g.metric==="quantity"&&typeof v==="number")?String(v):periodLabel(d,g.horizon));
-      c.appendChild(lab);
-      c.onclick=function(){ togglePeriod(g,key); };
-      grid.appendChild(c);
-    })(i);
-  }
-  per.appendChild(grid);
-  inr.appendChild(per);
-
-  /* protocol — resets every cycle */
-  var steps=protocolOf(g);
-  var curKey=ps.key;
-  var doneIds=stepsDone(g,curKey);
-  var tw=el("div","tactics");
-  var th=el("div","thead");
-  th.appendChild(el("h3",null,"Protocol · resets each "+h.unitLabel));
-  th.appendChild(el("span","tcount",ps.total?ps.done+" of "+ps.total+" this "+h.unitLabel:"no steps yet"));
-  tw.appendChild(th);
-  var tl=el("div","tlist");
-  steps.forEach(function(t){
-    var isDone=doneIds.indexOf(t.id)>=0;
-    var row=el("div","tactic"+(isDone?" done":""));
-    var cb=document.createElement("input"); cb.type="checkbox"; cb.checked=isDone;
-    cb.id="t-"+g.id+"-"+t.id;
-    cb.setAttribute("aria-label",t.text);
-    cb.onchange=function(){ toggleStep(g,t.id,cb.checked); };
-    var tx=el("div","ttext",t.text);
-    tx.contentEditable="true"; tx.spellcheck=false;
-    tx.setAttribute("role","textbox");
-    var committed=false;
-    function commitText(){
-      if(committed) return; committed=true;
-      var val=tx.textContent.trim();
-      if(val===t.text) return;
-      var c=clone(g); c.steps=protocolOf(c).slice();
-      var tt=c.steps.find(function(x){return x.id===t.id;});
-      if(tt){
-        if(val){ tt.text=val; }
-        else { c.steps=c.steps.filter(function(x){return x.id!==t.id;}); }
-        delete c.tactics; saveGoal(c);
-      }
-    }
-    tx.onfocus=function(){ committed=false; openEditor=commitText; };
-    tx.onblur=function(){ openEditor=null; commitText(); };
-    tx.onkeydown=function(ev){ if(ev.key==="Enter"){ev.preventDefault();tx.blur();} };
-    var del=el("button","btn btn-ghost btn-sm tdel","Remove");
-    del.onclick=function(){
-      var c=clone(g); c.steps=protocolOf(c).filter(function(x){return x.id!==t.id;});
-      delete c.tactics; saveGoal(c);
-    };
-    row.appendChild(cb); row.appendChild(tx); row.appendChild(del);
-    tl.appendChild(row);
+  if(cells.length>16) grid.classList.add("pgrid--dense");
+  cells.forEach(function(d){
+    var key=periodKey(d,g.horizon);
+    var v=(g.log||{})[key];
+    var future=periodIsFuture(d,g.horizon);
+    var c=el("button","pcell"); c.type="button";
+    if(v) c.classList.add("on");
+    if(periodIsNow(d,g.horizon)) c.classList.add("today");
+    if(future){ c.classList.add("future"); c.disabled=true; }
+    if(g.horizon==="daily"){ var wd=d.getDay(); if(wd===0||wd===6) c.classList.add("weekend"); }
+    c.title=periodTitle(d,g.horizon)+(future?" — not yet"
+      :(v?(typeof v==="number"?" — "+v+" "+(g.unit||""):" — ran it"):" — not run"));
+    c.setAttribute("aria-label",g.title+" · "+c.title);
+    c.textContent=(g.metric==="quantity"&&typeof v==="number")?String(v):periodLabel(d,g.horizon);
+    if(!future) c.onclick=function(){ togglePeriod(g,key); };
+    grid.appendChild(c);
   });
-  tw.appendChild(tl);
+  row.appendChild(grid);
+
+  var steps=protocolOf(g);
+  if(steps.length){
+    var doneIds=stepsDone(g,ps.key);
+    var pw=el("div","protocol");
+    var ph=el("div","phead");
+    ph.appendChild(el("span","lbl","Protocol · resets each "+h.unitLabel));
+    ph.appendChild(el("span","tcount",ps.done+" of "+ps.total+" this "+h.unitLabel));
+    pw.appendChild(ph);
+    var tl=el("div","tlist");
+    steps.forEach(function(t){
+      var isDone=doneIds.indexOf(t.id)>=0;
+      var r2=el("div","tactic"+(isDone?" done":""));
+      var cb=document.createElement("input"); cb.type="checkbox"; cb.checked=isDone;
+      cb.id="t-"+g.id+"-"+t.id; cb.setAttribute("aria-label",t.text);
+      cb.onchange=function(){ toggleStep(g,t.id,cb.checked); };
+      var tx=el("div","ttext",t.text);
+      tx.contentEditable="true"; tx.spellcheck=false; tx.setAttribute("role","textbox");
+      var committed=false;
+      function commitText(){
+        if(committed) return; committed=true;
+        var val=tx.textContent.trim();
+        if(val===t.text) return;
+        var c=clone(g); c.steps=protocolOf(c).slice();
+        var tt=c.steps.find(function(x){return x.id===t.id;});
+        if(tt){ if(val){tt.text=val;} else { c.steps=c.steps.filter(function(x){return x.id!==t.id;}); }
+          delete c.tactics; saveGoal(c); }
+      }
+      tx.onfocus=function(){ committed=false; openEditor=commitText; };
+      tx.onblur=function(){ openEditor=null; commitText(); };
+      tx.onkeydown=function(ev){ if(ev.key==="Enter"){ev.preventDefault();tx.blur();} };
+      var del=el("button","btn btn-ghost btn-sm tdel","Remove");
+      del.onclick=function(){ var c=clone(g);
+        c.steps=protocolOf(c).filter(function(x){return x.id!==t.id;}); delete c.tactics; saveGoal(c); };
+      r2.appendChild(cb); r2.appendChild(tx); r2.appendChild(del);
+      tl.appendChild(r2);
+    });
+    pw.appendChild(tl);
+    row.appendChild(pw);
+  }
 
   var addWrap=el("div","tadd");
   var inp=document.createElement("input"); inp.type="text";
   inp.placeholder="Add a step — what you actually do each "+h.unitLabel;
-  inp.id="add-"+g.id;
-  inp.value=addDrafts[g.id]||"";
+  inp.id="add-"+g.id; inp.value=addDrafts[g.id]||"";
   inp.oninput=function(){ addDrafts[g.id]=inp.value; };
   var addBtn=el("button","btn btn-sm","Add");
   function doAdd(){
     var v=inp.value.trim(); if(!v) return;
     var c=clone(g); c.steps=protocolOf(c).slice();
     c.steps.push({id:"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),text:v});
-    delete c.tactics;
-    inp.value=""; delete addDrafts[g.id]; saveGoal(c);
+    delete c.tactics; inp.value=""; delete addDrafts[g.id]; saveGoal(c);
     setTimeout(function(){ var n=document.getElementById("add-"+g.id); if(n)n.focus(); },0);
   }
   addBtn.onclick=doAdd;
   inp.onkeydown=function(ev){ if(ev.key==="Enter"){ev.preventDefault();doAdd();} };
   addWrap.appendChild(inp); addWrap.appendChild(addBtn);
-  tw.appendChild(addWrap);
-  inr.appendChild(tw);
-
-  card.appendChild(inr);
-  return card;
+  row.appendChild(addWrap);
+  return row;
 }
+
 function fmtNum(n){ return (Math.round(n*100)/100).toString(); }
 function clone(g){ return JSON.parse(JSON.stringify(g)); }
 
@@ -1316,6 +1684,7 @@ function toggleStep(g,stepId,on){
 
 function togglePeriod(g,key){
   var c=clone(g); c.log=c.log||{};
+  if(key>periodKey(new Date(),c.horizon)) return;   // never log ahead of time
   if(c.metric==="quantity"){
     var cur=typeof c.log[key]==="number"?c.log[key]:0;
     c.log[key]=cur+1;
@@ -1411,7 +1780,7 @@ function flashStatus(m){
 
 function render(){
   renderPageNav();
-  if(page==="goals"){ renderHorizons(); renderReadouts(); renderFilters(); renderList(); }
+  if(page==="goals"){ renderHorizons(); renderPeriodNav(); renderReadouts(); renderFilters(); renderList(); }
   else renderVision();
   renderStatus(); renderStorage();
   $("#samplebar").hidden = !goals.some(function(g){return g.sample;});
@@ -1421,7 +1790,7 @@ function render(){
 function renderPageNav(){
   var nav=$("#pagenav"); if(!nav) return;
   nav.textContent="";
-  [["goals","Systems"],["vision","Vision board"]].forEach(function(p){
+  [["goals","Goals"],["vision","Vision board"]].forEach(function(p){
     var b=el("button",null,p[1]); b.type="button";
     b.setAttribute("aria-pressed",page===p[0]?"true":"false");
     b.onclick=function(){ setPage(p[0]); };
@@ -1432,7 +1801,7 @@ function setPage(p){
   page=p;
   $("#pageGoals").hidden=(p!=="goals");
   $("#pageVision").hidden=(p!=="vision");
-  $("#newBtn").textContent=(p==="vision")?"Add to board":"New system";
+  $("#newBtn").textContent=(p==="vision")?"Add to board":"New goal";
   render();
 }
 
@@ -1602,18 +1971,45 @@ $("#vmSave").onclick=function(){
 };
 
 /* ============================ modal ============================ */
-function openNew(){
+function openNewGoal(){
   editing=null;
-  draft={title:"",outcome:"",why:"",horizon:view.horizon,category:"",
-         targetDate:"",metric:"binary",targetValue:0,unit:"",commitN:1,commitM:1};
+  draft={kind:"goal",title:"",outcome:"",why:"",horizon:GOAL_HORIZONS.indexOf(view.horizon)>=0?view.horizon:"monthly",
+         category:"",targetDate:"",metric:"binary",targetValue:0,unit:"",commitN:1,commitM:1,parentId:""};
+  fillModal("New goal",false); showModal();
+}
+function openNewSystem(parentId){
+  editing=null;
+  draft={kind:"system",title:"",outcome:"",why:"",horizon:"daily",category:"",targetDate:"",
+         metric:"binary",targetValue:0,unit:"",commitN:1,commitM:1,parentId:parentId||""};
   fillModal("New system",false); showModal();
 }
+function openNew(){ openNewGoal(); }
 function openEdit(g){
   editing=g.id; draft=clone(g);
-  fillModal("Edit system",true); showModal();
+  draft.kind=isSystem(g)?"system":"goal";
+  fillModal(draft.kind==="system"?"Edit system":"Edit goal",true); showModal();
 }
 function fillModal(title,showDel){
+  var sys=draft.kind==="system";
   $("#mTitle").textContent=title;
+  $("#fTitleLab").textContent = sys?"The system":"The goal";
+  $("#fTitleHint").textContent = sys?"Name the action you repeat, not the result."
+                                   :"Name the outcome you are after.";
+  $("#fTitle").placeholder = sys?"Thirty minutes of reading before the day starts"
+                                :"Four studios at 98 Hustler Street finished and let";
+  $("#fOutcomeLab").textContent = sys?"Outcome it serves":"Done means";
+  $("#fOutcomeHint").textContent = sys?"Recorded for context. Never used to score you."
+                                     :"What has to be true for this to count as achieved.";
+  $("#fWhyLab").textContent = sys?"Why this process":"Why it matters";
+  $("#fHorizonLab").textContent = sys?"Cadence":"Horizon";
+  $("#fTargetLab").textContent = sys?"Review on":"Target date";
+  $("#fTargetHint").textContent = sys?"Optional. A date to revisit the system."
+                                    :"When this should be true by.";
+  $("#commitWrap").hidden=!sys;
+  $("#parentWrap").hidden=!sys;
+  $("#mDelete").textContent = sys?"Delete system":"Delete goal";
+  $("#mSave").textContent = sys?"Save system":"Save goal";
+
   $("#fTitle").value=draft.title||"";
   $("#fOutcome").value=draft.outcome||"";
   $("#fWhy").value=draft.why||"";
@@ -1623,11 +2019,23 @@ function fillModal(title,showDel){
   $("#fUnit").value=draft.unit||"";
   $("#fCommitN").value=draft.commitN>0?draft.commitN:1;
   $("#fCommitM").value=draft.commitM>0?draft.commitM:1;
+
+  var sel=$("#fParent"); sel.textContent="";
+  var none=document.createElement("option"); none.value=""; none.textContent="No goal yet";
+  sel.appendChild(none);
+  allGoalRecs().slice().sort(function(a,b){return (a.title||"").localeCompare(b.title||"");})
+    .forEach(function(gg){
+      var o=document.createElement("option"); o.value=gg.id;
+      o.textContent=(HMAP[gg.horizon]?HMAP[gg.horizon].label+" · ":"")+trunc(gg.title||"Untitled",44);
+      sel.appendChild(o);
+    });
+  sel.value=draft.parentId||"";
+
   $("#mDelete").hidden=!showDel;
   renderSegs();
 }
 function syncCommitHint(){
-  var h=HMAP[draft.horizon]||HMAP.weekly;
+  var h=HMAP[draft.horizon]||HMAP.daily;
   var n=parseInt($("#fCommitN").value,10)||1, m=parseInt($("#fCommitM").value,10)||1;
   if(n>m){ n=m; $("#fCommitN").value=n; }
   $("#commitUnit").textContent=(m===1?h.unitLabel:h.plural);
@@ -1637,7 +2045,9 @@ function syncCommitHint(){
 }
 function renderSegs(){
   var hb=$("#fHorizon"); hb.textContent="";
-  HORIZONS.forEach(function(h){
+  var allowed=(draft.kind==="system")?SYS_HORIZONS:GOAL_HORIZONS;
+  if(allowed.indexOf(draft.horizon)<0) draft.horizon=allowed[0];
+  HORIZONS.filter(function(h){return allowed.indexOf(h.k)>=0;}).forEach(function(h){
     var b=el("button",null,h.label); b.type="button";
     b.setAttribute("aria-pressed",draft.horizon===h.k?"true":"false");
     b.onclick=function(){ draft.horizon=h.k; renderSegs(); };
@@ -1649,10 +2059,8 @@ function renderSegs(){
     b.onclick=function(){ draft.metric=b.dataset.v; renderSegs(); };
   });
   $("#qtyFields").hidden = draft.metric!=="quantity";
-  syncCommitHint();
+  if(draft.kind==="system") syncCommitHint();
 }
-$("#fCommitN").oninput=syncCommitHint;
-$("#fCommitM").oninput=syncCommitHint;
 function showModal(){ $("#scrim").hidden=false; setTimeout(function(){$("#fTitle").focus();},20); }
 function hideModal(){ $("#scrim").hidden=true; }
 
@@ -1671,6 +2079,8 @@ $("#mSave").onclick=function(){
   var g;
   if(editing){ g=goals.find(function(x){return x.id===editing;}); g=g?clone(g):null; }
   if(!g){ g={id:uid(),createdAt:new Date().toISOString(),log:{},steps:[],stepLog:{},status:"active",startDate:ymd(new Date()),schema:SCHEMA}; }
+  g.kind=draft.kind==="system"?"system":"goal";
+  g.parentId=(g.kind==="system")?($("#fParent").value||""):"";
   g.title=t;
   g.outcome=$("#fOutcome").value.trim();
   g.why=$("#fWhy").value.trim();
@@ -1688,7 +2098,8 @@ $("#mSave").onclick=function(){
   g.schema=SCHEMA;
   if(!g.startDate) g.startDate=ymd(new Date());
   delete g.sample;
-  view.horizon=g.horizon;
+  if(g.kind==="goal") view.horizon=g.horizon;
+  else if(g.parentId){ var pg=goals.find(function(x){return x.id===g.parentId;}); if(pg) view.horizon=pg.horizon; }
   saveGoal(g); hideModal();
 };
 
