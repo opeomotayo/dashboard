@@ -586,8 +586,7 @@ textarea{resize:vertical;min-height:66px;line-height:1.5}
       <div class="row2">
         <div class="field">
           <label for="fCatIn">Category</label>
-          <input type="text" id="fCatIn" list="catList" placeholder="Platform">
-          <datalist id="catList"></datalist>
+          <select id="fCatIn"></select>
         </div>
         <div class="field">
           <label for="fTarget" id="fTargetLab">Target date</label>
@@ -760,6 +759,30 @@ function containerLabel(h){
   if(h==="yearly"){ var ys=yearOptions(); return ys[0]+"\u2013"+ys[ys.length-1]; }
   return ""+view.year;
 }
+/* the life areas a goal or system belongs to */
+var CATEGORIES=["Health","Spiritual","Property","Family","Finance","Career","Personal"];
+
+/* the seven, plus any category already sitting on a record, so nothing is lost */
+function categoriesInUse(){
+  var out=CATEGORIES.slice();
+  goals.concat(vrecords||[]).forEach(function(r){
+    var c=r&&r.category;
+    if(c && !r.deleted && out.indexOf(c)<0) out.push(c);
+  });
+  return out;
+}
+function fillCatSelect(sel,val){
+  sel.textContent="";
+  var list=categoriesInUse();
+  if(val && list.indexOf(val)<0) list.push(val);
+  var none=document.createElement("option");
+  none.value=""; none.textContent="No category"; sel.appendChild(none);
+  list.forEach(function(c){
+    var o=document.createElement("option"); o.value=c; o.textContent=c; sel.appendChild(o);
+  });
+  sel.value=val||"";
+}
+
 var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 var QUARTERS=["Quarter 1","Quarter 2","Quarter 3","Quarter 4"];
 var YEAR_SPAN=5;   /* the current year and the four that follow */
@@ -1267,11 +1290,11 @@ function sampleSystems(){
     goal({id:"sample-g2",title:"Next quarter's platform priorities agreed on evidence",
       outcome:"A costed top-three, circulated and signed off before the quarter turns",
       why:"Without a fixed review the quarter just ends and the roadmap goes to whoever shouted most recently.",
-      horizon:"quarterly",category:"Platform"}),
+      horizon:"quarterly",category:"Career"}),
     sys({id:"sample-5",parentId:"sample-g2",title:"Friday numbers pull",
       outcome:"The quarter-close review writes itself because the evidence is already there",
       why:"Gathering a quarter of data in the final week is how reviews slip. Twenty minutes a Friday makes it a formality.",
-      horizon:"weekly",category:"Platform",metric:"binary",
+      horizon:"weekly",category:"Career",metric:"binary",
       commitN:3,commitM:4,startDate:back("weekly",8),targetDate:"",log:W3,
       steps:[{id:"t1",text:"Incident count and change-failure rate into the sheet"},
              {id:"t2",text:"Error budget burn against each SLO"},
@@ -1294,7 +1317,7 @@ function sampleSystems(){
     sys({id:"sample-4",parentId:"sample-g3",title:"Thirty minutes of reading before the day starts",
       outcome:"Staying ahead of platform architecture instead of catching up on it",
       why:"The reading never survives contact with the working day, so it has to happen before the day begins. Five mornings out of seven is the honest bar.",
-      horizon:"daily",category:"Learning",metric:"binary",
+      horizon:"daily",category:"Personal",metric:"binary",
       commitN:5,commitM:7,startDate:back("daily",26),targetDate:"",log:D2,
       steps:[{id:"t1",text:"06:45-07:15 held in the calendar as busy"},
              {id:"t2",text:"Current book left on the desk the night before"},
@@ -1722,12 +1745,16 @@ function togglePeriod(g,key){
 }
 
 function renderFilters(){
-  var cats=["all"].concat(Array.from(new Set(goals.map(function(g){return g.category||"Uncategorised";}))).sort());
+  var used=categoriesInUse();
+  if(goals.some(function(g){return !g.deleted && !g.category;})) used.push("Uncategorised");
+  var cats=["all"].concat(used);
   var sel=$("#fCat"); var prev=view.cat; sel.textContent="";
   cats.forEach(function(c){ var o=document.createElement("option"); o.value=c; o.textContent=c==="all"?"All categories":c; sel.appendChild(o); });
   sel.value=cats.indexOf(prev)>=0?prev:"all"; view.cat=sel.value;
-  var dl=$("#catList"); dl.textContent="";
-  cats.filter(function(c){return c!=="all";}).forEach(function(c){ var o=document.createElement("option"); o.value=c; dl.appendChild(o); });
+  var dl=$("#vThemeList");
+  if(dl){ dl.textContent="";
+    used.filter(function(c){return c!=="Uncategorised";}).forEach(function(c){
+      var o=document.createElement("option"); o.value=c; dl.appendChild(o); }); }
   $("#fStatus").value=view.status; $("#fSort").value=view.sort;
 }
 
@@ -1843,7 +1870,9 @@ function renderVision(){
   var chips=$("#vChips"); chips.textContent="";
   (m.themes||[]).forEach(function(t){ chips.appendChild(el("span","vchip",t)); });
   var dl=$("#vThemeList"); dl.textContent="";
-  (m.themes||[]).forEach(function(t){ var o=document.createElement("option"); o.value=t; dl.appendChild(o); });
+  var tlist=CATEGORIES.slice();
+  (m.themes||[]).forEach(function(t){ if(tlist.indexOf(t)<0) tlist.push(t); });
+  tlist.forEach(function(t){ var o=document.createElement("option"); o.value=t; dl.appendChild(o); });
 
   var items=visionItems(visionYear);
   $("#vCount").textContent=items.length+(items.length===1?" card":" cards");
@@ -2005,7 +2034,10 @@ function openNewGoal(){
 }
 function openNewSystem(parentId){
   editing=null;
-  draft={kind:"system",title:"",outcome:"",why:"",horizon:"daily",category:"",targetDate:"",
+  /* a system belongs to the same life area as the goal it serves */
+  var par=goals.filter(function(r){return r.id===parentId;})[0];
+  draft={kind:"system",title:"",outcome:"",why:"",horizon:"daily",category:(par&&par.category)||"",
+         targetDate:"",
          metric:"binary",targetValue:0,unit:"",commitN:1,commitM:1,parentId:parentId||""};
   fillModal("New system",false); showModal();
 }
@@ -2039,7 +2071,7 @@ function fillModal(title,showDel){
   $("#fTitle").value=draft.title||"";
   $("#fOutcome").value=draft.outcome||"";
   $("#fWhy").value=draft.why||"";
-  $("#fCatIn").value=draft.category||"";
+  fillCatSelect($("#fCatIn"),draft.category||"");
   $("#fTarget").value=draft.targetDate||"";
   $("#fTargetVal").value=draft.targetValue||"";
   $("#fUnit").value=draft.unit||"";
@@ -2111,7 +2143,7 @@ $("#mSave").onclick=function(){
   g.outcome=$("#fOutcome").value.trim();
   g.why=$("#fWhy").value.trim();
   g.horizon=draft.horizon;
-  g.category=$("#fCatIn").value.trim();
+  g.category=$("#fCatIn").value;
   g.targetDate=$("#fTarget").value||"";
   g.metric=draft.metric;
   g.targetValue=draft.metric==="quantity"?(parseFloat($("#fTargetVal").value)||0):0;
