@@ -132,6 +132,8 @@ textarea{resize:vertical;min-height:62px;line-height:1.45}
 .gtitle{font-family:var(--display);font-size:16.5px;font-weight:600;line-height:1.3;margin-bottom:4px;word-break:break-word}
 .goal[data-done="1"] .gtitle{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px}
 .gwhy{font-size:13px;color:var(--muted);line-height:1.45;margin-bottom:9px;max-width:62ch}
+.goutcome{font-size:12.5px;color:var(--accent);line-height:1.4;margin-bottom:5px;max-width:62ch}
+.goutcome::before{content:"";display:inline-block;width:14px;height:1px;background:var(--accent);vertical-align:middle;margin-right:7px;opacity:.6}
 .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:2.5px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
 .chip.status{font-weight:600}
@@ -260,6 +262,8 @@ textarea{resize:vertical;min-height:62px;line-height:1.45}
 .field label{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
 .field .hint{font-size:11.5px;color:var(--faint)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.commit{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-2)}
+.commit input{width:66px;flex:0 0 auto;text-align:center;font-family:var(--mono);font-variant-numeric:tabular-nums}
 .seg{display:flex;flex-wrap:wrap;gap:3px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px}
 .seg button{flex:1 1 76px;border:0;background:transparent;padding:7px 4px;border-radius:6px;cursor:pointer;font-size:12.5px;font-weight:500;color:var(--muted);white-space:nowrap}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
@@ -293,7 +297,7 @@ textarea{resize:vertical;min-height:62px;line-height:1.45}
     <div class="pagenav" id="pagenav" role="group" aria-label="Section"></div>
     <span class="savepill" id="savepill" data-s="saved" role="status" aria-live="polite"><span class="sdot"></span><span id="savetext">Saved</span></span>
     <button class="btn" id="exportBtn" title="Download a copy of everything as JSON">Export</button>
-    <button class="btn btn-primary" id="newBtn">New goal</button>
+    <button class="btn btn-primary" id="newBtn">New system</button>
   </div>
 </div>
 
@@ -303,7 +307,7 @@ textarea{resize:vertical;min-height:62px;line-height:1.45}
   <div class="horizons" id="horizons" role="group" aria-label="Goal horizon"></div>
   <div class="readouts" id="readouts"></div>
   <div class="samplebar" id="samplebar" hidden>
-    <span><strong>These are example goals.</strong> They show how the console works. Replace or clear them when you are ready.</span>
+    <span><strong>These are example systems.</strong> They show how the console works. Replace or clear them when you are ready.</span>
     <button class="btn btn-sm" id="clearSamples">Clear examples</button>
   </div>
 
@@ -311,17 +315,17 @@ textarea{resize:vertical;min-height:62px;line-height:1.45}
     <span class="lbl">Filter</span>
     <select id="fCat" aria-label="Filter by category"></select>
     <select id="fStatus" aria-label="Filter by state">
-      <option value="open">Open</option>
+      <option value="open">Live</option>
       <option value="all">All</option>
-      <option value="done">Achieved</option>
-      <option value="behind">Behind</option>
+      <option value="done">Retired</option>
+      <option value="behind">Needs attention</option>
     </select>
     <span class="lbl" style="margin-left:6px">Sort</span>
-    <select id="fSort" aria-label="Sort goals">
-      <option value="target">Target date</option>
-      <option value="progress">Least progress</option>
+    <select id="fSort" aria-label="Sort systems">
+      <option value="progress">Lowest adherence</option>
+      <option value="target">Longest streak</option>
       <option value="created">Recently added</option>
-      <option value="title">Title</option>
+      <option value="title">Name</option>
     </select>
   </div>
 
@@ -389,54 +393,72 @@ textarea{resize:vertical;min-height:62px;line-height:1.45}
 
 <div class="scrim" id="scrim" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
-    <div class="mhead"><h2 id="mTitle">New goal</h2></div>
+    <div class="mhead"><h2 id="mTitle">New system</h2></div>
     <div class="mbody">
       <div class="field">
-        <label for="fTitle">Goal</label>
-        <input type="text" id="fTitle" placeholder="Ship the platform migration to production">
+        <label for="fTitle">The system</label>
+        <input type="text" id="fTitle" placeholder="Friday afternoon platform review">
+        <span class="hint">Name the process you run, not the result you want.</span>
       </div>
       <div class="field">
-        <label for="fWhy">Why it matters</label>
-        <textarea id="fWhy" placeholder="What changes once this is done, and who it is for."></textarea>
+        <label for="fOutcome">Outcome it serves</label>
+        <input type="text" id="fOutcome" placeholder="A platform that stops surprising us">
+        <span class="hint">Recorded for context. Never used to score you.</span>
       </div>
       <div class="field">
-        <label>Horizon</label>
-        <div class="seg" id="fHorizon" role="group" aria-label="Horizon"></div>
+        <label for="fWhy">Why this process</label>
+        <textarea id="fWhy" placeholder="What running this reliably actually changes."></textarea>
+      </div>
+      <div class="field">
+        <label>Cadence</label>
+        <div class="seg" id="fHorizon" role="group" aria-label="Cadence"></div>
         <span class="hint" id="horizonHint"></span>
+      </div>
+      <div class="field">
+        <label for="fCommitN">Commitment</label>
+        <div class="commit">
+          <span>Run it</span>
+          <input type="number" id="fCommitN" min="1" max="99" step="1" value="1">
+          <span>time(s) out of every</span>
+          <input type="number" id="fCommitM" min="1" max="99" step="1" value="1">
+          <span id="commitUnit">period(s)</span>
+        </div>
+        <span class="hint" id="commitHint">This is the bar adherence is measured against.</span>
       </div>
       <div class="row2">
         <div class="field">
           <label for="fCatIn">Category</label>
-          <input type="text" id="fCatIn" list="catList" placeholder="Career">
+          <input type="text" id="fCatIn" list="catList" placeholder="Platform">
           <datalist id="catList"></datalist>
         </div>
         <div class="field">
-          <label for="fTarget">Target date</label>
+          <label for="fTarget">Review on</label>
           <input type="date" id="fTarget">
+          <span class="hint">Optional. A date to revisit the system.</span>
         </div>
       </div>
       <div class="field">
-        <label>How you will measure it</label>
+        <label>How a run is recorded</label>
         <div class="seg" id="fMetric" role="group" aria-label="Measure">
-          <button type="button" data-v="binary">Did it / didn't</button>
-          <button type="button" data-v="quantity">Count toward a number</button>
+          <button type="button" data-v="binary">Ran it / didn't</button>
+          <button type="button" data-v="quantity">Count the reps</button>
         </div>
       </div>
       <div class="row2" id="qtyFields" hidden>
         <div class="field">
-          <label for="fTargetVal">Target amount</label>
+          <label for="fTargetVal">Reps to aim for</label>
           <input type="number" id="fTargetVal" min="0" step="any" placeholder="12">
         </div>
         <div class="field">
           <label for="fUnit">Unit</label>
-          <input type="text" id="fUnit" placeholder="deploys">
+          <input type="text" id="fUnit" placeholder="sessions">
         </div>
       </div>
     </div>
     <div class="mfoot">
-      <button class="btn btn-danger" id="mDelete" hidden>Delete goal</button>
+      <button class="btn btn-danger" id="mDelete" hidden>Delete system</button>
       <button class="btn" id="mCancel">Cancel</button>
-      <button class="btn btn-primary" id="mSave">Save goal</button>
+      <button class="btn btn-primary" id="mSave">Save system</button>
     </div>
   </div>
 </div>
@@ -465,9 +487,9 @@ textarea{resize:vertical;min-height:62px;line-height:1.45}
           <datalist id="vThemeList"></datalist>
         </div>
         <div class="field">
-          <label for="vmGoal">Linked goal</label>
+          <label for="vmGoal">Linked system</label>
           <select id="vmGoal"></select>
-          <span class="hint">Optional — ties this card to something you are tracking.</span>
+          <span class="hint">Optional — ties this card to a system you run.</span>
         </div>
       </div>
     </div>
@@ -496,7 +518,7 @@ var HMAP = {}; HORIZONS.forEach(function(h){HMAP[h.k]=h;});
 /* ============================ state ============================ */
 var db = null, unsub = null;
 var goals = [];                 // array of {id, ...body}
-var view  = {horizon:"weekly", cat:"all", status:"open", sort:"target"};
+var view  = {horizon:"weekly", cat:"all", status:"open", sort:"progress"};
 var editing = null;             // goal id being edited, or null for new
 var draft = {};
 var persistMode = "loading";    // loading | db | local | none
@@ -566,10 +588,36 @@ function fmtDate(s){
 function daysBetween(a,b){ return Math.round((b-a)/86400000); }
 
 /* ============================ derived ============================ */
-function tacticStats(g){
-  var t=g.tactics||[]; var done=0;
-  for(var i=0;i<t.length;i++) if(t[i].done) done++;
-  return {done:done,total:t.length};
+/* ---- systems thinking ------------------------------------------------
+   A system is a process you run on a cadence, not an outcome you chase by
+   a date. So the measure is ADHERENCE — how reliably you ran it over the
+   last stretch — against a COMMITMENT you set (run it N times out of
+   every M periods). The outcome the system serves is recorded as context
+   and deliberately never drives the status colour.
+   -------------------------------------------------------------------- */
+
+/* the protocol: steps you work through every cycle, reset each period.
+   Falls back to the old `tactics` shape so records written before the
+   systems model still render correctly, migrated or not. */
+function protocolOf(g){
+  if(g.steps) return g.steps;
+  return (g.tactics||[]).map(function(t){ return {id:t.id,text:t.text}; });
+}
+function stepsDone(g,key){
+  var sl=(g.stepLog||{})[key];
+  return Array.isArray(sl)?sl:[];
+}
+function protocolStats(g){
+  var key=periodKey(new Date(),g.horizon);
+  var total=protocolOf(g).length;
+  var ids=protocolOf(g).map(function(s){return s.id;});
+  var done=stepsDone(g,key).filter(function(id){ return ids.indexOf(id)>=0; }).length;
+  return {done:done,total:total,key:key};
+}
+function commitOf(g){
+  var n=g.commitN>0?g.commitN:1, m=g.commitM>0?g.commitM:1;
+  if(n>m) n=m;
+  return {n:n,m:m,ratio:n/m};
 }
 function loggedPeriods(g){
   var log=g.log||{}, n=0, sum=0;
@@ -580,52 +628,54 @@ function loggedPeriods(g){
   }
   return {periods:n,sum:sum};
 }
-function progressOf(g){
-  var lp=loggedPeriods(g);
-  if(g.metric==="quantity" && g.targetValue>0){
-    return {pct:Math.min(1,lp.sum/g.targetValue), current:lp.sum, target:g.targetValue, kind:"quantity"};
-  }
-  // binary: measured against periods elapsed in the goal window
-  var start=parseYmd(g.startDate)||parseYmd(g.createdAt&&g.createdAt.slice(0,10))||new Date();
-  var end=parseYmd(g.targetDate);
+
+/* Adherence over the visible window — what you see in the grid is what is
+   measured. Periods before the system existed do not count against it. */
+function adherenceOf(g){
+  var h=HMAP[g.horizon]||HMAP.weekly;
+  var win=h.back;
+  var start=parseYmd(g.startDate)||parseYmd(g.createdAt&&g.createdAt.slice(0,10));
+  var log=g.log||{}, ran=0, available=0;
   var now=new Date();
-  var last=(end&&end<now)?end:now;
-  var elapsed=0, cur=new Date(start.getFullYear(),start.getMonth(),start.getDate());
-  while(cur<=last && elapsed<2000){ elapsed++; cur=shiftPeriod(cur,g.horizon,1); }
-  var total=elapsed;
-  if(end){
-    var c2=new Date(start.getFullYear(),start.getMonth(),start.getDate()), tot=0;
-    while(c2<=end && tot<2000){ tot++; c2=shiftPeriod(c2,g.horizon,1); }
-    total=tot;
+  for(var i=win-1;i>=0;i--){
+    var d=shiftPeriod(now,g.horizon,-i);
+    if(start){
+      var pEnd=shiftPeriod(d,g.horizon,1);
+      if(pEnd<=start) continue;              // period finished before the system began
+    }
+    available++;
+    if(log[periodKey(d,g.horizon)]) ran++;
   }
-  return {pct: total>0?Math.min(1,lp.periods/total):0, current:lp.periods, target:total, kind:"binary", elapsed:elapsed};
-}
-function paceOf(g){
-  var start=parseYmd(g.startDate); var end=parseYmd(g.targetDate);
-  if(!start||!end||end<=start) return null;
-  var now=new Date();
-  if(now<=start) return 0;
-  if(now>=end) return 1;
-  return daysBetween(start,now)/daysBetween(start,end);
+  var c=commitOf(g);
+  var expected=Math.max(1,Math.round(available*c.ratio));
+  return {
+    ran:ran, available:available, expected:Math.min(expected,available),
+    rate: available>0 ? ran/available : 0,
+    target: c.ratio, commit:c, window:win
+  };
 }
 function statusOf(g){
-  if(g.status==="done") return "done";
-  var p=progressOf(g).pct;
-  if(p>=1) return "done";
-  var pace=paceOf(g);
-  if(pace===null) return p>0?"ok":"warn";
-  if(p>=pace-0.08) return "ok";
-  if(p>=pace-0.25) return "warn";
+  if(g.status==="done"||g.status==="retired") return "done";
+  var a=adherenceOf(g);
+  if(a.available===0) return "ok";                       // brand new, nothing to judge yet
+  if(a.rate>=a.target-0.001) return "ok";                // meeting the commitment
+  if(a.rate>=a.target*0.6) return "warn";
   return "bad";
 }
-var STATUS_TEXT={ok:"On track",warn:"At risk",bad:"Behind",done:"Achieved"};
+var STATUS_TEXT={ok:"Holding",warn:"Slipping",bad:"Stalled",done:"Retired"};
 function streakOf(g){
   var log=g.log||{}, n=0, d=new Date();
-  if(!log[periodKey(d,g.horizon)]) d=shiftPeriod(d,g.horizon,-1); // today not logged yet is fine
+  if(!log[periodKey(d,g.horizon)]) d=shiftPeriod(d,g.horizon,-1); // this period not run yet is fine
   for(var i=0;i<400;i++){
     if(log[periodKey(d,g.horizon)]){n++; d=shiftPeriod(d,g.horizon,-1);} else break;
   }
   return n;
+}
+function commitLabel(g){
+  var c=commitOf(g), h=HMAP[g.horizon]||HMAP.weekly;
+  if(c.n===c.m && c.m===1) return "every "+h.unitLabel;
+  if(c.n===c.m) return "every "+h.unitLabel;
+  return c.n+" of every "+c.m+" "+h.plural;
 }
 
 /* ============================ persistence ============================
@@ -767,7 +817,7 @@ function applySnapshot(snap){
     refreshView(); render();
     if(wasEmpty){
       var live=toLocal.filter(function(r){return !r.deleted;}).length;
-      if(live) flashStatus("Restored "+live+" goals from your account into this device's local database.");
+      if(live) flashStatus("Restored "+live+" systems from your account into this device's local database.");
     }
   }
   toCloud.forEach(pushOne);
@@ -775,6 +825,37 @@ function applySnapshot(snap){
 }
 
 /* --- housekeeping ---------------------------------------------------- */
+/* One-time tidy from the goal shape to the system shape. Deliberately does
+   NOT bump updatedAt: the records mean the same thing, so there is nothing
+   for the other devices to resolve. Every accessor already tolerates the
+   old shape, so this is cleanup rather than a gate. */
+var SCHEMA=3;
+function migrateToSystems(){
+  var written=[];
+  records.forEach(function(r,i){
+    if(r.deleted||r.schema===SCHEMA) return;
+    var m=clone(r);
+    if(!m.steps){
+      m.steps=(m.tactics||[]).map(function(t){ return {id:t.id,text:t.text}; });
+      var done=(m.tactics||[]).filter(function(t){return t.done;}).map(function(t){return t.id;});
+      if(done.length){
+        m.stepLog=m.stepLog||{};
+        m.stepLog[periodKey(new Date(), m.horizon||"weekly")]=done;
+      }
+      delete m.tactics;
+    }
+    m.stepLog=m.stepLog||{};
+    if(!(m.commitN>0)) m.commitN=1;
+    if(!(m.commitM>0)) m.commitM=1;
+    if(typeof m.outcome!=="string") m.outcome="";
+    if(m.status==="done") m.status="retired";
+    m.schema=SCHEMA;
+    records[i]=m; written.push(m);
+  });
+  if(written.length&&idb) idbPutMany("goals",written).catch(function(){});
+  return written.length;
+}
+
 function purgeTombstones(){
   var cut=new Date(Date.now()-30*86400000).toISOString();
   var old=records.filter(function(r){ return r.deleted && (r.updatedAt||"")<cut; });
@@ -905,55 +986,69 @@ function prepareImage(file){
 }
 
 /* ============================ samples ============================ */
-function sampleGoals(){
+/* Each example is a SYSTEM: a process on a cadence, with a commitment to
+   hold it to and a protocol you work through each cycle. The outcome is
+   named but never scored. */
+function sampleSystems(){
   var today=new Date();
   function back(h,n){ return ymd(shiftPeriod(today,h,-n)); }
-  function fwd(h,n){ return ymd(shiftPeriod(today,h,n)); }
   var L1={},L2={},L3={},L4={},L5={};
   for(var i=1;i<=11;i++){ if(i%4!==0) L1[periodKey(shiftPeriod(today,"daily",-i),"daily")]=true; }
   L1[periodKey(today,"daily")]=true;
   for(var j=1;j<=6;j++){ if(j!==3) L2[periodKey(shiftPeriod(today,"weekly",-j),"weekly")]=true; }
   for(var m=1;m<=4;m++){ L3[periodKey(shiftPeriod(today,"monthly",-m),"monthly")]= m===1?3:2; }
-  L4[periodKey(shiftPeriod(today,"yearly",-1),"yearly")]=true;
   L5[periodKey(shiftPeriod(today,"quarterly",-1),"quarterly")]=true;
   L5[periodKey(shiftPeriod(today,"quarterly",-2),"quarterly")]=true;
+  L4[periodKey(shiftPeriod(today,"yearly",-1),"yearly")]=true;
+  function sys(o){ o.sample=true; o.status="active"; o.stepLog={}; o.schema=SCHEMA;
+                   o.createdAt=new Date().toISOString(); return o; }
   return [
-    {id:"sample-1",sample:true,title:"Read or study for 30 minutes before work",why:"Compounding beats cramming. Thirty focused minutes a day is what keeps the platform-architecture reading from slipping behind delivery work.",
-     horizon:"daily",category:"Learning",metric:"binary",targetValue:0,unit:"",status:"active",
-     startDate:back("daily",30),targetDate:fwd("daily",60),log:L1,createdAt:new Date().toISOString(),
-     tactics:[{id:"t1",text:"Book out 06:45-07:15 in the calendar as busy",done:true},
-              {id:"t2",text:"Keep the current book on the desk, not the shelf",done:true},
-              {id:"t3",text:"Write one paragraph of notes per session",done:false}]},
-    {id:"sample-2",sample:true,title:"Publish one substantive engineering write-up a week",why:"Visible technical writing is what turns ten years of delivery into a case for a principal or head-of-platform role.",
-     horizon:"weekly",category:"Career",metric:"binary",targetValue:0,unit:"",status:"active",
-     startDate:back("weekly",7),targetDate:fwd("weekly",14),log:L2,createdAt:new Date().toISOString(),
-     tactics:[{id:"t1",text:"Keep a running list of problems worth writing up",done:true},
-              {id:"t2",text:"Draft Thursday evening, edit and publish Sunday",done:true},
-              {id:"t3",text:"Cross-post to the internal engineering channel",done:false},
-              {id:"t4",text:"Ask one colleague to review before publishing",done:false}]},
-    {id:"sample-3",sample:true,title:"Run four portfolio inspections a quarter",why:"Catching damp, alarm faults and wear early is the difference between a £90 fix and a £2,000 one, and the inspection record backs up the management claim.",
-     horizon:"monthly",category:"Property",metric:"quantity",targetValue:12,unit:"inspections",status:"active",
-     startDate:back("monthly",5),targetDate:fwd("monthly",7),log:L3,createdAt:new Date().toISOString(),
-     tactics:[{id:"t1",text:"Block the first Saturday of each month for London visits",done:true},
-              {id:"t2",text:"Standard checklist: damp, alarms, windows, externals, meters",done:true},
-              {id:"t3",text:"Photograph every room and file to the property record same day",done:false},
-              {id:"t4",text:"Pair the Hartlepool trip with the annual service visit",done:false}]},
-    {id:"sample-5",sample:true,title:"Close each quarter with a written platform review",why:"A quarterly look at incidents, error budget and toil is what turns firefighting into a roadmap — and it is the artefact that makes the case at review time.",
-     horizon:"quarterly",category:"Platform",metric:"binary",targetValue:0,unit:"",status:"active",
-     startDate:back("quarterly",3),targetDate:fwd("quarterly",4),log:L5,createdAt:new Date().toISOString(),
-     tactics:[{id:"t1",text:"Pull incident and change-failure numbers in the final week of the quarter",done:true},
-              {id:"t2",text:"Review error budget burn against the SLOs and note what caused it",done:true},
-              {id:"t3",text:"List the top three sources of toil and cost one fix for each",done:false},
-              {id:"t4",text:"Circulate the review and agree next quarter's priorities with the team",done:false}]},
-    {id:"sample-4",sample:true,title:"Reach principal-level platform scope",why:"The next step is owning platform direction across teams rather than delivery within one. This is the year to make the case.",
-     horizon:"yearly",category:"Career",metric:"binary",targetValue:0,unit:"",status:"active",
-     startDate:back("yearly",1),targetDate:fwd("yearly",1),log:L4,createdAt:new Date().toISOString(),
-     tactics:[{id:"t1",text:"Lead one cross-team platform initiative end to end",done:true},
-              {id:"t2",text:"Mentor two engineers through a Kubernetes migration",done:false},
-              {id:"t3",text:"Present the platform roadmap to engineering leadership",done:false},
-              {id:"t4",text:"Get the scope change agreed in writing at the mid-year review",done:false}]}
+    sys({id:"sample-1",title:"Thirty minutes of reading before the day starts",
+      outcome:"Staying ahead of platform architecture instead of catching up on it",
+      why:"The reading never survives a contact with the working day, so it has to happen before the day begins. Five mornings out of seven is the honest bar.",
+      horizon:"daily",category:"Learning",metric:"binary",targetValue:0,unit:"",
+      commitN:5,commitM:7,startDate:back("daily",30),targetDate:"",log:L1,
+      steps:[{id:"t1",text:"06:45-07:15 held in the calendar as busy"},
+             {id:"t2",text:"Current book left on the desk the night before"},
+             {id:"t3",text:"One paragraph of notes before closing it"}]}),
+    sys({id:"sample-2",title:"Thursday draft, Sunday publish",
+      outcome:"A public body of writing that makes the case for principal scope",
+      why:"Writing only happens when it has a slot. Splitting draft and publish across two fixed evenings removes the decision.",
+      horizon:"weekly",category:"Career",metric:"binary",targetValue:0,unit:"",
+      commitN:1,commitM:1,startDate:back("weekly",7),targetDate:"",log:L2,
+      steps:[{id:"t1",text:"Pick one problem off the running list"},
+             {id:"t2",text:"Draft it Thursday evening, badly, in one sitting"},
+             {id:"t3",text:"Edit and publish Sunday"},
+             {id:"t4",text:"Cross-post to the internal engineering channel"}]}),
+    sys({id:"sample-3",title:"First-Saturday portfolio round",
+      outcome:"Repairs caught at ninety pounds instead of two thousand",
+      why:"Damp, alarm faults and wear are cheap early and expensive late. A fixed Saturday beats reacting to tenant calls.",
+      horizon:"monthly",category:"Property",metric:"quantity",targetValue:12,unit:"inspections",
+      commitN:1,commitM:1,startDate:back("monthly",5),targetDate:"",log:L3,
+      steps:[{id:"t1",text:"First Saturday blocked out for the London round"},
+             {id:"t2",text:"Walk the checklist: damp, alarms, windows, externals, meters"},
+             {id:"t3",text:"Photograph every room, file to the property record same day"},
+             {id:"t4",text:"Anything found goes straight into the works list with a date"}]}),
+    sys({id:"sample-5",title:"Quarter-close platform review",
+      outcome:"A roadmap driven by evidence rather than by whoever shouted most recently",
+      why:"Without a fixed review the quarter just ends. Pulling the numbers in the last week is what turns firefighting into a plan.",
+      horizon:"quarterly",category:"Platform",metric:"binary",targetValue:0,unit:"",
+      commitN:1,commitM:1,startDate:back("quarterly",3),targetDate:"",log:L5,
+      steps:[{id:"t1",text:"Pull incident and change-failure numbers in the final week"},
+             {id:"t2",text:"Review error budget burn against the SLOs"},
+             {id:"t3",text:"Name the top three sources of toil and cost a fix for each"},
+             {id:"t4",text:"Circulate it and agree next quarter's priorities"}]}),
+    sys({id:"sample-4",title:"Year-end reset week",
+      outcome:"Starting each year with explicit priorities instead of inherited momentum",
+      why:"One week, once a year, to close the books properly and decide what the next twelve months are actually for.",
+      horizon:"yearly",category:"Career",metric:"binary",targetValue:0,unit:"",
+      commitN:1,commitM:1,startDate:back("yearly",2),targetDate:"",log:L4,
+      steps:[{id:"t1",text:"Read back the year's notes and write what actually changed"},
+             {id:"t2",text:"Retire the systems that stopped earning their slot"},
+             {id:"t3",text:"Set next year's vision board before the first working day"}]})
   ];
 }
+function sampleGoals(){ return sampleSystems(); }
 
 /* ============================ render ============================ */
 var $=function(s){return document.querySelector(s);};
@@ -969,9 +1064,8 @@ function visibleGoals(){
   out.sort(function(a,b){
     if(s==="title")    return (a.title||"").localeCompare(b.title||"");
     if(s==="created")  return (b.createdAt||"").localeCompare(a.createdAt||"");
-    if(s==="progress") return progressOf(a).pct-progressOf(b).pct;
-    var da=a.targetDate||"9999", dbb=b.targetDate||"9999";
-    return da.localeCompare(dbb);
+    if(s==="progress") return adherenceOf(a).rate-adherenceOf(b).rate;   // weakest first
+    return streakOf(b)-streakOf(a);                                      // longest streak first
   });
   return out;
 }
@@ -992,20 +1086,22 @@ function renderHorizons(){
 function renderReadouts(){
   var box=$("#readouts"); box.textContent="";
   var inH=goals.filter(function(g){return g.horizon===view.horizon;});
-  var open=inH.filter(function(g){return statusOf(g)!=="done";});
-  var onTrack=open.filter(function(g){return statusOf(g)==="ok";}).length;
-  var atRisk=open.filter(function(g){return statusOf(g)==="warn";}).length;
-  var behind=open.filter(function(g){return statusOf(g)==="bad";}).length;
+  var live=inH.filter(function(g){return statusOf(g)!=="done";});
+  var holding=live.filter(function(g){return statusOf(g)==="ok";}).length;
+  var slipping=live.filter(function(g){return statusOf(g)==="warn";}).length;
+  var stalled=live.filter(function(g){return statusOf(g)==="bad";}).length;
   var h=HMAP[view.horizon];
 
-  var tDone=0,tTot=0;
-  inH.forEach(function(g){var s=tacticStats(g); tDone+=s.done; tTot+=s.total;});
+  // adherence across every live system on this cadence
+  var ran=0, avail=0;
+  live.forEach(function(g){ var a=adherenceOf(g); ran+=a.ran; avail+=a.available; });
+  var rate=avail>0?Math.round(ran/avail*100):0;
 
   var bestStreak=0,bestName="";
   inH.forEach(function(g){ var s=streakOf(g); if(s>bestStreak){bestStreak=s;bestName=g.title;} });
 
   var curKey=periodKey(new Date(),view.horizon);
-  var loggedNow=inH.filter(function(g){return (g.log||{})[curKey];}).length;
+  var runNow=live.filter(function(g){return (g.log||{})[curKey];}).length;
 
   function add(k,v,small,sub,sparkOn){
     var r=el("div","readout");
@@ -1018,19 +1114,21 @@ function renderReadouts(){
       var sp=el("div","spark");
       for(var i=h.back-1;i>=0;i--){
         var key=periodKey(shiftPeriod(new Date(),view.horizon,-i),view.horizon);
-        var any=inH.some(function(g){return (g.log||{})[key];});
-        var bar=el("i"); if(any)bar.className="on";
-        bar.style.height=(any?100:30)+"%";
+        var n=live.filter(function(g){return (g.log||{})[key];}).length;
+        var bar=el("i"); if(n) bar.className="on";
+        bar.style.height=(live.length?Math.max(12,Math.round(n/live.length*100)):12)+"%";
         sp.appendChild(bar);
       }
       r.appendChild(sp);
     }
     box.appendChild(r);
   }
-  add("Open "+h.label.toLowerCase()+" goals", String(open.length), null, onTrack+" on track · "+atRisk+" at risk · "+behind+" behind");
-  add("Logged this "+h.unitLabel, String(loggedNow), "of "+open.length, periodTitle(new Date(),view.horizon));
-  add("Tactics complete", String(tDone), "of "+tTot, tTot?Math.round(tDone/tTot*100)+"% of the plan":"no tactics yet");
-  add("Best streak", String(bestStreak), h.plural, bestName?trunc(bestName,34):"start logging to build one", true);
+  add("Live "+h.label.toLowerCase()+" systems", String(live.length), null,
+      holding+" holding · "+slipping+" slipping · "+stalled+" stalled");
+  add("Run this "+h.unitLabel, String(runNow), "of "+live.length, periodTitle(new Date(),view.horizon));
+  add("Adherence", String(rate)+"%", null,
+      avail?ran+" of "+avail+" "+h.plural+" run":"nothing to measure yet");
+  add("Longest streak", String(bestStreak), h.plural, bestName?trunc(bestName,34):"run a system to start one", true);
 }
 function trunc(s,n){ return s.length>n?s.slice(0,n-1)+"…":s; }
 
@@ -1040,16 +1138,16 @@ function renderList(){
   var h=HMAP[view.horizon];
   if(!items.length){
     var e=el("div","empty");
-    e.appendChild(el("h2",null,"No "+h.label.toLowerCase()+" goals here yet"));
-    e.appendChild(el("p",null,goals.length?"Nothing matches this filter. Change the filter above, or add a goal on this horizon.":"Set the first one. A goal on this horizon is tracked one square per "+h.unitLabel+", with tactics underneath it."));
-    var b=el("button","btn btn-primary","New "+h.label.toLowerCase()+" goal"); b.onclick=openNew;
+    e.appendChild(el("h2",null,"No "+h.label.toLowerCase()+" systems yet"));
+    e.appendChild(el("p",null,goals.length?"Nothing matches this filter. Change the filter above, or add a system on this cadence.":"Build the first one. A system is the process you run every "+h.unitLabel+" — name the protocol, set how often you intend to run it, and log each "+h.unitLabel+" you do."));
+    var b=el("button","btn btn-primary","New "+h.label.toLowerCase()+" system"); b.onclick=openNew;
     e.appendChild(b); box.appendChild(e); return;
   }
   items.forEach(function(g){ box.appendChild(goalCard(g)); });
 }
 
 function goalCard(g){
-  var st=statusOf(g), pr=progressOf(g), ts=tacticStats(g), h=HMAP[g.horizon];
+  var st=statusOf(g), ad=adherenceOf(g), ps=protocolStats(g), h=HMAP[g.horizon]||HMAP.weekly;
   var card=el("div","goal"); card.dataset.s=st; card.dataset.done=st==="done"?"1":"0";
   card.appendChild(el("div","stripe"));
   var inr=el("div","goal-in");
@@ -1057,51 +1155,50 @@ function goalCard(g){
   /* head */
   var head=el("div","ghead");
   var main=el("div","gmain");
-  main.appendChild(el("div","gtitle",g.title||"Untitled goal"));
+  main.appendChild(el("div","gtitle",g.title||"Untitled system"));
+  if(g.outcome) main.appendChild(el("div","goutcome","Serves: "+g.outcome));
   if(g.why) main.appendChild(el("div","gwhy",g.why));
   var chips=el("div","chips");
   chips.appendChild(el("span","chip status "+st,STATUS_TEXT[st]));
   if(g.category) chips.appendChild(el("span","chip cat",g.category));
-  chips.appendChild(el("span","chip","by "+fmtDate(g.targetDate)));
+  chips.appendChild(el("span","chip",commitLabel(g)));
   var sk=streakOf(g);
   if(sk>1) chips.appendChild(el("span","chip",sk+" "+h.plural+" running"));
   main.appendChild(chips);
   head.appendChild(main);
 
   var acts=el("div","gactions");
-  var doneBtn=el("button","btn btn-ghost btn-sm",g.status==="done"?"Reopen":"Mark achieved");
-  doneBtn.onclick=function(){ var c=clone(g); c.status=(g.status==="done")?"active":"done"; saveGoal(c); };
+  var retired=(g.status==="done"||g.status==="retired");
+  var doneBtn=el("button","btn btn-ghost btn-sm",retired?"Restart":"Retire");
+  doneBtn.title=retired?"Put this system back into rotation":"Stop running this system, keep its history";
+  doneBtn.onclick=function(){ var c=clone(g); c.status=retired?"active":"retired"; saveGoal(c); };
   var editBtn=el("button","btn btn-ghost btn-sm","Edit");
   editBtn.onclick=function(){ openEdit(g); };
   acts.appendChild(doneBtn); acts.appendChild(editBtn);
   head.appendChild(acts);
   inr.appendChild(head);
 
-  /* meter */
+  /* adherence */
   var mw=el("div","meter-wrap");
   var m=el("div","meter");
-  var fill=el("div","fill"); fill.style.width=Math.round(pr.pct*100)+"%"; m.appendChild(fill);
-  var pace=paceOf(g);
-  if(pace!==null && pace>0 && pace<1){
-    var pm=el("div","pace"); pm.style.left="calc("+(pace*100)+"% - 1px)";
-    pm.title="Where you would be if progress matched the calendar";
+  var fill=el("div","fill"); fill.style.width=Math.round(ad.rate*100)+"%"; m.appendChild(fill);
+  if(ad.target>0 && ad.target<1){
+    var pm=el("div","pace"); pm.style.left="calc("+(ad.target*100)+"% - 1px)";
+    pm.title="Your commitment: "+commitLabel(g);
     m.appendChild(pm);
   }
   mw.appendChild(m);
   var mv=el("div","meter-val");
-  var b=el("b",null,Math.round(pr.pct*100)+"%");
-  mv.appendChild(b);
-  mv.appendChild(document.createTextNode(pr.kind==="quantity"
-    ? "  "+fmtNum(pr.current)+"/"+fmtNum(pr.target)+(g.unit?" "+g.unit:"")
-    : "  "+pr.current+"/"+pr.target+" "+h.plural));
+  mv.appendChild(el("b",null,Math.round(ad.rate*100)+"%"));
+  mv.appendChild(document.createTextNode("  "+ad.ran+"/"+ad.available+" "+h.plural));
   mw.appendChild(mv);
   inr.appendChild(mw);
 
   /* period grid */
   var per=el("div","periods");
   var pl=el("div","plabel");
-  pl.appendChild(el("span",null,"Last "+h.back+" "+h.plural));
-  pl.appendChild(el("span",null,g.metric==="quantity"?"tap to add one "+(g.unit||"unit"):"tap to log"));
+  pl.appendChild(el("span",null,"Last "+h.back+" "+h.plural+" · adherence window"));
+  pl.appendChild(el("span",null,g.metric==="quantity"?"tap to add one "+(g.unit||"unit"):"tap to log a run"));
   per.appendChild(pl);
   var grid=el("div","pgrid");
   var now=new Date();
@@ -1113,7 +1210,7 @@ function goalCard(g){
       var c=el("button","pcell"); c.type="button";
       if(v) c.classList.add("on");
       if(off===0) c.classList.add("today");
-      c.title=periodTitle(d,g.horizon)+(v?(typeof v==="number"?" — "+v+" "+(g.unit||""):" — logged"):" — not logged");
+      c.title=periodTitle(d,g.horizon)+(v?(typeof v==="number"?" — "+v+" "+(g.unit||""):" — ran it"):" — not run");
       c.setAttribute("aria-label",c.title);
       var lab=el("span","pd", (g.metric==="quantity"&&typeof v==="number")?String(v):periodLabel(d,g.horizon));
       c.appendChild(lab);
@@ -1124,19 +1221,23 @@ function goalCard(g){
   per.appendChild(grid);
   inr.appendChild(per);
 
-  /* tactics */
+  /* protocol — resets every cycle */
+  var steps=protocolOf(g);
+  var curKey=ps.key;
+  var doneIds=stepsDone(g,curKey);
   var tw=el("div","tactics");
   var th=el("div","thead");
-  th.appendChild(el("h3",null,"Tactics"));
-  th.appendChild(el("span","tcount",ts.total?ts.done+" of "+ts.total+" done":"none yet"));
+  th.appendChild(el("h3",null,"Protocol · resets each "+h.unitLabel));
+  th.appendChild(el("span","tcount",ps.total?ps.done+" of "+ps.total+" this "+h.unitLabel:"no steps yet"));
   tw.appendChild(th);
   var tl=el("div","tlist");
-  (g.tactics||[]).forEach(function(t){
-    var row=el("div","tactic"+(t.done?" done":""));
-    var cb=document.createElement("input"); cb.type="checkbox"; cb.checked=!!t.done;
+  steps.forEach(function(t){
+    var isDone=doneIds.indexOf(t.id)>=0;
+    var row=el("div","tactic"+(isDone?" done":""));
+    var cb=document.createElement("input"); cb.type="checkbox"; cb.checked=isDone;
     cb.id="t-"+g.id+"-"+t.id;
     cb.setAttribute("aria-label",t.text);
-    cb.onchange=function(){ var c=clone(g); var tt=c.tactics.find(function(x){return x.id===t.id;}); if(tt)tt.done=cb.checked; saveGoal(c); };
+    cb.onchange=function(){ toggleStep(g,t.id,cb.checked); };
     var tx=el("div","ttext",t.text);
     tx.contentEditable="true"; tx.spellcheck=false;
     tx.setAttribute("role","textbox");
@@ -1145,29 +1246,39 @@ function goalCard(g){
       if(committed) return; committed=true;
       var val=tx.textContent.trim();
       if(val===t.text) return;
-      var c=clone(g); var tt=c.tactics.find(function(x){return x.id===t.id;});
-      if(tt){ if(val){tt.text=val;} else { c.tactics=c.tactics.filter(function(x){return x.id!==t.id;}); } saveGoal(c); }
+      var c=clone(g); c.steps=protocolOf(c).slice();
+      var tt=c.steps.find(function(x){return x.id===t.id;});
+      if(tt){
+        if(val){ tt.text=val; }
+        else { c.steps=c.steps.filter(function(x){return x.id!==t.id;}); }
+        delete c.tactics; saveGoal(c);
+      }
     }
     tx.onfocus=function(){ committed=false; openEditor=commitText; };
     tx.onblur=function(){ openEditor=null; commitText(); };
     tx.onkeydown=function(ev){ if(ev.key==="Enter"){ev.preventDefault();tx.blur();} };
     var del=el("button","btn btn-ghost btn-sm tdel","Remove");
-    del.onclick=function(){ var c=clone(g); c.tactics=c.tactics.filter(function(x){return x.id!==t.id;}); saveGoal(c); };
+    del.onclick=function(){
+      var c=clone(g); c.steps=protocolOf(c).filter(function(x){return x.id!==t.id;});
+      delete c.tactics; saveGoal(c);
+    };
     row.appendChild(cb); row.appendChild(tx); row.appendChild(del);
     tl.appendChild(row);
   });
   tw.appendChild(tl);
 
   var addWrap=el("div","tadd");
-  var inp=document.createElement("input"); inp.type="text"; inp.placeholder="Add a tactic — the concrete thing that moves this goal";
+  var inp=document.createElement("input"); inp.type="text";
+  inp.placeholder="Add a step — what you actually do each "+h.unitLabel;
   inp.id="add-"+g.id;
   inp.value=addDrafts[g.id]||"";
   inp.oninput=function(){ addDrafts[g.id]=inp.value; };
   var addBtn=el("button","btn btn-sm","Add");
   function doAdd(){
     var v=inp.value.trim(); if(!v) return;
-    var c=clone(g); c.tactics=c.tactics||[];
-    c.tactics.push({id:"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),text:v,done:false});
+    var c=clone(g); c.steps=protocolOf(c).slice();
+    c.steps.push({id:"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),text:v});
+    delete c.tactics;
     inp.value=""; delete addDrafts[g.id]; saveGoal(c);
     setTimeout(function(){ var n=document.getElementById("add-"+g.id); if(n)n.focus(); },0);
   }
@@ -1182,6 +1293,26 @@ function goalCard(g){
 }
 function fmtNum(n){ return (Math.round(n*100)/100).toString(); }
 function clone(g){ return JSON.parse(JSON.stringify(g)); }
+
+/* Ticking the protocol is the real interaction: work the steps and the
+   period logs itself once the protocol is complete. */
+function toggleStep(g,stepId,on){
+  var c=clone(g);
+  var key=periodKey(new Date(),c.horizon);
+  c.steps=protocolOf(c).slice(); delete c.tactics;
+  c.stepLog=c.stepLog||{};
+  var cur=Array.isArray(c.stepLog[key])?c.stepLog[key].slice():[];
+  var i=cur.indexOf(stepId);
+  if(on && i<0) cur.push(stepId);
+  if(!on && i>=0) cur.splice(i,1);
+  c.stepLog[key]=cur;
+  var total=c.steps.length;
+  if(total && cur.length>=total){
+    c.log=c.log||{};
+    if(!c.log[key]) c.log[key]=true;      // protocol complete → the period counts as run
+  }
+  saveGoal(c);
+}
 
 function togglePeriod(g,key){
   var c=clone(g); c.log=c.log||{};
@@ -1215,7 +1346,7 @@ function renderStatus(){
   else { msg="Every change writes to the local database on this device."; }
   s.appendChild(d); s.appendChild(el("span",null,msg));
   s.appendChild(el("span",null,"·"));
-  s.appendChild(el("span",null,goals.length+" goals tracked"));
+  s.appendChild(el("span",null,goals.length+" systems tracked"));
 }
 
 function fmtBytes(b){
@@ -1243,7 +1374,7 @@ function renderStorage(){
   grid.textContent="";
   var tactics=0, logged=0;
   goals.forEach(function(g){
-    tactics+=(g.tactics||[]).length;
+    tactics+=protocolOf(g).length;
     var lg=g.log||{}; for(var k in lg){ if(Object.prototype.hasOwnProperty.call(lg,k)) logged++; }
   });
   var tombs=records.filter(function(r){return r.deleted;}).length;
@@ -1256,8 +1387,8 @@ function renderStorage(){
   var vItems=vrecords.filter(function(r){return !r.deleted&&r.kind==="item";}).length;
   var vImgs=vrecords.filter(function(r){return !r.deleted&&r.image;}).length;
   cell("Object stores","goals, vision, meta");
-  cell("Goal records",String(goals.length)+(tombs?" (+"+tombs+" deleted)":""));
-  cell("Tactics",String(tactics));
+  cell("System records",String(goals.length)+(tombs?" (+"+tombs+" deleted)":""));
+  cell("Protocol steps",String(tactics));
   cell("Logged periods",String(logged));
   cell("Vision cards",String(vItems)+(vImgs?" · "+vImgs+" with images":""));
   cell("Estimated size",fmtBytes(storageInfo.bytes),storageInfo.bytes==null);
@@ -1290,7 +1421,7 @@ function render(){
 function renderPageNav(){
   var nav=$("#pagenav"); if(!nav) return;
   nav.textContent="";
-  [["goals","Goals"],["vision","Vision board"]].forEach(function(p){
+  [["goals","Systems"],["vision","Vision board"]].forEach(function(p){
     var b=el("button",null,p[1]); b.type="button";
     b.setAttribute("aria-pressed",page===p[0]?"true":"false");
     b.onclick=function(){ setPage(p[0]); };
@@ -1301,7 +1432,7 @@ function setPage(p){
   page=p;
   $("#pageGoals").hidden=(p!=="goals");
   $("#pageVision").hidden=(p!=="vision");
-  $("#newBtn").textContent=(p==="vision")?"Add to board":"New goal";
+  $("#newBtn").textContent=(p==="vision")?"Add to board":"New system";
   render();
 }
 
@@ -1433,7 +1564,7 @@ function fillVisionModal(title,showDel){
   if(vDraft.image){ wrap.hidden=false; $("#vPreview").src=vDraft.image; }
   else { wrap.hidden=true; $("#vPreview").removeAttribute("src"); }
   var sel=$("#vmGoal"); sel.textContent="";
-  var none=document.createElement("option"); none.value=""; none.textContent="No linked goal"; sel.appendChild(none);
+  var none=document.createElement("option"); none.value=""; none.textContent="No linked system"; sel.appendChild(none);
   goals.slice().sort(function(a,b){return (a.title||"").localeCompare(b.title||"");}).forEach(function(g){
     var o=document.createElement("option"); o.value=g.id;
     o.textContent=HMAP[g.horizon] ? HMAP[g.horizon].label+" · "+trunc(g.title,42) : trunc(g.title,42);
@@ -1473,23 +1604,36 @@ $("#vmSave").onclick=function(){
 /* ============================ modal ============================ */
 function openNew(){
   editing=null;
-  draft={title:"",why:"",horizon:view.horizon,category:"",targetDate:ymd(shiftPeriod(new Date(),view.horizon,HMAP[view.horizon].span)),metric:"binary",targetValue:0,unit:""};
-  fillModal("New goal",false); showModal();
+  draft={title:"",outcome:"",why:"",horizon:view.horizon,category:"",
+         targetDate:"",metric:"binary",targetValue:0,unit:"",commitN:1,commitM:1};
+  fillModal("New system",false); showModal();
 }
 function openEdit(g){
   editing=g.id; draft=clone(g);
-  fillModal("Edit goal",true); showModal();
+  fillModal("Edit system",true); showModal();
 }
 function fillModal(title,showDel){
   $("#mTitle").textContent=title;
   $("#fTitle").value=draft.title||"";
+  $("#fOutcome").value=draft.outcome||"";
   $("#fWhy").value=draft.why||"";
   $("#fCatIn").value=draft.category||"";
   $("#fTarget").value=draft.targetDate||"";
   $("#fTargetVal").value=draft.targetValue||"";
   $("#fUnit").value=draft.unit||"";
+  $("#fCommitN").value=draft.commitN>0?draft.commitN:1;
+  $("#fCommitM").value=draft.commitM>0?draft.commitM:1;
   $("#mDelete").hidden=!showDel;
   renderSegs();
+}
+function syncCommitHint(){
+  var h=HMAP[draft.horizon]||HMAP.weekly;
+  var n=parseInt($("#fCommitN").value,10)||1, m=parseInt($("#fCommitM").value,10)||1;
+  if(n>m){ n=m; $("#fCommitN").value=n; }
+  $("#commitUnit").textContent=(m===1?h.unitLabel:h.plural);
+  $("#commitHint").textContent = (n===m)
+    ? "Every "+h.unitLabel+". Adherence is measured against running it every time."
+    : n+" of every "+m+" "+h.plural+" — "+Math.round(n/m*100)+"% adherence is holding the line.";
 }
 function renderSegs(){
   var hb=$("#fHorizon"); hb.textContent="";
@@ -1505,7 +1649,10 @@ function renderSegs(){
     b.onclick=function(){ draft.metric=b.dataset.v; renderSegs(); };
   });
   $("#qtyFields").hidden = draft.metric!=="quantity";
+  syncCommitHint();
 }
+$("#fCommitN").oninput=syncCommitHint;
+$("#fCommitM").oninput=syncCommitHint;
 function showModal(){ $("#scrim").hidden=false; setTimeout(function(){$("#fTitle").focus();},20); }
 function hideModal(){ $("#scrim").hidden=true; }
 
@@ -1523,8 +1670,9 @@ $("#mSave").onclick=function(){
   if(!t){ $("#fTitle").focus(); return; }
   var g;
   if(editing){ g=goals.find(function(x){return x.id===editing;}); g=g?clone(g):null; }
-  if(!g){ g={id:uid(),createdAt:new Date().toISOString(),log:{},tactics:[],status:"active",startDate:ymd(new Date())}; }
+  if(!g){ g={id:uid(),createdAt:new Date().toISOString(),log:{},steps:[],stepLog:{},status:"active",startDate:ymd(new Date()),schema:SCHEMA}; }
   g.title=t;
+  g.outcome=$("#fOutcome").value.trim();
   g.why=$("#fWhy").value.trim();
   g.horizon=draft.horizon;
   g.category=$("#fCatIn").value.trim();
@@ -1532,6 +1680,12 @@ $("#mSave").onclick=function(){
   g.metric=draft.metric;
   g.targetValue=draft.metric==="quantity"?(parseFloat($("#fTargetVal").value)||0):0;
   g.unit=draft.metric==="quantity"?$("#fUnit").value.trim():"";
+  var cn=parseInt($("#fCommitN").value,10)||1, cm=parseInt($("#fCommitM").value,10)||1;
+  g.commitM=Math.max(1,Math.min(99,cm));
+  g.commitN=Math.max(1,Math.min(g.commitM,cn));
+  g.steps=protocolOf(g); delete g.tactics;
+  g.stepLog=g.stepLog||{};
+  g.schema=SCHEMA;
   if(!g.startDate) g.startDate=ymd(new Date());
   delete g.sample;
   view.horizon=g.horizon;
@@ -1553,7 +1707,7 @@ function doExport(){
   if(window.claude&&window.claude.use){
     window.claude.use("downloads").then(function(dl){
       if(!dl){ copyFallback(text); return; }
-      dl.save({filename:name,data:text}).then(function(){ flashStatus("Exported "+goals.length+" goals."); })
+      dl.save({filename:name,data:text}).then(function(){ flashStatus("Exported "+goals.length+" systems."); })
         .catch(function(){ copyFallback(text); });
     }).catch(function(){ copyFallback(text); });
   } else copyFallback(text);
@@ -1598,7 +1752,7 @@ $("#importFile").onchange=function(){
     try{ parsed=JSON.parse(fr.result); }catch(e){ flashStatus("That file is not valid JSON."); return; }
     var r=mergePayload(parsed);
     if(!r){ flashStatus("No records found in that file."); return; }
-    flashStatus("Imported — "+r.added+" new goals, "+r.updated+" updated, "+r.vision+" vision cards.");
+    flashStatus("Imported — "+r.added+" new systems, "+r.updated+" updated, "+r.vision+" vision cards.");
   };
   fr.onerror=function(){ flashStatus("Could not read that file."); };
   fr.readAsText(f);
@@ -1749,6 +1903,7 @@ window.addEventListener("online",function(){
   }).then(function(m){
     if(m&&typeof m.v==="boolean") cloudSync=m.v;
     purgeTombstones();
+    migrateToSystems();
     booting=false;
     refreshView(); render(); setSaveState();
     requestPersistence();
