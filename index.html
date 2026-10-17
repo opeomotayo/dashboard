@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Dashboard</title>
-<meta name="description" content="Two consoles: goals and the systems that produce them, and the household budget.">
+<meta name="description" content="Three consoles: goals and the systems that produce them, the household budget, and the rental portfolio.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
@@ -15,6 +15,7 @@
   --line:#DFE4EE; --line-2:#C7D0E0;
   --accent:#3A4FC4; --accent-soft:#E7EAFB;
   --p2:#B5468C; --p2-soft:#FAE8F3;
+  --p3:#0F7A55; --p3-soft:#E2F2EC;
   --shadow-1:0 1px 1px rgba(11,16,32,.04), 0 2px 6px -2px rgba(11,16,32,.08);
   --shadow-2:0 2px 4px rgba(11,16,32,.05), 0 14px 28px -16px rgba(11,16,32,.22);
   --display:"Bricolage Grotesque","Archivo","Helvetica Neue",Arial,sans-serif;
@@ -29,6 +30,7 @@
     --line:#212A3D; --line-2:#2E3850;
     --accent:#6478DE; --accent-soft:#1A2142;
     --p2:#C85C9C; --p2-soft:#2B1626;
+    --p3:#0FA37E; --p3-soft:#0E2A24;
     --shadow-1:0 1px 1px rgba(0,0,0,.5), 0 2px 8px -2px rgba(0,0,0,.6);
     --shadow-2:0 2px 6px rgba(0,0,0,.5), 0 18px 34px -18px rgba(0,0,0,.9);
   }
@@ -40,6 +42,7 @@
   --line:#212A3D; --line-2:#2E3850;
   --accent:#6478DE; --accent-soft:#1A2142;
   --p2:#C85C9C; --p2-soft:#2B1626;
+  --p3:#0FA37E; --p3-soft:#0E2A24;
   --shadow-1:0 1px 1px rgba(0,0,0,.5), 0 2px 8px -2px rgba(0,0,0,.6);
   --shadow-2:0 2px 6px rgba(0,0,0,.5), 0 18px 34px -18px rgba(0,0,0,.9);
 }
@@ -49,10 +52,10 @@ body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:
   line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh;
   display:flex;align-items:center;justify-content:center;
   padding:48px max(16px,env(safe-area-inset-left,0px))}
-main{width:100%;max-width:760px}
+main{width:100%;max-width:1020px}
 h1{font-family:var(--display);font-size:33px;font-weight:800;letter-spacing:-.035em;margin:0}
 .sub{color:var(--muted);margin:9px 0 0;font-size:15.5px;max-width:52ch}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(286px,1fr));gap:16px;margin-top:30px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:16px;margin-top:30px}
 .card{display:block;text-decoration:none;color:inherit;background:var(--surface);
   border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-1);padding:24px;
   transition:transform .12s,box-shadow .16s,border-color .16s}
@@ -62,6 +65,7 @@ h1{font-family:var(--display);font-size:33px;font-weight:800;letter-spacing:-.03
   color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 9px;
   display:inline-block}
 .card.budget .tag{color:var(--p2);background:var(--p2-soft)}
+.card.property .tag{color:var(--p3);background:var(--p3-soft)}
 .card h2{font-family:var(--display);font-size:21px;font-weight:700;letter-spacing:-.025em;
   margin:13px 0 0}
 .card p{color:var(--muted);font-size:14px;margin:7px 0 0}
@@ -73,8 +77,8 @@ footer{margin-top:28px;font-family:var(--mono);font-size:11px;letter-spacing:.06
 <body>
 <main>
   <h1>Dashboard</h1>
-  <p class="sub">Two consoles. Both keep their data in your browser and sync through your
-     own Google Drive — nothing is stored on this site.</p>
+  <p class="sub">Three consoles. All of them keep their data in your browser and sync
+     through your own Google Drive — nothing is stored on this site.</p>
 
   <div class="cards">
     <a class="card goal" href="./goal/">
@@ -82,6 +86,14 @@ footer{margin-top:28px;font-family:var(--mono);font-size:11px;letter-spacing:.06
       <h2>Goal Console</h2>
       <p>Monthly, quarterly and yearly goals, each with the daily and weekly systems
          that produce it. Plus a vision board for the year.</p>
+      <span class="go">Open &rarr;</span>
+    </a>
+
+    <a class="card property" href="./property/">
+      <span class="tag">Portfolio</span>
+      <h2>Property Console</h2>
+      <p>The rental portfolio month by month: income, costs, cashflow,
+         return on the cash invested and gross yield, per property.</p>
       <span class="go">Open &rarr;</span>
     </a>
 
