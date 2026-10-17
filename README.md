@@ -1,14 +1,20 @@
-# Consoles
+# Dashboard
 
-Two pages, one site, one deployment.
+Two consoles, one site, one deployment.
 
-| Page | URL | What it is |
-|---|---|---|
-| **Goal Console** | `/` | Monthly, quarterly and yearly goals, each with the daily and weekly systems that produce it, plus a vision board. |
-| **Budget Console** | `/budget/` | A household month: budget against actual by category, who spent what, and savings pots filling up. |
+```
+/                 landing page, links to both
+/goal/            Goal Console
+/budget/          Budget Console
+```
 
-Each links to the other from its header. One HTML file each, no build step, no
-backend.
+| Page | What it is |
+|---|---|
+| **Goal Console** | Monthly, quarterly and yearly goals, each with the daily and weekly systems that produce it, plus a vision board. |
+| **Budget Console** | A household month: budget against actual by category, who spent what, and savings pots filling up. |
+
+Each console links to the other from its header. One HTML file each, no build
+step, no backend.
 
 Data lives in an IndexedDB database in your browser — a separate one per page
 (`goal_console` and `budget_console`), so the two never tread on each other.
@@ -22,8 +28,8 @@ device.
 ```bash
 git init
 git add -A
-git commit -m "Consoles"
-gh repo create goal-console --public --source=. --push
+git commit -m "Dashboard"
+gh repo create dashboard --public --source=. --push
 ```
 
 Then turn Pages on. Either route works:
@@ -37,9 +43,14 @@ Then turn Pages on. Either route works:
 A minute later:
 
 ```
-https://<username>.github.io/goal-console/          # goals
-https://<username>.github.io/goal-console/budget/   # budget
+https://<username>.github.io/dashboard/          # landing page
+https://<username>.github.io/dashboard/goal/     # goals
+https://<username>.github.io/dashboard/budget/   # budget
 ```
+
+**The Pages URL follows the repo name.** Rename the repo and every path moves
+with it; GitHub redirects the old name, but update your bookmarks and the git
+remote (`git remote set-url origin …`) anyway.
 
 **The repo has to be public** unless you are on GitHub Pro or Team — Pages from
 a private repo is a paid feature. Nothing here is sensitive: the file is the app
@@ -150,8 +161,14 @@ disables that one feature. Everything else works.
 | `error — access denied (403)` | Drive API not enabled, or the scope was not granted. Re-run consent. |
 | 404 on the Pages URL | Pages not enabled yet, or still building — check the Actions tab. |
 
-Updating later: replace `index.html` or `budget/index.html`, commit, push. Data
-is in Drive and IndexedDB, never in the page, so a redeploy loses nothing.
+Updating later: replace `goal/index.html` or `budget/index.html`, commit, push.
+Data is in Drive and IndexedDB, never in the page, so a redeploy loses nothing.
+
+Moving the pages around is safe too: **IndexedDB is keyed by origin, not by
+path**, so everything already saved in your browser survives a repo rename or a
+folder move, as long as the host stays `<username>.github.io`. The Google OAuth
+client is keyed by origin for the same reason — scheme and host only, no path —
+so a rename needs no change in Google Cloud.
 
 ## Budget Console notes
 
