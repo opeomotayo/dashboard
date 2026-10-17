@@ -1,11 +1,19 @@
-# Goal Console
+# Consoles
 
-Daily, weekly, monthly, quarterly and yearly goals, each broken into tactics and
-logged period by period, plus a vision board for the year. One HTML file, no
-build step, no backend.
+Two pages, one site, one deployment.
 
-Data lives in an IndexedDB database in your browser. Google Drive is optional
-and is what makes it the same console on every device.
+| Page | URL | What it is |
+|---|---|---|
+| **Goal Console** | `/` | Monthly, quarterly and yearly goals, each with the daily and weekly systems that produce it, plus a vision board. |
+| **Budget Console** | `/budget/` | A household month: budget against actual by category, who spent what, and savings pots filling up. |
+
+Each links to the other from its header. One HTML file each, no build step, no
+backend.
+
+Data lives in an IndexedDB database in your browser — a separate one per page
+(`goal_console` and `budget_console`), so the two never tread on each other.
+Google Drive is optional and is what makes them the same consoles on every
+device.
 
 ---
 
@@ -14,7 +22,7 @@ and is what makes it the same console on every device.
 ```bash
 git init
 git add -A
-git commit -m "Goal Console"
+git commit -m "Consoles"
 gh repo create goal-console --public --source=. --push
 ```
 
@@ -29,7 +37,8 @@ Then turn Pages on. Either route works:
 A minute later:
 
 ```
-https://<username>.github.io/goal-console/
+https://<username>.github.io/goal-console/          # goals
+https://<username>.github.io/goal-console/budget/   # budget
 ```
 
 **The repo has to be public** unless you are on GitHub Pro or Team — Pages from
@@ -80,16 +89,25 @@ At <https://console.cloud.google.com>:
 Open your Pages URL, scroll to **Local database**, find the **Google Drive**
 row. Paste the client ID, click **Connect Drive**, approve the prompt.
 
-It creates `goal-console.json` in your Drive. On any other device: same URL,
-same client ID, connect — your goals and vision board arrive.
+Each page keeps its own file — `goal-console.json` and `budget-console.json` —
+and each needs the client ID pasted in once. **One OAuth client covers both**:
+they share an origin, so the client ID you set up for the goals page works
+unchanged on the budget page. On any other device: same URL, same client ID,
+connect — your data arrives.
 
 ---
 
 ## How the storage works
 
-IndexedDB (`goal_console`, v2, stores `goals` / `vision` / `meta`) is the
-working store, so the app is instant and works with no signal. Drive is the
-shared copy the devices meet in.
+IndexedDB is the working store, so each page is instant and works with no
+signal; Drive is the shared copy the devices meet in.
+
+| Page | Database | Stores |
+|---|---|---|
+| Goals | `goal_console` v2 | `goals`, `vision`, `meta` |
+| Budget | `budget_console` v1 | `records`, `meta` |
+
+Both follow the same rules:
 
 - **Sync runs** on connect, on returning to the tab, and ~2.5s after a change.
 - **Conflicts** resolve per record, newest edit wins. Two devices editing
@@ -132,5 +150,19 @@ disables that one feature. Everything else works.
 | `error — access denied (403)` | Drive API not enabled, or the scope was not granted. Re-run consent. |
 | 404 on the Pages URL | Pages not enabled yet, or still building — check the Actions tab. |
 
-Updating later: replace `index.html`, commit, push. Data is in Drive and
-IndexedDB, never in the page, so a redeploy loses nothing.
+Updating later: replace `index.html` or `budget/index.html`, commit, push. Data
+is in Drive and IndexedDB, never in the page, so a redeploy loses nothing.
+
+## Budget Console notes
+
+- **Categories** carry a standing monthly budget. Editing one offers *This
+  month only*, which overrides the figure for the month in view and leaves the
+  standing budget alone.
+- **Entries** are tagged with who paid, which drives the *Who spent it* split.
+- **Deleting a category** deletes its entries too, so no spending is left
+  orphaned and invisible.
+- **Pots** run across every month; the balance is the sum of every payment in.
+  A negative amount records a withdrawal.
+- Colours: the category meters use the reserved under / watch / over status
+  triad; Ope and Justina get their own validated hue each, kept clear of those
+  three so a colour never means two things at once.

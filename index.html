@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Goal Console — daily, weekly, monthly, quarterly and yearly goals with tactics, plus a vision board. Local-first, with optional Google Drive sync.">
+<meta name="description" content="Goal Console — monthly, quarterly and yearly goals, each with the daily and weekly systems that produce it, plus a vision board. Local-first, with optional Google Drive sync.">
 <style>
   :root{color-scheme:light dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
   html,body{margin:0}
@@ -150,17 +150,27 @@ button,input,select,textarea{font:inherit;color:inherit}
 .horizons button[aria-pressed="true"] .cnt{background:var(--accent-soft);color:var(--accent-ink)}
 
 /* ── instrument panel ──────────────────────────────────────────────── */
-.readouts{display:flex;gap:28px;align-items:center;flex-wrap:wrap;
+.readouts{display:flex;flex-direction:column;gap:19px;
   background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
   box-shadow:var(--shadow-1);padding:22px 24px;margin-top:22px}
-.dial{display:flex;align-items:center;gap:18px;flex:0 0 auto}
-.dial svg{display:block;flex:none}
-.dial .dial-read{display:flex;flex-direction:column;gap:2px}
-.dial .dial-num{font-family:var(--display);font-size:42px;font-weight:800;line-height:.95;
-  letter-spacing:-.04em;font-variant-numeric:tabular-nums}
-.dial .dial-sub{font-size:12.5px;color:var(--muted);max-width:21ch;line-height:1.35}
-.facts{display:flex;gap:26px;flex-wrap:wrap;flex:1 1 300px;min-width:0;
-  border-left:1px solid var(--line);padding-left:26px}
+/* three rings: goals achieved inside each calendar container */
+.rings{display:flex;gap:26px;flex-wrap:wrap;flex:0 0 auto;align-items:flex-start}
+.ringfig{margin:0;display:flex;align-items:center;gap:13px;min-width:0}
+.ringfig svg{display:block;flex:none}
+.ringpct{font-family:var(--display);font-size:21px;font-weight:700;letter-spacing:-.03em;
+  fill:var(--ink);font-variant-numeric:tabular-nums}
+.ringcap{min-width:0;display:flex;flex-direction:column;gap:3px}
+.ringlab{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--faint);white-space:nowrap}
+.ringval{font-family:var(--display);font-size:15px;font-weight:600;letter-spacing:-.015em;
+  color:var(--ink);white-space:nowrap}
+.ringsub{font-size:11.5px;color:var(--muted);line-height:1.35;white-space:nowrap}
+@media(max-width:760px){
+  .rings{gap:16px;width:100%}
+  .ringfig{flex:1 1 210px}
+}
+.facts{display:flex;gap:26px;flex-wrap:wrap;min-width:0;
+  border-top:1px solid var(--line);padding-top:17px}
 .fact{min-width:0;display:flex;flex-direction:column;gap:5px}
 .fact .fv{font-family:var(--display);font-size:23px;font-weight:700;line-height:1;letter-spacing:-.025em;
   font-variant-numeric:tabular-nums}
@@ -822,6 +832,53 @@ var MONTHS=["January","February","March","April","May","June","July","August","S
 var QUARTERS=["Quarter 1","Quarter 2","Quarter 3","Quarter 4"];
 var YEAR_SPAN=5;   /* the current year and the four that follow */
 
+/* ---- goals achieved inside the period now in view -------------------- */
+
+/* when a goal was marked achieved; older records predate doneAt */
+function doneAtOf(g){
+  if(g.status!=="done" && g.status!=="retired") return null;
+  var t=g.doneAt||g.updatedAt||g.createdAt;
+  return t?new Date(t):null;
+}
+
+/* [start, end) of the calendar container the dropdowns currently select */
+function periodBounds(h){
+  var y=view.year;
+  if(h==="monthly")   return [new Date(y,view.month,1), new Date(y,view.month+1,1)];
+  if(h==="quarterly"){ var q=Math.floor(view.month/3);
+                       return [new Date(y,q*3,1), new Date(y,q*3+3,1)]; }
+  return [new Date(y,0,1), new Date(y+1,0,1)];
+}
+
+/* the container a goal belongs to: its target date, or failing that the
+   date it was set */
+function goalAnchor(g){
+  return parseYmd(g.targetDate) || new Date(g.createdAt||g.startDate||0);
+}
+
+/* Of this horizon's goals that belong to the container now in view, how
+   many are achieved. A goal counts for one container only — the one its
+   target date falls in — so an open October goal is not also December's. */
+function goalsAchieved(h){
+  var b=periodBounds(h), s=b[0], e=b[1], now=new Date();
+  var inScope=goals.filter(function(g){
+    if(g.deleted || !isGoalRec(g) || g.horizon!==h) return false;
+    var a=goalAnchor(g);
+    return a>=s && a<e;
+  });
+  var done=inScope.filter(function(g){ return statusOf(g)==="done"; });
+  return {total:inScope.length, done:done.length,
+          rate:inScope.length?done.length/inScope.length:0,
+          elapsed: now<=s?0 : now>=e?1 : (now-s)/(e-s),
+          start:s, end:e};
+}
+
+function periodNoun(h){
+  if(h==="monthly")   return MONTHS[view.month]+" "+view.year;
+  if(h==="quarterly") return "Q"+(Math.floor(view.month/3)+1)+" "+view.year;
+  return String(view.year);
+}
+
 /* the years the year dropdown offers, plus whatever year is being viewed */
 function yearOptions(){
   var y0=new Date().getFullYear(), out=[], i;
@@ -1471,42 +1528,69 @@ function renderReadouts(){
   var slipping=sys.filter(function(g){return statusOf(g)==="warn";}).length;
   var stalled=sys.filter(function(g){return statusOf(g)==="bad";}).length;
 
-  var ran=0, avail=0;
-  sys.forEach(function(g){ var a=adherenceOf(g); ran+=a.ran; avail+=a.available; });
-  var rate=avail>0?ran/avail:0, pct=Math.round(rate*100);
-
   var bestStreak=0,bestName="";
   sys.forEach(function(g){ var sk=streakOf(g); if(sk>bestStreak){bestStreak=sk;bestName=g.title;} });
 
-  var R=46, C=2*Math.PI*R;
-  var tone = pct>=85?"var(--hold)" : pct>=55?"var(--slip)" : pct>0?"var(--stall)" : "var(--line-2)";
-  var dial=el("div","dial");
-  var NS="http://www.w3.org/2000/svg";
-  var svg=document.createElementNS(NS,"svg");
-  svg.setAttribute("width","112"); svg.setAttribute("height","112");
-  svg.setAttribute("viewBox","0 0 112 112"); svg.setAttribute("role","img");
-  svg.setAttribute("aria-label","System adherence "+pct+" per cent across "+sys.length+" systems");
-  function ring(stroke,dash,offset,w){
-    var c=document.createElementNS(NS,"circle");
-    c.setAttribute("cx","56"); c.setAttribute("cy","56"); c.setAttribute("r",String(R));
-    c.setAttribute("fill","none"); c.setAttribute("stroke",stroke);
-    c.setAttribute("stroke-width",String(w)); c.setAttribute("stroke-linecap","round");
-    if(dash!=null){ c.setAttribute("stroke-dasharray",dash); c.setAttribute("stroke-dashoffset",String(offset)); }
-    c.setAttribute("transform","rotate(-90 56 56)");
-    return c;
-  }
-  svg.appendChild(ring("var(--line)",null,0,11));
-  if(rate>0) svg.appendChild(ring(tone,C.toFixed(1)+" "+C.toFixed(1),(C*(1-rate)).toFixed(1),11));
-  dial.appendChild(svg);
-  var dr=el("div","dial-read");
-  var dn=el("div","dial-num",pct+"%"); dn.style.color=tone;
-  dr.appendChild(dn);
-  dr.appendChild(el("div","lbl","System adherence"));
-  dr.appendChild(el("div","dial-sub", avail
-    ? containerLabel("daily")+" — "+ran+" of "+avail+" runs across "+sys.length+" system"+(sys.length===1?"":"s")
-    : "No systems running under these goals yet"));
-  dial.appendChild(dr);
-  box.appendChild(dial);
+  /* ── goals achieved: one ring per horizon ───────────────────────────
+     Three independent ratios, so three rings rather than one pie: a
+     single pie would imply they are shares of one total, which they
+     are not. Each ring is achieved-out-of-in-scope for its own
+     container, with the share of that container already gone shown
+     underneath so the number has something to be judged against. */
+  var rings=el("div","rings");
+  rings.setAttribute("role","group");
+  rings.setAttribute("aria-label","Goals achieved by horizon");
+
+  GOAL_HORIZONS.forEach(function(k){
+    var p=goalsAchieved(k), pct=Math.round(p.rate*100), has=p.total>0;
+    var R=34, C=2*Math.PI*R, NS="http://www.w3.org/2000/svg";
+
+    var fig=el("figure","ringfig");
+    var svg=document.createElementNS(NS,"svg");
+    svg.setAttribute("width","92"); svg.setAttribute("height","92");
+    svg.setAttribute("viewBox","0 0 92 92"); svg.setAttribute("role","img");
+    svg.setAttribute("aria-label", has
+      ? HMAP[k].label+" goals: "+p.done+" of "+p.total+" achieved in "+periodNoun(k)+", "+pct+" per cent"
+      : "No "+HMAP[k].label.toLowerCase()+" goals in "+periodNoun(k));
+    function arc(stroke,w,frac,round){
+      var c=document.createElementNS(NS,"circle");
+      c.setAttribute("cx","46"); c.setAttribute("cy","46"); c.setAttribute("r",String(R));
+      c.setAttribute("fill","none"); c.setAttribute("stroke",stroke);
+      c.setAttribute("stroke-width",String(w));
+      if(round) c.setAttribute("stroke-linecap","round");
+      if(frac!=null){
+        c.setAttribute("stroke-dasharray",C.toFixed(1)+" "+C.toFixed(1));
+        c.setAttribute("stroke-dashoffset",(C*(1-frac)).toFixed(1));
+      }
+      c.setAttribute("transform","rotate(-90 46 46)");
+      return c;
+    }
+    svg.appendChild(arc("var(--line)",10,null,false));            /* the track */
+    if(has && p.rate>0) svg.appendChild(arc("var(--accent)",10,p.rate,true));
+    var mid=document.createElementNS(NS,"text");
+    mid.setAttribute("x","46"); mid.setAttribute("y","46");
+    mid.setAttribute("text-anchor","middle"); mid.setAttribute("dominant-baseline","central");
+    mid.setAttribute("class","ringpct");
+    mid.textContent = has ? pct+"%" : "\u2013";
+    svg.appendChild(mid);
+    fig.appendChild(svg);
+
+    var cap=el("figcaption","ringcap");
+    cap.appendChild(el("div","ringlab",HMAP[k].label+" goals"));
+    cap.appendChild(el("div","ringval", has
+      ? p.done+" of "+p.total+" achieved"
+      : "none set"));
+    cap.appendChild(el("div","ringsub", periodNoun(k)+" \u00b7 "+
+      Math.round(p.elapsed*100)+"% through"));
+    fig.appendChild(cap);
+
+    fig.title = has
+      ? HMAP[k].label+" goals in "+periodNoun(k)+": "+p.done+" of "+p.total+
+        " achieved ("+pct+"%). "+Math.round(p.elapsed*100)+"% of the period has passed."
+      : "No "+HMAP[k].label.toLowerCase()+" goals were open in "+periodNoun(k)+".";
+    rings.appendChild(fig);
+  });
+  box.appendChild(rings);
 
   var facts=el("div","facts");
   function fact(label,value,small,subNode){
@@ -1518,8 +1602,8 @@ function renderReadouts(){
     if(subNode) f.appendChild(subNode);
     facts.appendChild(f); return f;
   }
-  fact(h.label+" goals",String(gls.length),null,
-       el("div","fs",containerLabel(view.horizon)));
+  fact("Open "+h.label.toLowerCase()+" goals",String(gls.length),null,
+       el("div","fs","not yet achieved"));
 
   var leg=el("div","legend");
   [["l-hold",holding,"holding"],["l-slip",slipping,"slipping"],["l-stall",stalled,"stalled"]]
@@ -1597,7 +1681,12 @@ function goalCard(g){
   var acts=el("div","gactions");
   var retired=(g.status==="done"||g.status==="retired");
   var doneBtn=el("button","btn btn-ghost btn-sm",retired?"Reopen":"Mark achieved");
-  doneBtn.onclick=function(){ var c=clone(g); c.status=retired?"active":"done"; saveGoal(c); };
+  doneBtn.onclick=function(){
+    var c=clone(g);
+    c.status=retired?"active":"done";
+    if(c.status==="done") c.doneAt=new Date().toISOString(); else delete c.doneAt;
+    saveGoal(c);
+  };
   var editBtn=el("button","btn btn-ghost btn-sm","Edit");
   editBtn.onclick=function(){ openEdit(g); };
   acts.appendChild(doneBtn); acts.appendChild(editBtn);
@@ -2640,6 +2729,9 @@ window.addEventListener("online",function(){
   var FS_OK  = typeof window.showSaveFilePicker === "function";
   var SCOPE  = "https://www.googleapis.com/auth/drive.file";
   var FILENAME = "goal-console.json";
+  var IDB_NAME = "goal_console";
+  var APP = window.__gc;
+  var LABEL = "Goal Console";
 
   var handle = null, fsTimer = null;
   var clientId = null, token = null, tokenExp = 0, fileId = null;
@@ -2651,7 +2743,7 @@ window.addEventListener("online",function(){
   /* ---------- a tiny meta store, sharing the app's own database ---------- */
   function openDb(){
     return new Promise(function(res,rej){
-      var r = indexedDB.open("goal_console");
+      var r = indexedDB.open(IDB_NAME);
       r.onsuccess=function(){ res(r.result); };
       r.onerror=function(){ rej(r.error); };
     });
@@ -2731,7 +2823,7 @@ window.addEventListener("online",function(){
     return fetch(url, opts).then(function(r){
       if (r.status === 401 || r.status === 403){
         token = null;
-        return r.text().then(function(t){ throw new Error("access denied (" + r.status + ")"); });
+        return r.text().then(function(){ throw new Error("access denied (" + r.status + ")"); });
       }
       if (!r.ok) return r.text().then(function(t){ throw new Error("Drive " + r.status + " " + t.slice(0,120)); });
       return r;
@@ -2745,9 +2837,8 @@ window.addEventListener("online",function(){
       .then(function(j){ return (j.files && j.files[0]) || null; });
   }
   function createFile(text){
-    var meta = { name: FILENAME, mimeType: "application/json",
-                 description: "Goal Console database — goals, tactics, logged periods and vision board." };
-    var b = "gc" + Date.now();
+    var meta = { name: FILENAME, mimeType: "application/json", description: "Goal Console database — goals, systems, logged periods and vision board." };
+    var b = "bd" + Date.now();
     var body = "--" + b + "\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n" + JSON.stringify(meta) +
                "\r\n--" + b + "\r\nContent-Type: application/json\r\n\r\n" + text + "\r\n--" + b + "--";
     return dFetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", {
@@ -2780,11 +2871,11 @@ window.addEventListener("online",function(){
       .then(function(f){ if (f){ fileId = f.id; return readFile(f.id); } return null; })
       .then(function(remote){
         var pulled = 0;
-        if (remote && window.__gc){
-          var r = window.__gc.load(remote);
-          if (r) pulled = r.added + r.updated + r.vision;
+        if (remote && APP){
+          var r = APP.load(remote);
+          if (r) pulled = (r.added||0) + (r.updated||0) + (r.vision||0);
         }
-        var text = JSON.stringify(window.__gc.data(), null, 2);
+        var text = JSON.stringify(APP.data(), null, 2);
         return (fileId ? writeFileTo(fileId, text) : createFile(text)).then(function(){ return pulled; });
       })
       .then(function(pulled){
@@ -2812,8 +2903,8 @@ window.addEventListener("online",function(){
   function fsState(t){ var e=byId("fsState"); if(e) e.textContent=t; }
   function fsReconnect(v){ var b=byId("fsRe"); if(b) b.hidden = !v; }
   function writeLocalFile(){
-    if (!handle || !window.__gc) return Promise.resolve();
-    var text = JSON.stringify(window.__gc.data(), null, 2);
+    if (!handle || !APP) return Promise.resolve();
+    var text = JSON.stringify(APP.data(), null, 2);
     return handle.createWritable()
       .then(function(w){ return w.write(text).then(function(){ return w.close(); }); })
       .then(function(){ fsState(handle.name + " · saved " + hhmm()); })
@@ -2824,7 +2915,7 @@ window.addEventListener("online",function(){
     handle = h; fsReconnect(false);
     metaPut("fileHandle", h).catch(function(){});
     fsState(h.name + " · bound");
-    if (loud && window.__gc) window.__gc.status("Bound to " + h.name + " — every change now writes to that file.");
+    if (loud && APP) APP.status("Bound to " + h.name + " — every change now writes to that file.");
     scheduleFs();
   }
 
@@ -2855,7 +2946,23 @@ window.addEventListener("online",function(){
     return b;
   }
 
+  /* The two consoles are one site when hosted, so each links to the other.
+     This lives in the standalone layer because the hosted artifacts have
+     separate URLs and no such sibling. */
+  function crossLink(){
+    var nav = document.getElementById("pagenav");
+    if (!nav || document.getElementById("siteLink")) return;
+    var a = document.createElement("a");
+    a.id = "siteLink"; a.href = "./budget/"; a.textContent = "Budget \u2192";
+    a.style.cssText = "margin-left:9px;align-self:center;font-size:13px;font-weight:500;"
+      + "color:var(--muted);text-decoration:none;white-space:nowrap;border-bottom:1px solid transparent";
+    a.onmouseenter = function(){ a.style.color = "var(--ink)"; a.style.borderBottomColor = "var(--line-2)"; };
+    a.onmouseleave = function(){ a.style.color = "var(--muted)"; a.style.borderBottomColor = "transparent"; };
+    nav.parentNode.insertBefore(a, nav.nextSibling);
+  }
+
   function mount(){
+    crossLink();
     var anchor = document.querySelector(".sactions");
     if (!anchor) return setTimeout(mount, 120);
 
@@ -2907,19 +3014,19 @@ window.addEventListener("online",function(){
       fsRow.appendChild(btn("fsNew", "Choose file…", function(){
         window.showSaveFilePicker({
           suggestedName: FILENAME,
-          types: [{ description: "Goal Console database", accept: { "application/json": [".json"] } }]
+          types: [{ description: LABEL + " database", accept: { "application/json": [".json"] } }]
         }).then(function(h){ bindFs(h, true); }).catch(function(){});
       }));
       fsRow.appendChild(btn("fsOpen", "Open file…", function(){
         window.showOpenFilePicker({
           multiple: false,
-          types: [{ description: "Goal Console database", accept: { "application/json": [".json"] } }]
+          types: [{ description: LABEL + " database", accept: { "application/json": [".json"] } }]
         }).then(function(hs){
           var h = hs[0];
           return h.getFile().then(function(f){ return f.text(); }).then(function(txt){
-            var p; try { p = JSON.parse(txt); } catch(e){ window.__gc.status("That file is not valid JSON."); return; }
-            var r = window.__gc.load(p);
-            window.__gc.status(r ? ("Loaded " + h.name + " — " + r.added + " new, " + r.updated + " updated, " + r.vision + " vision cards.") : "No records in that file.");
+            var p; try { p = JSON.parse(txt); } catch(e){ APP.status("That file is not valid JSON."); return; }
+            var r = APP.load(p);
+            APP.status(r ? ("Loaded " + h.name + " — " + r.added + " new, " + r.updated + " updated.") : "No records in that file.");
             bindFs(h, false);
           });
         }).catch(function(){});
@@ -2937,7 +3044,7 @@ window.addEventListener("online",function(){
     anchor.parentNode.insertBefore(gd, anchor.nextSibling);
     gd.parentNode.insertBefore(fsRow, gd.nextSibling);
 
-    if (window.__gc) window.__gc.onChange = function(){ scheduleFs(); scheduleDrive(); };
+    if (APP) APP.onChange = function(){ scheduleFs(); scheduleDrive(); };
 
     /* restore saved settings */
     metaGet("driveClientId").then(function(v){
