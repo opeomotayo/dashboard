@@ -406,8 +406,12 @@ textarea{resize:vertical;min-height:66px;line-height:1.5}
 .steplab{font-family:var(--display);font-size:14.5px;font-weight:600;letter-spacing:-.01em;
   padding:0 8px;min-width:88px;text-align:center}
 .navcount{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.navsel{display:inline-flex;align-items:center;gap:7px}
+.navsellab{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--faint);white-space:nowrap}
 .yearsel{width:auto;min-width:92px;font-family:var(--display);font-weight:600;font-size:14.5px;
   padding:7px 10px;letter-spacing:-.01em}
+@media(max-width:520px){ .navsel{gap:5px} .yearsel{min-width:0;font-size:13.5px;padding:6px 8px} }
 
 /* dense day grids scroll rather than crushing the labels */
 .pgrid{overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
@@ -738,7 +742,7 @@ function periodsInView(h){
   } else if(h==="quarterly"){
     for(i=0;i<4;i++) out.push(new Date(y,i*3,1));
   } else {
-    for(i=0;i<YEAR_SPAN;i++) out.push(new Date(view.year+i,0,1));
+    yearOptions().forEach(function(yy){ out.push(new Date(yy,0,1)); });
   }
   return out;
 }
@@ -752,12 +756,21 @@ function periodIndex(d,h){
 function periodIsFuture(d,h){ return periodIndex(d,h)>periodIndex(new Date(),h); }
 function periodIsNow(d,h){ return periodKey(d,h)===periodKey(new Date(),h); }
 function containerLabel(h){
-  var M=["January","February","March","April","May","June","July","August","September","October","November","December"];
-  if(h==="daily"||h==="weekly") return M[view.month]+" "+view.year;
-  if(h==="yearly") return view.year+"\u2013"+(view.year+YEAR_SPAN-1);
+  if(h==="daily"||h==="weekly") return MONTHS[view.month]+" "+view.year;
+  if(h==="yearly"){ var ys=yearOptions(); return ys[0]+"\u2013"+ys[ys.length-1]; }
   return ""+view.year;
 }
-var YEAR_SPAN=4;   /* the selected year and the three that follow */
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var QUARTERS=["Quarter 1","Quarter 2","Quarter 3","Quarter 4"];
+var YEAR_SPAN=5;   /* the current year and the four that follow */
+
+/* the years the year dropdown offers, plus whatever year is being viewed */
+function yearOptions(){
+  var y0=new Date().getFullYear(), out=[], i;
+  for(i=0;i<YEAR_SPAN;i++) out.push(y0+i);
+  if(out.indexOf(view.year)<0) out.unshift(view.year);
+  return out;
+}
 
 function periodKey(d,h){
   if(h==="daily")     return ymd(d);
@@ -1338,35 +1351,49 @@ function renderHorizons(){
 function renderPeriodNav(){
   var box=$("#periodnav"); if(!box) return;
   box.textContent="";
-  var now=new Date();
-  var MM=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var now=new Date(), h=view.horizon;
 
-  /* goals sit on a year; the daily and weekly systems under them sit in a month */
-  var step=el("div","stepper");
-  var prev=el("button","stepnav","\u2039"); prev.type="button";
-  prev.setAttribute("aria-label","Previous month"); prev.title="Previous month";
-  prev.onclick=function(){ if(view.month===0){view.month=11;view.year--;} else view.month--; render(); };
-  var lab=el("span","steplab",MM[view.month]);
-  var next=el("button","stepnav","\u203a"); next.type="button";
-  next.setAttribute("aria-label","Next month"); next.title="Next month";
-  next.onclick=function(){ if(view.month===11){view.month=0;view.year++;} else view.month++; render(); };
-  step.appendChild(prev); step.appendChild(lab); step.appendChild(next);
-  box.appendChild(step);
-  box.appendChild(el("span","navcount","system strips show this month"));
+  function sel(id,label,opts,val,on){
+    var w=el("label","navsel");
+    w.appendChild(el("span","navsellab",label));
+    var s=document.createElement("select");
+    s.id=id; s.className="yearsel"; s.setAttribute("aria-label",label);
+    opts.forEach(function(o){
+      var op=document.createElement("option");
+      op.value=String(o.v); op.textContent=o.t; s.appendChild(op);
+    });
+    s.value=String(val);
+    s.onchange=function(){ on(parseInt(this.value,10)); render(); };
+    w.appendChild(s);
+    box.appendChild(w);
+    return s;
+  }
+  function opts(list,from){ return list.map(function(t,i){ return {v:(from||0)+i,t:t}; }); }
 
-  var ysel=document.createElement("select");
-  ysel.id="yearSel"; ysel.className="yearsel"; ysel.setAttribute("aria-label","Year");
-  for(var i=0;i<YEAR_SPAN;i++){
-    var y=now.getFullYear()+i;
-    var o=document.createElement("option"); o.value=String(y); o.textContent=String(y);
-    ysel.appendChild(o);
+  var years=yearOptions().map(function(y){ return {v:y,t:String(y)}; });
+
+  if(h==="monthly"){
+    sel("monthSel","Month",opts(MONTHS),view.month,function(v){ view.month=v; });
+    sel("yearSel","Year",years,view.year,function(v){ view.year=v; });
+    box.appendChild(el("span","navcount","systems run inside "+MONTHS[view.month]+" "+view.year));
+
+  } else if(h==="quarterly"){
+    sel("quarterSel","Quarter",opts(QUARTERS),Math.floor(view.month/3),function(v){
+      /* stay on the current month when it sits in the quarter picked, else open at its first */
+      var n=new Date();
+      view.month=(n.getFullYear()===view.year && Math.floor(n.getMonth()/3)===v) ? n.getMonth() : v*3;
+    });
+    sel("yearSel","Year",years,view.year,function(v){ view.year=v; });
+    var q=Math.floor(view.month/3);
+    sel("monthSel","Systems show",opts(MONTHS.slice(q*3,q*3+3),q*3),view.month,function(v){ view.month=v; });
+
+  } else {
+    sel("yearSel","Year",years,view.year,function(v){
+      var n=new Date(); view.year=v;
+      view.month=(n.getFullYear()===v) ? n.getMonth() : 0;
+    });
+    sel("monthSel","Systems show",opts(MONTHS),view.month,function(v){ view.month=v; });
   }
-  if(view.year<now.getFullYear()||view.year>now.getFullYear()+YEAR_SPAN-1){
-    var o2=document.createElement("option"); o2.value=String(view.year); o2.textContent=String(view.year);
-    ysel.insertBefore(o2,ysel.firstChild);
-  }
-  ysel.value=String(view.year);
-  ysel.onchange=function(){ view.year=parseInt(this.value,10); render(); };
 
   var spacer=el("span"); spacer.style.flex="1 1 10px";
   box.appendChild(spacer);
@@ -1375,7 +1402,6 @@ function renderPeriodNav(){
     today.onclick=function(){ view.year=now.getFullYear(); view.month=now.getMonth(); render(); };
     box.appendChild(today);
   }
-  box.appendChild(ysel);
 }
 
 function renderReadouts(){
