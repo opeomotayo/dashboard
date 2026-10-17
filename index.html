@@ -395,6 +395,26 @@ textarea{resize:vertical;min-height:66px;line-height:1.5}
 .goal.loose{border-style:dashed}
 .goal.loose .syslist{margin-top:14px}
 
+/* ── rephrase with Claude ──────────────────────────────────────────── */
+.airow{border-top:1px solid var(--line);padding-top:15px;margin-top:3px}
+.aihead{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.aihead .hint{flex:1 1 180px;margin:0}
+.aistyle{width:auto;min-width:120px;font-size:13px;padding:6px 9px}
+.aipanel{margin-top:13px;border:1px solid var(--line);border-radius:12px;
+  background:var(--sunken);padding:13px 14px}
+.aistate{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted)}
+.aistate.bad{color:var(--stall-ink)}
+.aisug+.aisug{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.aisug .aflab{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+.aisug .aiold{font-size:13px;color:var(--faint);margin-bottom:4px}
+.aisug .ainew{font-size:14.5px;line-height:1.45;color:var(--ink)}
+.aisug .ainew b{font-weight:600}
+.aisug .aiact{margin-top:7px}
+.aifoot{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:12px;
+  border-top:1px solid var(--line)}
+.aifoot .grow{flex:1 1 10px}
+
 /* ── period navigator ──────────────────────────────────────────────── */
 .periodnav{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:16px}
 .stepper{display:inline-flex;align-items:center;gap:2px;background:var(--surface);
@@ -610,6 +630,21 @@ textarea{resize:vertical;min-height:66px;line-height:1.5}
           <label for="fUnit">Unit</label>
           <input type="text" id="fUnit" placeholder="sessions">
         </div>
+      </div>
+      <div class="field airow" id="aiRow" hidden>
+        <div class="aihead">
+          <button type="button" class="btn btn-sm" id="aiBtn">Rephrase with Claude</button>
+          <select id="aiStyle" class="aistyle" aria-label="How to rephrase">
+            <option value="sharper">Sharper</option>
+            <option value="shorter">Shorter</option>
+            <option value="specific">More specific</option>
+            <option value="plainer">Plainer English</option>
+            <option value="motivating">More driving</option>
+          </select>
+          <button type="button" class="btn btn-sm" id="aiStop" hidden>Stop</button>
+          <span class="hint" id="aiNote">Claude rewrites the wording. Your facts, numbers and dates stay put.</span>
+        </div>
+        <div class="aipanel" id="aiPanel" hidden></div>
       </div>
     </div>
     <div class="mfoot">
@@ -2119,8 +2154,199 @@ function renderSegs(){
   $("#qtyFields").hidden = draft.metric!=="quantity";
   if(draft.kind==="system") syncCommitHint();
 }
-function showModal(){ $("#scrim").hidden=false; setTimeout(function(){$("#fTitle").focus();},20); }
-function hideModal(){ $("#scrim").hidden=true; }
+/* ===================== rephrase with Claude ===================== */
+/* Available only where the page runs inside a Claude viewer. A self-hosted
+   copy has no window.claude, so the whole row stays hidden. */
+var aiSample=null, aiCtl=null, aiBusy=false, aiOff=false;
+
+if(window.claude && typeof window.claude.use==="function"){
+  window.claude.use("sample").then(function(s){
+    if(!s) return;
+    aiSample=s;
+    var row=$("#aiRow"); if(row) row.hidden=false;
+  }).catch(function(){});
+}
+
+var AI_STYLE={
+  sharper:"Make it sharper and more concrete. Cut hedging, filler and throat-clearing.",
+  shorter:"Make it shorter. Keep every fact, lose the words doing no work.",
+  specific:"Make it more specific and observable, so it is obvious from the outside whether it happened.",
+  plainer:"Put it in plain English. No jargon, no abstraction, nothing that needs re-reading.",
+  motivating:"Give it more drive and momentum — but no hype, no exclamation marks, no slogans."
+};
+var AI_ERR={
+  not_granted:"You declined Claude access for this page. Reload to be asked again.",
+  sampling_disabled:"Claude is not available on this account.",
+  not_declared:"This version of the console cannot reach Claude.",
+  capability_disabled:"Claude is not available in this view.",
+  capability_removed:"This viewer is too old for the rephrase feature.",
+  rate_limited:"Too many requests just now. Give it a minute and try again.",
+  session_expired:"Your session expired — sign in again and retry.",
+  refused:"Claude declined to rewrite this. Try changing the wording yourself first.",
+  empty_completion:"Claude came back empty. Try a different style.",
+  invalid_json:"The reply came back malformed. Try again.",
+  prompt_too_large:"There is too much text here to rewrite in one go.",
+  upstream_error:"That didn't get through. Try again in a moment."
+};
+
+function aiSetState(txt,bad){
+  var p=$("#aiPanel"); p.hidden=false; p.textContent="";
+  var s=el("div","aistate"+(bad?" bad":""),txt); p.appendChild(s);
+}
+function aiReset(){
+  if(aiCtl){ aiCtl.abort(); aiCtl=null; }
+  aiBusy=false;
+  var p=$("#aiPanel"); if(p){ p.hidden=true; p.textContent=""; }
+  var st=$("#aiStop"); if(st) st.hidden=true;
+  var b=$("#aiBtn"); if(b){ b.disabled=aiOff; b.textContent="Rephrase with Claude"; }
+}
+
+function aiCurrent(){
+  return {
+    title:  $("#fTitle").value.trim(),
+    outcome:$("#fOutcome").value.trim(),
+    why:    $("#fWhy").value.trim(),
+    steps:  (draft.stepsOverride||draft.steps||[]).map(function(s){return s.text||"";})
+  };
+}
+
+function aiPrompt(cur){
+  var isSys=draft.kind==="system";
+  return [
+    "You are rewriting the wording of one entry in a personal goal tracker. "+
+      (AI_STYLE[$("#aiStyle").value]||AI_STYLE.sharper),
+    "",
+    "Hard rules:",
+    "- Keep the meaning. Keep every fact, number, date, place and name exactly as given. Invent nothing.",
+    "- Do not add a frequency, a commitment or a deadline that is not already in the text.",
+    "- Stay in the writer's voice: first person where the original is, plain declarative sentences, British English.",
+    "- No emoji, no exclamation marks, no corporate or self-help register.",
+    "- title: one line, no full stop.",
+    "- outcome: one sentence naming an observable end state.",
+    "- why: one or two sentences.",
+    "- steps: short imperative lines, same number and same order as given.",
+    "- Return a field unchanged if it is already good. Return \"\" for a field that came in empty.",
+    "",
+    isSys ? "This entry is a SYSTEM: a repeated action run on a cadence."
+          : "This entry is a GOAL: an outcome to reach.",
+    "",
+    "The entry:",
+    JSON.stringify(cur,null,1),
+    "",
+    "Reply with only a JSON object: "+
+      "{\"title\": string, \"outcome\": string, \"why\": string, \"steps\": string[]}"
+  ].join("\n");
+}
+
+function aiRender(cur,sug){
+  var p=$("#aiPanel"); p.hidden=false; p.textContent="";
+  /* label each suggestion exactly as the field above it is labelled */
+  function labOf(id,fallback){ var e=$(id); return (e&&e.textContent)||fallback; }
+  var fields=[["title",labOf("#fTitleLab","The goal")],
+              ["outcome",labOf("#fOutcomeLab","Done means")],
+              ["why",labOf("#fWhyLab","Why it matters")]];
+  var shown=0;
+
+  fields.forEach(function(f){
+    var k=f[0], nv=typeof sug[k]==="string"?sug[k].trim():"";
+    if(!nv || nv===cur[k]) return;
+    shown++;
+    var box=el("div","aisug");
+    box.appendChild(el("div","aflab",f[1]));
+    if(cur[k]) box.appendChild(el("div","aiold",cur[k]));
+    box.appendChild(el("div","ainew",nv));
+    var act=el("div","aiact");
+    var use=el("button","btn btn-sm","Use this"); use.type="button";
+    use.onclick=function(){
+      $(k==="title"?"#fTitle":k==="outcome"?"#fOutcome":"#fWhy").value=nv;
+      use.textContent="Applied"; use.disabled=true;
+    };
+    act.appendChild(use); box.appendChild(act);
+    p.appendChild(box);
+  });
+
+  var ns=Array.isArray(sug.steps)?sug.steps:[];
+  var stepsChanged=ns.length===cur.steps.length &&
+    ns.some(function(t,i){ return String(t).trim() && String(t).trim()!==cur.steps[i]; });
+  if(stepsChanged){
+    shown++;
+    var sb=el("div","aisug");
+    sb.appendChild(el("div","aflab","Protocol steps"));
+    ns.forEach(function(t,i){
+      var nt=String(t).trim(); if(!nt) return;
+      if(cur.steps[i] && cur.steps[i]!==nt) sb.appendChild(el("div","aiold",cur.steps[i]));
+      sb.appendChild(el("div","ainew","· "+nt));
+    });
+    var sact=el("div","aiact");
+    var suse=el("button","btn btn-sm","Use these steps"); suse.type="button";
+    suse.onclick=function(){
+      var base=draft.stepsOverride||draft.steps||[];
+      draft.stepsOverride=base.map(function(s,i){
+        var nt=ns[i]!=null?String(ns[i]).trim():"";
+        return {id:s.id,text:nt||s.text};
+      });
+      suse.textContent="Applied"; suse.disabled=true;
+    };
+    sact.appendChild(suse); sb.appendChild(sact);
+    p.appendChild(sb);
+  }
+
+  if(!shown){ aiSetState("Claude left it as it is — nothing it would change."); return; }
+
+  var foot=el("div","aifoot");
+  var all=el("button","btn btn-sm btn-primary","Use all"); all.type="button";
+  all.onclick=function(){
+    Array.prototype.forEach.call(p.querySelectorAll(".aiact button"),function(b){
+      if(!b.disabled) b.click();
+    });
+  };
+  var again=el("button","btn btn-sm","Try another"); again.type="button";
+  again.onclick=function(){ aiRephrase(); };
+  var dis=el("button","btn btn-sm","Discard"); dis.type="button";
+  dis.onclick=function(){ $("#aiPanel").hidden=true; $("#aiPanel").textContent=""; };
+  foot.appendChild(all); foot.appendChild(again);
+  foot.appendChild(el("span","grow")); foot.appendChild(dis);
+  p.appendChild(foot);
+}
+
+function aiRephrase(){
+  if(!aiSample || aiBusy || aiOff) return;
+  var cur=aiCurrent();
+  if(!cur.title && !cur.outcome && !cur.why && !cur.steps.length){
+    aiSetState("Write something first — there is nothing to rephrase.",true); return;
+  }
+  aiBusy=true;
+  var btn=$("#aiBtn"), stop=$("#aiStop");
+  btn.disabled=true; btn.textContent="Thinking…"; stop.hidden=false;
+  aiSetState("Claude is reading it…");
+  aiCtl=new AbortController();
+  aiSample.json(aiPrompt(cur),{modelTier:"quick",cache:false,signal:aiCtl.signal})
+    .then(function(sug){
+      if(!sug||typeof sug!=="object"){ aiSetState(AI_ERR.invalid_json,true); return; }
+      aiRender(cur,sug);
+    })
+    .catch(function(e){
+      var code=(e&&e.code)||"upstream_error";
+      if(code==="cancelled"){ $("#aiPanel").hidden=true; return; }
+      aiSetState(AI_ERR[code]||AI_ERR.upstream_error,true);
+      /* these are permanent for this page load — stop offering the button */
+      if(["not_granted","sampling_disabled","not_declared",
+          "capability_disabled","capability_removed"].indexOf(code)>=0) aiOff=true;
+    })
+    .then(function(){
+      aiBusy=false; aiCtl=null;
+      stop.hidden=true;
+      btn.textContent="Rephrase with Claude";
+      btn.disabled=aiOff;
+    });
+}
+
+$("#aiBtn").onclick=aiRephrase;
+$("#aiStop").onclick=function(){ if(aiCtl) aiCtl.abort(); };
+$("#aiStyle").onchange=function(){ var p=$("#aiPanel"); p.hidden=true; p.textContent=""; };
+
+function showModal(){ aiReset(); $("#scrim").hidden=false; setTimeout(function(){$("#fTitle").focus();},20); }
+function hideModal(){ aiReset(); $("#scrim").hidden=true; }
 
 $("#newBtn").onclick=function(){ if(page==="vision") $("#vFile").click(); else openNew(); };
 $("#mCancel").onclick=hideModal;
@@ -2151,7 +2377,7 @@ $("#mSave").onclick=function(){
   var cn=parseInt($("#fCommitN").value,10)||1, cm=parseInt($("#fCommitM").value,10)||1;
   g.commitM=Math.max(1,Math.min(99,cm));
   g.commitN=Math.max(1,Math.min(g.commitM,cn));
-  g.steps=protocolOf(g); delete g.tactics;
+  g.steps=draft.stepsOverride||protocolOf(g); delete g.tactics;
   g.stepLog=g.stepLog||{};
   g.schema=SCHEMA;
   if(!g.startDate) g.startDate=ymd(new Date());
