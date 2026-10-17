@@ -1608,10 +1608,12 @@ window.addEventListener("online",function(){
      This lives in the standalone layer because the hosted artifacts have
      separate URLs and no such sibling. */
   function crossLink(){
-    var nav = document.getElementById("pagenav");
-    if (!nav || document.getElementById("siteLink")) return;
+    if (document.getElementById("siteLink")) return;
+    /* after the page tabs where a console has them, otherwise beside the title */
+    var nav = document.getElementById("pagenav") || document.querySelector(".brand");
+    if (!nav) return;
     var a = document.createElement("a");
-    a.id = "siteLink"; a.href = "../goal/"; a.textContent = "Goals \u2192";
+    a.id = "siteLink"; a.href = "../"; a.textContent = "\u2190 Dashboard";
     a.style.cssText = "margin-left:9px;align-self:center;font-size:13px;font-weight:500;"
       + "color:var(--muted);text-decoration:none;white-space:nowrap;border-bottom:1px solid transparent";
     a.onmouseenter = function(){ a.style.color = "var(--ink)"; a.style.borderBottomColor = "var(--line-2)"; };
