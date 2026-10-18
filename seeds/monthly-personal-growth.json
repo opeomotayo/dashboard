@@ -1,0 +1,429 @@
+{
+  "format": "goal-console",
+  "version": 2,
+  "exportedAt": "2026-10-18T07:00:00.000Z",
+  "goalCount": 12,
+  "records": [
+    {
+      "status": "active",
+      "log": {},
+      "stepLog": {},
+      "deleted": false,
+      "createdAt": "2026-10-18T07:00:00.000Z",
+      "updatedAt": "2026-10-18T07:00:00.000Z",
+      "schema": 4,
+      "kind": "goal",
+      "parentId": "",
+      "horizon": "monthly",
+      "track": "habit",
+      "metric": "binary",
+      "targetValue": 0,
+      "unit": "",
+      "commitN": 1,
+      "commitM": 1,
+      "startDate": "2026-10-18",
+      "targetDate": "2026-10-31",
+      "steps": [],
+      "id": "mg-morning",
+      "title": "Complete the 5:30am morning routine before 7am",
+      "outcome": "The routine done on at least 26 days this month — about 85%",
+      "why": "To develop spiritual maturity, physical fitness, effective communication, knowledge, self-discipline and purposeful living through consistent daily habits. Eighty-five minutes of activity between 5:30 and 7:00, with five minutes for transitions.",
+      "category": "Personal"
+    },
+    {
+      "status": "active",
+      "log": {},
+      "stepLog": {},
+      "deleted": false,
+      "createdAt": "2026-10-18T07:00:00.000Z",
+      "updatedAt": "2026-10-18T07:00:00.000Z",
+      "schema": 4,
+      "kind": "system",
+      "horizon": "daily",
+      "commitN": 26,
+      "commitM": 30,
+      "metric": "quantity",
+      "startDate": "2026-10-18",
+      "targetDate": "",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Up at 5:30 — kit laid out the night before"
+        },
+        {
+          "id": "s2",
+          "text": "Thirty minutes: prayer while jogging"
+        },
+        {
+          "id": "s3",
+          "text": "Burpees before the run ends"
+        }
+      ],
+      "id": "mg-prayer",
+      "parentId": "mg-morning",
+      "category": "Spiritual",
+      "title": "Prayer, jogging and burpees — 5:30 to 6:00",
+      "outcome": "13 hours of prayer and movement across the month",
+      "why": "Thirty minutes that does two things at once: the day starts with God and with the body moving.",
+      "targetValue": 13,
+      "unit": "hours"
+    },
+    {
+      "status": "active",
+      "log": {},
+      "stepLog": {},
+      "deleted": false,
+      "createdAt": "2026-10-18T07:00:00.000Z",
+      "updatedAt": "2026-10-18T07:00:00.000Z",
+      "schema": 4,
+      "kind": "system",
+      "horizon": "daily",
+      "commitN": 26,
+      "commitM": 30,
+      "metric": "quantity",
+      "startDate": "2026-10-18",
+      "targetDate": "",
+      "steps": [
+        {
+          "id": "s4",
+          "text": "The next chapter in sequence, no skipping ahead"
+        },
+        {
+          "id": "s5",
+          "text": "Ten minutes: read, then sit with it"
+        },
+        {
+          "id": "s6",
+          "text": "One line on what it means for today"
+        }
+      ],
+      "id": "mg-bible",
+      "parentId": "mg-morning",
+      "category": "Spiritual",
+      "title": "Bible study and reflection — 6:00 to 6:10",
+      "outcome": "26 chapter-by-chapter study sessions",
+      "why": "Chapter by chapter, in sequence. Ten minutes a day covers more in a month than an occasional long sitting.",
+      "targetValue": 26,
+      "unit": "study sessions"
+    },
+    {
+      "status": "active",
+      "log": {},
+      "stepLog": {},
+      "deleted": false,
+      "createdAt": "2026-10-18T07:00:00.000Z",
+      "updatedAt": "2026-10-18T07:00:00.000Z",
+      "schema": 4,
+      "kind": "system",
+      "horizon": "daily",
+      "commitN": 26,
+      "commitM": 30,
+      "metric": "quantity",
+      "startDate": "2026-10-18",
+      "targetDate": "",
+      "steps": [
+        {
+          "id": "s7",
+          "text": "Five minutes out loud, standing"
+        },
+        {
+          "id": "s8",
+          "text": "One idea explained end to end"
+        },
+        {
+          "id": "s9",
+          "text": "No filler words — pause instead"
+        }
+      ],
+      "id": "mg-articulation",
+      "parentId": "mg-morning",
+      "category": "Career",
+      "title": "Articulation training — 6:10 to 6:15",
+      "outcome": "130 minutes of deliberate speaking practice",
+      "why": "Speaking well is trained, not inherited. Five minutes a day out loud beats an hour once a month.",
+      "targetValue": 130,
+      "unit": "minutes"
+    },
+    {
+      "status": "active",
+      "log": {},
+      "stepLog": {},
+      "deleted": false,
+      "createdAt": "2026-10-18T07:00:00.000Z",
+      "updatedAt": "2026-10-18T07:00:00.000Z",
+      "schema": 4,
+      "kind": "system",
+      "horizon": "daily",
+      "commitN": 26,
+      "commitM": 30,
+      "metric": "quantity",
+      "startDate": "2026-10-18",
+      "targetDate": "",
+      "steps": [
+        {
+          "id": "sa",
+          "text": "Spoken aloud, not read silently"
+        },
+        {
+          "id": "sb",
+          "text": "Five minutes, no rushing the last one"
+        }
+      ],
+      "id": "mg-declare",
+      "parentId": "mg-morning",
+      "category": "Spiritual",
+      "title": "Confessions and declarations — 6:15 to 6:20",
+      "outcome": "130 minutes of declarations spoken, not skimmed",
+      "why": "What gets said out loud, in the first hour, sets the posture for the rest of the day.",
+      "targetValue": 130,
+      "unit": "minutes"
+    },
+    {
+      "status": "active",
+      "log": {},
+      "stepLog": {},
+      "deleted": false,
+      "createdAt": "2026-10-18T07:00:00.000Z",
+      "updatedAt": "2026-10-18T07:00:00.000Z",
+      "schema": 4,
+      "kind": "system",
+      "horizon": "daily",
+      "commitN": 26,
+      "commitM": 30,
+      "metric": "quantity",
+      "startDate": "2026-10-18",
+      "targetDate": "",
+      "steps": [
+        {
+          "id": "sc",
+          "text": "Yesterday in one line — what actually happened"
+        },
+        {
+          "id": "sd",
+          "text": "Three priority actions for today"
+        },
+        {
+          "id": "se",
+          "text": "Name which monthly goal each one moves"
+        }
+      ],
+      "id": "mg-planning",
+      "parentId": "mg-morning",
+      "category": "Personal",
+      "title": "Daily planning and reflection — 6:20 to 6:30",
+      "outcome": "26 planning sessions, each naming three priority actions",
+      "why": "The hinge of the routine: this is where the morning turns into a day with a shape.",
+      "targetValue": 26,
+      "unit": "planning sessions"
+    },
+    {
+      "status": "active",
+      "log": {},
+      "stepLog": {},
+      "deleted": false,
+      "createdAt": "2026-10-18T07:00:00.000Z",
+      "updatedAt": "2026-10-18T07:00:00.000Z",
+      "schema": 4,
+      "kind": "system",
+      "horizon": "daily",
+      "commitN": 26,
+      "commitM": 30,
+      "metric": "quantity",
+      "startDate": "2026-10-18",
+      "targetDate": "",
+      "steps": [
+        {
+          "id": "sf",
+          "text": "Ten minutes, the current book, no switching"
+        },
+        {
+          "id": "sg",
+          "text": "One note before closing it"
+        }
+      ],
+      "id": "mg-reading",
+      "parentId": "mg-morning",
+      "category": "Personal",
+      "title": "Book reading — 6:30 to 6:40",
+      "outcome": "260 minutes of reading across the month",
+      "why": "Ten minutes a day is four and a bit hours a month — a book, reliably, without ever finding time for one.",
+      "targetValue": 260,
+      "unit": "minutes"
+    },
+    {
+      "status": "active",
+      "log": {},
+      "stepLog": {},
+      "deleted": false,
+      "createdAt": "2026-10-18T07:00:00.000Z",
+      "updatedAt": "2026-10-18T07:00:00.000Z",
+      "schema": 4,
+      "kind": "system",
+      "horizon": "daily",
+      "commitN": 26,
+      "commitM": 30,
+      "metric": "quantity",
+      "startDate": "2026-10-18",
+      "targetDate": "",
+      "steps": [
+        {
+          "id": "sh",
+          "text": "Fifteen minutes — shower and breakfast"
+        },
+        {
+          "id": "si",
+          "text": "At the desk by 7:00"
+        }
+      ],
+      "id": "mg-care",
+      "parentId": "mg-morning",
+      "category": "Health",
+      "title": "Shower and breakfast — 6:40 to 6:55",
+      "outcome": "26 mornings that end at the desk on time",
+      "why": "The routine only counts if it lands you ready. Fifteen minutes, then five to move across.",
+      "targetValue": 26,
+      "unit": "mornings"
+    },
+    {
+      "status": "active",
+      "log": {},
+      "stepLog": {},
+      "deleted": false,
+      "createdAt": "2026-10-18T07:00:00.000Z",
+      "updatedAt": "2026-10-18T07:00:00.000Z",
+      "schema": 4,
+      "kind": "goal",
+      "parentId": "",
+      "horizon": "monthly",
+      "track": "habit",
+      "metric": "binary",
+      "targetValue": 0,
+      "unit": "",
+      "commitN": 1,
+      "commitM": 1,
+      "startDate": "2026-10-18",
+      "targetDate": "2026-10-31",
+      "steps": [],
+      "id": "mg-execute",
+      "title": "Execute on the month's priorities from 7am",
+      "outcome": "Every working day moved a monthly goal; every Sunday reviewed",
+      "why": "The morning routine is the foundation. This is what it is a foundation for: deliberate progress, honest ownership of the outcomes, and rest taken on purpose rather than when everything is finished.",
+      "category": "Career"
+    },
+    {
+      "status": "active",
+      "log": {},
+      "stepLog": {},
+      "deleted": false,
+      "createdAt": "2026-10-18T07:00:00.000Z",
+      "updatedAt": "2026-10-18T07:00:00.000Z",
+      "schema": 4,
+      "kind": "system",
+      "horizon": "daily",
+      "commitN": 5,
+      "commitM": 7,
+      "metric": "binary",
+      "startDate": "2026-10-18",
+      "targetDate": "",
+      "steps": [
+        {
+          "id": "sj",
+          "text": "The three priority actions come from the 6:20 planning"
+        },
+        {
+          "id": "sk",
+          "text": "At least one moves a monthly goal"
+        },
+        {
+          "id": "sl",
+          "text": "Done before the day fills up"
+        }
+      ],
+      "id": "mg-progress",
+      "parentId": "mg-execute",
+      "category": "Career",
+      "title": "Move one monthly goal, every working day",
+      "outcome": "Meaningful progress on at least one monthly goal each working day",
+      "why": "Three priority actions named in the morning, and at least one of them moves a goal rather than the inbox.",
+      "targetValue": 0,
+      "unit": ""
+    },
+    {
+      "status": "active",
+      "log": {},
+      "stepLog": {},
+      "deleted": false,
+      "createdAt": "2026-10-18T07:00:00.000Z",
+      "updatedAt": "2026-10-18T07:00:00.000Z",
+      "schema": 4,
+      "kind": "system",
+      "horizon": "daily",
+      "commitN": 26,
+      "commitM": 30,
+      "metric": "quantity",
+      "startDate": "2026-10-18",
+      "targetDate": "",
+      "steps": [
+        {
+          "id": "sm",
+          "text": "One lesson or improvement, written down"
+        },
+        {
+          "id": "sn",
+          "text": "Own the decision, not the circumstances"
+        }
+      ],
+      "id": "mg-accountable",
+      "parentId": "mg-execute",
+      "category": "Personal",
+      "title": "Record one lesson learned",
+      "outcome": "26 written entries — what I would do differently",
+      "why": "Taking responsibility for decisions, actions and outcomes only means something if it is written down and read back.",
+      "targetValue": 26,
+      "unit": "entries"
+    },
+    {
+      "status": "active",
+      "log": {},
+      "stepLog": {},
+      "deleted": false,
+      "createdAt": "2026-10-18T07:00:00.000Z",
+      "updatedAt": "2026-10-18T07:00:00.000Z",
+      "schema": 4,
+      "kind": "system",
+      "horizon": "weekly",
+      "commitN": 1,
+      "commitM": 1,
+      "metric": "quantity",
+      "startDate": "2026-10-18",
+      "targetDate": "",
+      "steps": [
+        {
+          "id": "so",
+          "text": "Read back the week"
+        },
+        {
+          "id": "sp",
+          "text": "Celebrate what landed"
+        },
+        {
+          "id": "sq",
+          "text": "Name what slipped, and why"
+        },
+        {
+          "id": "sr",
+          "text": "Plan the week ahead"
+        }
+      ],
+      "id": "mg-review",
+      "parentId": "mg-execute",
+      "category": "Personal",
+      "title": "Sunday progress review",
+      "outcome": "Four reviews a month: progress, setbacks, next week planned",
+      "why": "Also the week's permission to stop. Breaks during the day and a proper review on Sunday are the rest side of the bargain.",
+      "targetValue": 4,
+      "unit": "reviews"
+    }
+  ],
+  "vision": []
+}

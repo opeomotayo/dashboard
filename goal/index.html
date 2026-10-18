@@ -367,6 +367,11 @@ textarea{resize:vertical;min-height:66px;line-height:1.5}
 
 
 /* ── goal rollup and nested systems ────────────────────────────────── */
+.tracktag{font-family:var(--mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;
+  padding:2px 8px;border-radius:999px;white-space:nowrap;flex:none;
+  background:var(--sunken);color:var(--muted);border:1px solid var(--line)}
+.tracktag[data-t="achievement"]{background:var(--accent-soft);color:var(--accent-ink);
+  border-color:transparent}
 .kindtag{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
   color:var(--faint);border:1px solid var(--line);border-radius:4px;padding:2px 7px;margin-left:4px}
 .rollup{margin-top:15px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
@@ -591,6 +596,11 @@ textarea{resize:vertical;min-height:66px;line-height:1.5}
       <div class="field">
         <label for="fWhy" id="fWhyLab">Why it matters</label>
         <textarea id="fWhy" placeholder="What running this reliably actually changes."></textarea>
+      </div>
+      <div class="field" id="trackWrap">
+        <label id="fTrackLab">Kind of goal</label>
+        <div class="seg" id="fTrack" role="group" aria-label="Kind of goal"></div>
+        <span class="hint" id="trackHint"></span>
       </div>
       <div class="field">
         <label id="fHorizonLab">Horizon</label>
@@ -981,8 +991,12 @@ function adherenceOf(g){
   cells.forEach(function(d){
     if(periodIsFuture(d,g.horizon)) return;              // the future is not a miss
     if(start && shiftPeriod(d,g.horizon,1)<=start) return; // period closed before the system began
+    var hit=!!log[periodKey(d,g.horizon)];
+    /* the period you are still inside counts only once you have run it:
+       a daily system is not a miss at six in the morning */
+    if(!hit && periodIsNow(d,g.horizon)) return;
     available++;
-    if(log[periodKey(d,g.horizon)]) ran++;
+    if(hit) ran++;
   });
   var c=commitOf(g);
   return {ran:ran, available:available,
@@ -994,7 +1008,15 @@ function statusOf(g){
   /* a goal is read through the systems under it, never through a log of its own */
   if(isGoalRec(g)){
     var r=rollupOf(g);
-    if(!r || r.available===0) return "ok";               // no systems yet, or nothing to judge
+    /* an achievement goal with no systems is simply not reached yet, and a
+       target date that has passed is the only thing that can make it late */
+    if(!r || r.available===0){
+      if(isAchievement(g) && g.targetDate){
+        var due=parseYmd(g.targetDate);
+        if(due && due < new Date()) return "bad";
+      }
+      return "ok";
+    }
     if(r.rate>=r.target-0.001) return "ok";
     if(r.rate>=r.target*0.6) return "warn";
     return "bad";
@@ -1006,6 +1028,12 @@ function statusOf(g){
   return "bad";
 }
 var STATUS_TEXT={ok:"Holding",warn:"Slipping",bad:"Stalled",done:"Retired"};
+/* Two kinds of goal, because they are judged differently. A HABIT goal is
+   the person you are becoming: its systems are the point, so adherence is
+   the verdict. An ACHIEVEMENT goal is a specific result: it is reached or
+   it is not, and systems under it are optional scaffolding. */
+function trackOf(g){ return g.track==="achievement"?"achievement":"habit"; }
+function isAchievement(g){ return isGoalRec(g) && trackOf(g)==="achievement"; }
 var GOAL_STATUS_TEXT={ok:"On track",warn:"Slipping",bad:"Stalled",done:"Achieved"};
 function streakOf(g){
   var log=g.log||{}, n=0, d=new Date();
@@ -1668,6 +1696,12 @@ function goalCard(g){
   srow.appendChild(el("span","sdotl"));
   srow.appendChild(el("span","sword",GOAL_STATUS_TEXT[st]));
   srow.appendChild(el("span","kindtag",h.label+" goal"));
+  var tk=el("span","tracktag",trackOf(g)==="habit"?"Habit":"Achievement");
+  tk.dataset.t=trackOf(g);
+  tk.title = trackOf(g)==="habit"
+    ? "A habit goal: the systems under it are the point, and adherence is the verdict."
+    : "An achievement goal: a specific result. Systems under it are optional.";
+  srow.appendChild(tk);
   main.appendChild(srow);
   main.appendChild(el("div","gtitle",g.title||"Untitled goal"));
   if(g.outcome) main.appendChild(el("div","goutcome","Done means: "+g.outcome));
@@ -1698,24 +1732,34 @@ function goalCard(g){
   if(roll){
     var rw=el("div","rollup");
     var bar=el("div","rbar");
-    var fill=el("div","rfill"); fill.style.width=Math.round(roll.rate*100)+"%";
+    var fill=el("div","rfill");
+    fill.style.width=(roll.available?Math.round(roll.rate*100):0)+"%";
     bar.appendChild(fill); rw.appendChild(bar);
     var rv=el("div","rval");
-    rv.appendChild(el("b",null,Math.round(roll.rate*100)+"%"));
-    rv.appendChild(document.createTextNode("  "+roll.holding+"/"+roll.count+" systems holding"));
+    if(roll.available){
+      rv.appendChild(el("b",null,Math.round(roll.rate*100)+"%"));
+      rv.appendChild(document.createTextNode("  "+roll.holding+"/"+roll.count+" systems holding"));
+    } else {
+      /* nothing has come due yet \u2014 0% would read as a failure */
+      rv.appendChild(el("b",null,"\u2013"));
+      rv.appendChild(document.createTextNode("  "+roll.count+" system"+(roll.count===1?"":"s")+
+        ", nothing due yet"));
+    }
     rw.appendChild(rv);
     inr.appendChild(rw);
   }
 
   var sw=el("div","syswrap");
   var sh=el("div","thead");
-  sh.appendChild(el("h3",null,kids.length?"Systems that produce it":"No systems yet"));
+  sh.appendChild(el("h3",null,kids.length?"Systems that produce it":(isAchievement(g)?"No systems":"No systems yet")));
   var add=el("button","btn btn-sm","Add a system");
   add.onclick=function(){ openNewSystem(g.id); };
   sh.appendChild(add);
   sw.appendChild(sh);
   if(!kids.length){
-    sw.appendChild(el("div","sysempty","A goal with no system is a wish. Add the daily or weekly action that moves it."));
+    sw.appendChild(el("div","sysempty", isAchievement(g)
+      ? "No systems needed \u2014 this one is reached or it is not. Add a daily or weekly action if something has to happen repeatedly to get there."
+      : "A habit goal with no system is a wish. Add the daily or weekly action that moves it."));
   } else {
     var sl=el("div","syslist");
     kids.forEach(function(k){ sl.appendChild(systemRow(k)); });
@@ -1742,8 +1786,10 @@ function systemRow(g){
   top.appendChild(left);
 
   var right=el("div","sysrow-act");
-  var pctEl=el("span","syspct",Math.round(ad.rate*100)+"%");
-  pctEl.title=ad.ran+" of "+ad.available+" "+h.plural+" run — "+STATUS_TEXT[st];
+  var pctEl=el("span","syspct", ad.available?Math.round(ad.rate*100)+"%":"\u2013");
+  pctEl.title = ad.available
+    ? ad.ran+" of "+ad.available+" "+h.plural+" run \u2014 "+STATUS_TEXT[st]
+    : "Nothing due yet in "+containerLabel("daily");
   right.appendChild(pctEl);
   var ed=el("button","btn btn-ghost btn-sm","Edit");
   ed.onclick=function(){ openEdit(g); };
@@ -2152,7 +2198,7 @@ $("#vmSave").onclick=function(){
 /* ============================ modal ============================ */
 function openNewGoal(){
   editing=null;
-  draft={kind:"goal",title:"",outcome:"",why:"",horizon:GOAL_HORIZONS.indexOf(view.horizon)>=0?view.horizon:"monthly",
+  draft={kind:"goal",track:"habit",title:"",outcome:"",why:"",horizon:GOAL_HORIZONS.indexOf(view.horizon)>=0?view.horizon:"monthly",
          category:"",targetDate:"",metric:"binary",targetValue:0,unit:"",commitN:1,commitM:1,parentId:""};
   fillModal("New goal",false); showModal();
 }
@@ -2225,7 +2271,30 @@ function syncCommitHint(){
     ? "Every "+h.unitLabel+". Adherence is measured against running it every time."
     : n+" of every "+m+" "+h.plural+" — "+Math.round(n/m*100)+"% adherence is holding the line.";
 }
+var TRACKS=[
+  {k:"habit",      label:"Habit",
+   hint:"The person you are becoming. Its systems are the point \u2014 adherence is the verdict."},
+  {k:"achievement",label:"Achievement",
+   hint:"A specific result: career, money, property, family, a milestone. Reached or not."}
+];
 function renderSegs(){
+  /* kind of goal \u2014 goals only; a system belongs to whichever goal it serves */
+  var tw=$("#trackWrap");
+  if(tw){
+    tw.hidden = draft.kind==="system";
+    if(!tw.hidden){
+      if(TRACKS.map(function(t){return t.k;}).indexOf(draft.track)<0) draft.track="habit";
+      var tb=$("#fTrack"); tb.textContent="";
+      TRACKS.forEach(function(t){
+        var b2=el("button",null,t.label); b2.type="button";
+        b2.setAttribute("aria-pressed",draft.track===t.k?"true":"false");
+        b2.onclick=function(){ draft.track=t.k; renderSegs(); };
+        tb.appendChild(b2);
+      });
+      $("#trackHint").textContent=
+        TRACKS.filter(function(t){return t.k===draft.track;})[0].hint;
+    }
+  }
   var hb=$("#fHorizon"); hb.textContent="";
   var allowed=(draft.kind==="system")?SYS_HORIZONS:GOAL_HORIZONS;
   if(allowed.indexOf(draft.horizon)<0) draft.horizon=allowed[0];
@@ -2453,6 +2522,8 @@ $("#mSave").onclick=function(){
   if(editing){ g=goals.find(function(x){return x.id===editing;}); g=g?clone(g):null; }
   if(!g){ g={id:uid(),createdAt:new Date().toISOString(),log:{},steps:[],stepLog:{},status:"active",startDate:ymd(new Date()),schema:SCHEMA}; }
   g.kind=draft.kind==="system"?"system":"goal";
+  if(g.kind==="goal") g.track=(draft.track==="achievement")?"achievement":"habit";
+  else delete g.track;
   g.parentId=(g.kind==="system")?($("#fParent").value||""):"";
   g.title=t;
   g.outcome=$("#fOutcome").value.trim();
