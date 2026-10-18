@@ -407,7 +407,18 @@ textarea{resize:vertical;min-height:66px;line-height:1.5}
 .phead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:7px}
 .sysrow .tactic:hover{background:var(--sunken)}
 .sysrow .tadd input{background:var(--sunken)}
-.goal.loose{border-style:dashed}
+.goal{cursor:pointer}
+.goal .syswrap,.goal .syswrap *{cursor:auto}
+.goal:hover{border-color:var(--line-2)}
+.goal[data-open="1"]:hover{border-color:var(--line)}
+.syscount{font-family:var(--mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--faint);white-space:nowrap}
+.chev{padding:4px 9px}
+.chev .chevi{display:inline-block;font-size:17px;line-height:1;transform:rotate(90deg);
+  transition:transform .16s ease}
+.goal[data-open="1"] .chev .chevi{transform:rotate(-90deg)}
+.goal.loose{border-style:dashed;cursor:auto}
+.goal.loose:hover{border-color:var(--line)}
 .goal.loose .syslist{margin-top:14px}
 
 /* ── rephrase with Claude ──────────────────────────────────────────── */
@@ -752,6 +763,7 @@ function rollupOf(g){
 /* ============================ state ============================ */
 var db = null, unsub = null;
 var goals = [];                 // array of {id, ...body}
+var openGoals = {};     // goal id -> true when its systems are showing
 var view  = {horizon:"monthly", cat:"all", status:"open", sort:"progress",
              year:new Date().getFullYear(), month:new Date().getMonth()};
 var editing = null;             // goal id being edited, or null for new
@@ -1688,6 +1700,8 @@ function renderList(){
 function goalCard(g){
   var st=statusOf(g), roll=rollupOf(g), h=HMAP[g.horizon]||HMAP.monthly;
   var card=el("div","goal"); card.dataset.s=st; card.dataset.done=st==="done"?"1":"0";
+  var open=!!openGoals[g.id];
+  card.dataset.open=open?"1":"0";
   var inr=el("div","goal-in");
 
   var head=el("div","ghead");
@@ -1702,6 +1716,8 @@ function goalCard(g){
     ? "A habit goal: the systems under it are the point, and adherence is the verdict."
     : "An achievement goal: a specific result. Systems under it are optional.";
   srow.appendChild(tk);
+  var kidCount=systemsFor(g.id).length;
+  if(kidCount) srow.appendChild(el("span","syscount",kidCount+" system"+(kidCount===1?"":"s")));
   main.appendChild(srow);
   main.appendChild(el("div","gtitle",g.title||"Untitled goal"));
   if(g.outcome) main.appendChild(el("div","goutcome","Done means: "+g.outcome));
@@ -1713,6 +1729,15 @@ function goalCard(g){
   head.appendChild(main);
 
   var acts=el("div","gactions");
+  var chev=el("button","btn btn-ghost btn-sm chev");
+  chev.type="button";
+  chev.setAttribute("aria-expanded",open?"true":"false");
+  chev.setAttribute("aria-controls","sys-"+g.id);
+  chev.setAttribute("aria-label",(open?"Hide":"Show")+" the systems under "+(g.title||"this goal"));
+  chev.title=open?"Hide systems":"Show systems";
+  chev.appendChild(el("span","chevi","\u203a"));
+  chev.onclick=function(e){ e.stopPropagation(); toggleGoal(g.id); };
+  acts.appendChild(chev);
   var retired=(g.status==="done"||g.status==="retired");
   var doneBtn=el("button","btn btn-ghost btn-sm",retired?"Reopen":"Mark achieved");
   doneBtn.onclick=function(){
@@ -1750,6 +1775,8 @@ function goalCard(g){
   }
 
   var sw=el("div","syswrap");
+  sw.id="sys-"+g.id;
+  sw.hidden=!open;
   var sh=el("div","thead");
   sh.appendChild(el("h3",null,kids.length?"Systems that produce it":(isAchievement(g)?"No systems":"No systems yet")));
   var add=el("button","btn btn-sm","Add a system");
@@ -1766,8 +1793,23 @@ function goalCard(g){
     sw.appendChild(sl);
   }
   inr.appendChild(sw);
+
+  /* Click anywhere on the goal to show or hide its systems. Controls keep
+     their own behaviour, and a click inside the open systems panel is left
+     alone — collapsing the thing you are ticking would be maddening. */
+  card.onclick=function(e){
+    if(e.target.closest("button,a,input,select,textarea,label,.syswrap")) return;
+    if(window.getSelection && String(window.getSelection())) return;  // let text be selected
+    toggleGoal(g.id);
+  };
+
   card.appendChild(inr);
   return card;
+}
+
+function toggleGoal(id){
+  if(openGoals[id]) delete openGoals[id]; else openGoals[id]=true;
+  renderList();
 }
 
 /* one system: its strip, its adherence, and its protocol for this cycle */
