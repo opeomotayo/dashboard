@@ -480,6 +480,113 @@ textarea{resize:vertical;min-height:66px;line-height:1.5}
   .strip-wrap{gap:12px}
   .pcell{height:34px}
 }
+/* ── roadmap timeline ──────────────────────────────────────────────────
+   One node per goal on a winding road, earliest at the top. The road runs
+   cyan → blue → violet → magenta down its length; each node takes the
+   colour of the road where it sits. Everything on it edits in place. */
+.tlhero{display:flex;align-items:flex-end;gap:22px 30px;flex-wrap:wrap;margin-top:30px}
+.tlhero h2{font-family:var(--display);font-size:clamp(32px,5.4vw,50px);font-weight:800;letter-spacing:-.04em;line-height:1;margin:0;color:var(--ink)}
+.tlhero p{margin:10px 0 0;color:var(--muted);max-width:50ch;font-size:14.5px;line-height:1.55}
+.tlstats{display:flex;gap:26px;margin-left:auto;flex-wrap:wrap}
+.tlstat .n{font-family:var(--display);font-size:28px;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-.02em}
+.tlstat .n.od{color:var(--stall-ink)} .tlstat .n.dn{color:var(--hold-ink)}
+.tlstat .k{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);margin-top:6px}
+.tlbar{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin:24px 0 6px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.tlbar .tlnext{font-size:13px;color:var(--ink-2);min-width:0}
+.tlbar .tlnext b{font-weight:600}
+.tlroad{position:relative;margin:6px 0 10px}
+.tlroad svg{position:absolute;left:0;top:0;width:100%;overflow:visible;pointer-events:none}
+.tlnode{position:absolute;border-radius:50%;display:grid;place-items:center;border:0;padding:0;cursor:pointer;z-index:2;
+  background:radial-gradient(circle at 32% 26%,color-mix(in srgb,var(--c) 55%,#fff),var(--c) 62%);
+  box-shadow:0 12px 24px -10px color-mix(in srgb,var(--c) 80%,transparent),0 2px 5px rgba(11,16,32,.14);
+  transition:transform .16s}
+.tlnode:hover{transform:scale(1.05)}
+.tlnode:focus-visible{outline:3px solid var(--accent-soft);outline-offset:3px}
+.tlnode .in{width:76%;height:76%;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;box-shadow:inset 0 3px 6px rgba(11,16,32,.16)}
+.tlnode .m{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;line-height:1}
+.tlnode .y{font-family:var(--display);font-weight:800;font-size:19px;color:var(--c);letter-spacing:-.03em;line-height:1}
+.tlnode .chk{position:absolute;right:-3px;top:-3px;width:23px;height:23px;border-radius:50%;background:var(--hold);color:#fff;
+  display:grid;place-items:center;font-size:12px;font-weight:700;border:2px solid var(--paper)}
+.tlnode.done{filter:saturate(.55)}
+.tltext{position:absolute;z-index:1}
+.tltext.l{text-align:right}
+.tlkick{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint)}
+.tlkick .od{color:var(--stall-ink);font-weight:600}
+.tlkick .dn{color:var(--hold-ink);font-weight:600}
+.tltitle{font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:-.022em;line-height:1.22;color:var(--ink);
+  margin-top:5px;outline:none;border-radius:6px;word-break:break-word;cursor:text}
+.tlnote{font-size:13.5px;color:var(--muted);line-height:1.5;margin-top:4px;outline:none;border-radius:6px;min-height:1.5em;word-break:break-word;cursor:text}
+.tltitle:focus,.tlnote:focus{background:var(--sunken);box-shadow:0 0 0 2px var(--accent-soft),0 0 0 6px var(--sunken)}
+.tlnote:empty::before{content:attr(data-ph);color:var(--faint)}
+.tltext.done .tltitle{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-2);text-decoration-thickness:2px}
+.tlacts{display:flex;gap:6px;align-items:center;margin-top:9px;flex-wrap:wrap;opacity:0;transition:opacity .15s}
+.tltext.l .tlacts{justify-content:flex-end}
+.tltext:hover .tlacts,.tltext:focus-within .tlacts{opacity:1}
+@media (hover:none){.tlacts{opacity:1}}
+.tlacts input[type=month],.tlacts select{width:auto;font:500 11.5px var(--mono);padding:5px 7px;border:1px solid var(--line-2);
+  border-radius:7px;background:var(--surface);color:var(--ink-2);min-height:0}
+.tlacts .btn{padding:5px 10px;font-size:12px}
+.tlacts .btn.on{background:var(--hold-soft);color:var(--hold-ink);border-color:var(--hold)}
+.tlacts .btn.arm{background:var(--stall-soft);color:var(--stall-ink);border-color:var(--stall)}
+.tlempty{border:1px dashed var(--line-2);border-radius:var(--r-md);padding:40px 24px;text-align:center;color:var(--muted);background:var(--surface);margin-top:20px}
+.tlempty h3{font-family:var(--display);font-size:18px;color:var(--ink);margin:0 0 8px}
+@media (max-width:719px){
+  .tlstats{margin-left:0;gap:20px}
+  .tltitle{font-size:17px}
+  .tlnode .y{font-size:15px} .tlnode .m{font-size:8.5px}
+}
+/* ── plan vs actual ─────────────────────────────────────────────────────
+   Two roads side by side, one row per goal. Left: the plan, in the roadmap
+   gradient. Right: where it actually stands — each node is a progress ring
+   coloured by state, each segment of road takes the state of the goal it
+   leads into, and a badge reads the slip in months. */
+.tlmode{display:flex;gap:3px;background:var(--sunken);border:1px solid var(--line);border-radius:10px;padding:3px}
+.tlmode button{border:0;background:transparent;padding:6px 13px;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:500;color:var(--muted);white-space:nowrap}
+.tlmode button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-1);font-weight:600}
+.cmphead{position:absolute;top:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  display:flex;align-items:center;gap:8px;white-space:nowrap}
+.cmphead i{width:22px;height:6px;border-radius:3px;display:inline-block}
+.cmphead.p i{background:linear-gradient(90deg,#38C6F0,#3F35E0,#E0379E)}
+.cmphead.a i{background:linear-gradient(90deg,var(--hold),var(--accent),var(--off))}
+.cmpdiv{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.anode{position:absolute;border-radius:50%;display:grid;place-items:center;z-index:2;
+  background:conic-gradient(var(--sc) calc(var(--p)*1%),color-mix(in srgb,var(--sc) 18%,var(--surface)) 0);
+  box-shadow:0 10px 22px -10px color-mix(in srgb,var(--sc) 85%,transparent),0 2px 5px rgba(11,16,32,.12)}
+.anode .in{width:78%;height:78%;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  box-shadow:inset 0 3px 6px rgba(11,16,32,.14)}
+.anode .m{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;line-height:1}
+.anode .y{font-family:var(--display);font-weight:800;font-size:16px;color:var(--sc);letter-spacing:-.03em;line-height:1}
+.anode .pc{font-family:var(--mono);font-size:9px;color:var(--faint);line-height:1}
+.anode.fc .in{border:2px dashed color-mix(in srgb,var(--sc) 45%,transparent)}
+.anode .chk{position:absolute;right:-3px;top:-3px;width:21px;height:21px;border-radius:50%;background:var(--hold);color:#fff;
+  display:grid;place-items:center;font-size:11px;font-weight:700;border:2px solid var(--paper)}
+.atext{position:absolute;z-index:1}
+.atop{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:5px;font-weight:600;white-space:nowrap}
+.chip.todo{background:var(--off-soft);color:var(--off-ink)}
+.chip.doing{background:var(--accent-soft);color:var(--accent-ink)}
+.chip.blocked{background:var(--stall-soft);color:var(--stall-ink)}
+.chip.done{background:var(--hold-soft);color:var(--hold-ink)}
+.chip.late{background:var(--stall-soft);color:var(--stall-ink)}
+.chip.slip{background:var(--slip-soft);color:var(--slip-ink)}
+.chip.ok{background:var(--hold-soft);color:var(--hold-ink)}
+.awhen{font-size:13px;color:var(--ink-2);margin-top:7px}
+.awhen .fcl{color:var(--faint);font-style:italic}
+.actl{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:9px}
+.actl select,.actl input[type=month]{width:auto;font:500 11.5px var(--mono);padding:5px 7px;border:1px solid var(--line-2);
+  border-radius:7px;background:var(--surface);color:var(--ink-2);min-height:0}
+.actl input[type=range]{width:110px;accent-color:var(--accent);margin:0}
+.actl .pv{font:600 11.5px var(--mono);color:var(--ink-2);min-width:3.2em}
+.anote{font-size:13px;color:var(--muted);line-height:1.5;margin-top:6px;outline:none;border-radius:6px;min-height:1.5em;word-break:break-word;cursor:text}
+.anote:focus{background:var(--sunken);box-shadow:0 0 0 2px var(--accent-soft),0 0 0 6px var(--sunken)}
+.anote:empty::before{content:attr(data-ph);color:var(--faint)}
+.ptext .tltitle{font-size:17.5px}
+@media (max-width:719px){
+  .anode .y{font-size:12.5px} .anode .m,.anode .pc{font-size:7.5px}
+  .actl input[type=range]{width:90px}
+  .cmphead{font-size:9px;letter-spacing:.08em}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -565,6 +672,24 @@ textarea{resize:vertical;min-height:66px;line-height:1.5}
   <input type="file" id="vFile" accept="image/*" hidden>
   <div class="vgrid" id="vGrid"></div>
 </div><!-- /pageVision -->
+
+<div id="pageTimeline" hidden>
+  <div class="tlhero">
+    <div>
+      <h2 id="tlHead">Roadmap</h2>
+      <p id="tlSub"></p>
+    </div>
+    <div class="tlstats" id="tlStats"></div>
+  </div>
+  <div class="tlbar">
+    <div class="tlmode" id="tlMode" role="group" aria-label="Timeline view"></div>
+    <span class="tlnext" id="tlNext"></span>
+    <span style="flex:1"></span>
+    <button class="btn btn-sm btn-primary" id="tlAdd">Add milestone</button>
+  </div>
+  <div class="tlroad" id="tlRoad"></div>
+</div><!-- /pageTimeline -->
+
 
   <div class="statusline" id="statusline"></div>
 
@@ -1330,7 +1455,7 @@ function applyVisionSnapshot(snap){
   if(toLocal.length){
     toLocal.forEach(function(c){ putVision(c); pushedAt["v:"+c.id]=c.updatedAt; });
     if(idb) idbPutMany("vision",toLocal).catch(function(){});
-    renderVision(); renderStorage();
+    renderVision(); if(page==="timeline") renderTimeline(); renderStorage();
   }
   toCloud.forEach(pushVision);
   lastSyncAt=nowIso(); renderStorage();
@@ -2046,6 +2171,7 @@ function flashStatus(m){
 function render(){
   renderPageNav();
   if(page==="goals"){ renderHorizons(); renderPeriodNav(); renderReadouts(); renderFilters(); renderList(); }
+  else if(page==="timeline") renderTimeline();
   else renderVision();
   renderStatus(); renderStorage();
   $("#samplebar").hidden = !goals.some(function(g){return g.sample;});
@@ -2055,7 +2181,7 @@ function render(){
 function renderPageNav(){
   var nav=$("#pagenav"); if(!nav) return;
   nav.textContent="";
-  [["goals","Goals"],["vision","Vision board"]].forEach(function(p){
+  [["goals","Goals"],["timeline","Timeline"],["vision","Vision board"]].forEach(function(p){
     var b=el("button",null,p[1]); b.type="button";
     b.setAttribute("aria-pressed",page===p[0]?"true":"false");
     b.onclick=function(){ setPage(p[0]); };
@@ -2066,9 +2192,422 @@ function setPage(p){
   page=p;
   $("#pageGoals").hidden=(p!=="goals");
   $("#pageVision").hidden=(p!=="vision");
-  $("#newBtn").textContent=(p==="vision")?"Add to board":"New goal";
+  $("#pageTimeline").hidden=(p!=="timeline");
+  $("#newBtn").textContent=(p==="vision")?"Add to board":(p==="timeline")?"Add milestone":"New goal";
   render();
 }
+
+/* ========================= roadmap timeline ========================= */
+/* Milestones live in the vision store (kind "milestone") so they ride the
+   same local database, account sync, Drive file, export and import with no
+   new plumbing. They carry no `year` field, so the vision board ignores them. */
+var TL_STOPS=["#38C6F0","#2C63EC","#3F35E0","#8B3BE6","#E0379E"];
+var TL_SEED=[
+  ["2025-10","Complete MOT and service for the Land Rover Discovery","Personal"],
+  ["2025-10","Finish repairs and rent out Gibson House, Stoke-on-Trent","Property"],
+  ["2025-11","Complete the Land Rover Discovery bodywork","Personal"],
+  ["2025-11","Purchase an Apple Watch","Personal"],
+  ["2025-11","Finish repairs and rent out 98 Hustler Street Flats","Property"],
+  ["2026-01","Submit the final property self-assessment tax return","Finance"],
+  ["2026-01","Purchase a new car","Personal"],
+  ["2026-04","Remortgage all personal properties to the LTD company","Property"],
+  ["2026-04","Transfer all personal properties to the LTD company","Property"],
+  ["2026-04","Plan a luxury holiday with Justina for our 20th wedding anniversary","Family"],
+  ["2026-05","Finalise Will, Trust and Estate Planning","Finance"],
+  ["2027-07","Plan a luxury holiday with family and friends for Justina's 40th birthday","Family"],
+  ["2027-07","Pay off all credit card debts","Finance"],
+  ["2029-06","Purchase a dream home","Family"],
+  ["2029-06","Purchase a dream 4x4 car","Personal"]
+];
+var tlPending=false, tlDelArm=null, tlDelTimer=null;
+
+function milestones(){
+  return vrecords.filter(function(r){ return !r.deleted && r.kind==="milestone"; })
+    .sort(function(a,b){ return (a.when||"").localeCompare(b.when||"") || (a.order||0)-(b.order||0)
+                             || (a.createdAt||"").localeCompare(b.createdAt||""); });
+}
+function seedTimeline(){
+  if(vrecords.some(function(r){ return r.kind==="milestone"; })) return;
+  var rows=TL_SEED.map(function(s,i){
+    return {id:"ms-seed-"+pad(i+1),kind:"milestone",when:s[0],title:s[1],note:"",category:s[2],
+            done:false,order:i,createdAt:SEED_TS,updatedAt:SEED_TS};
+  });
+  rows.forEach(putVision);
+  if(idb) idbPutMany("vision",rows).catch(function(){});
+  rows.forEach(pushVision);
+}
+function thisYm(){ var d=new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1); }
+function ymLabel(ym,short){
+  var p=(ym||"").split("-"); var m=MONTHS[(+p[1]||1)-1]||"";
+  return (short?m.slice(0,3):m)+" "+(p[0]||"");
+}
+function hexRgb(h){ var n=parseInt(h.slice(1),16); return [n>>16&255,n>>8&255,n&255]; }
+function tlColor(t){
+  t=Math.max(0,Math.min(1,t)); var seg=(TL_STOPS.length-1)*t, i=Math.min(TL_STOPS.length-2,Math.floor(seg)), f=seg-i;
+  var a=hexRgb(TL_STOPS[i]), b=hexRgb(TL_STOPS[i+1]);
+  return "rgb("+a.map(function(v,k){ return Math.round(v+(b[k]-v)*f); }).join(",")+")";
+}
+
+/* save without redrawing, so focus stays where the person is typing */
+function writeMilestone(r,redraw){
+  r.updatedAt=nowIso(); putVision(r);
+  if(redraw) renderTimeline(); else renderTimelineStats();
+  renderStorage();
+  if(!idb){ setSaveState("error","No local database"); return Promise.resolve(); }
+  inflight++; setSaveState("saving");
+  return idbPut("vision",r).then(function(){
+    if(--inflight<=0){ inflight=0; setSaveState(); }
+    pushVision(r); afterWrite();
+  }).catch(function(e){
+    inflight=Math.max(0,inflight-1);
+    setSaveState("error","Local write failed · "+((e&&(e.name||e.message))||"error"));
+  });
+}
+function msById(id){ return vrecords.find(function(r){ return r.id===id; }); }
+function addMilestone(){
+  var ms=milestones(), ym=thisYm();
+  var r={id:"ms"+uid(),kind:"milestone",when:ym,title:"New milestone",note:"",category:"",done:false,
+         order:ms.length,createdAt:nowIso()};
+  if(page!=="timeline") setPage("timeline");
+  writeMilestone(r,true).then(function(){});
+  var t=document.querySelector('[data-ms="'+r.id+'"] .tltitle');
+  if(t){ t.scrollIntoView({block:"center",behavior:"smooth"}); t.focus();
+    try{ var rg=document.createRange(); rg.selectNodeContents(t); var s=getSelection(); s.removeAllRanges(); s.addRange(rg); }catch(e){} }
+}
+
+/* ========================= plan vs actual ========================= */
+var tlMode="road";
+try{ tlMode=localStorage.getItem("gc.tlMode")||"road"; }catch(e){}
+var STATE_LABEL={todo:"Not started",doing:"In progress",blocked:"Blocked",done:"Done"};
+var STATE_VAR={todo:"--off",doing:"--accent",blocked:"--stall",done:"--hold"};
+function stateOf(m){ return m.done?"done":(STATE_LABEL[m.state]?m.state:"todo"); }
+function ymNum(ym){ var p=(ym||"").split("-"); return (+p[0])*12+(+p[1]-1); }
+/* where the goal actually lands: the month recorded, or a forecast that is
+   never earlier than the plan and never in the past */
+function forecastOf(m){
+  if(m.actualWhen) return {ym:m.actualWhen,firm:true};
+  if(stateOf(m)==="done") return {ym:null,firm:false};
+  var now=thisYm(); return {ym:(m.when||now)>now?m.when:now,firm:false};
+}
+function slipOf(m){ var f=forecastOf(m); return (f.ym&&m.when)?ymNum(f.ym)-ymNum(m.when):null; }
+function slipText(n){ return n===0?"On plan":(n>0?"+"+n+" mo late":Math.abs(n)+" mo early"); }
+function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||"#888"; }
+function setTlMode(m){
+  tlMode=m; try{ localStorage.setItem("gc.tlMode",m); }catch(e){}
+  renderTimeline();
+}
+function renderTlMode(){
+  var box=$("#tlMode"); if(!box) return; box.textContent="";
+  [["road","Roadmap"],["compare","Plan vs actual"]].forEach(function(o){
+    var b=el("button",null,o[1]); b.type="button"; b.setAttribute("aria-pressed",tlMode===o[0]?"true":"false");
+    b.onclick=function(){ setTlMode(o[0]); }; box.appendChild(b);
+  });
+  var sub=$("#tlSub"); if(sub) sub.textContent=tlMode==="compare"
+    ?"The plan on the left, where each goal actually stands on the right. Set the state, progress and actual month to see the slip."
+    :"Every goal on one road, earliest first. Click a title or note to edit it, tap a circle to mark it done.";
+}
+function renderCompareStats(ms){
+  var st=$("#tlStats"); if(!st) return; st.textContent="";
+  var open=ms.filter(function(m){return stateOf(m)!=="done";});
+  var slips=open.map(slipOf).filter(function(n){return n!=null;});
+  var late=slips.filter(function(n){return n>0;}).length;
+  var avg=slips.length?Math.round(slips.reduce(function(a,b){return a+b;},0)/slips.length*10)/10:0;
+  var done=ms.length-open.length, prog=ms.length?Math.round(ms.reduce(function(a,m){return a+(stateOf(m)==="done"?100:(+m.progress||0));},0)/ms.length):0;
+  [[done+"/"+ms.length,"Done","dn"],[prog+"%","Overall",""],[open.length-late,"On plan","dn"],[late,"Slipping",late?"od":""],[(avg>0?"+":"")+avg,"Avg slip · mo",avg>0?"od":""]].forEach(function(s){
+    var d=el("div","tlstat"); d.appendChild(el("div","n num "+s[2],String(s[0]))); d.appendChild(el("div","k",s[1])); st.appendChild(d);
+  });
+}
+function saveActual(id,patch){
+  var r=clone(msById(id)); for(var k in patch) r[k]=patch[k];
+  if(patch.state){ r.done=(patch.state==="done");
+    if(r.done){ r.progress=100; if(!r.actualWhen) r.actualWhen=thisYm(); }
+    else if(patch.state==="todo" && !(+r.progress)) r.progress=0; }
+  if("progress" in patch && +patch.progress>=100 && !r.done){ r.done=true; r.state="done"; if(!r.actualWhen) r.actualWhen=thisYm(); }
+  writeMilestone(r,true);
+}
+function renderCompare(road,ms){
+  var now=thisYm();
+  road.appendChild(el("div","cmphead p","")); road.lastChild.innerHTML="<i></i>Desired · the plan";
+  road.appendChild(el("div","cmphead a","")); road.lastChild.innerHTML="<i></i>Actual · where it stands";
+  road.appendChild(el("div","cmpdiv"));
+  ms.forEach(function(m,i){
+    var t=ms.length>1?i/(ms.length-1):0, s=stateOf(m), f=forecastOf(m), sl=slipOf(m);
+    /* planned node — same as the roadmap */
+    var node=el("div","tlnode"+(s==="done"?" done":"")); node.style.setProperty("--c",tlColor(t)); node.style.cursor="default";
+    var p=(m.when||"").split("-"), inn=el("span","in");
+    inn.appendChild(el("span","m",(MONTHS[(+p[1]||1)-1]||"").slice(0,3))); inn.appendChild(el("span","y",p[0]||""));
+    node.appendChild(inn); node.dataset.row=i;
+    /* plan text */
+    var pt=el("div","tltext ptext"+(s==="done"?" done":"")); pt.dataset.ms=m.id; pt.dataset.row=i;
+    var kick=el("div","tlkick"); kick.appendChild(document.createTextNode("Target "+ymLabel(m.when)+(m.category?" · "+m.category:"")));
+    if(s!=="done" && (m.when||"")<now){ kick.appendChild(document.createTextNode(" · ")); kick.appendChild(el("span","od","Overdue")); }
+    pt.appendChild(kick);
+    var ti=el("div","tltitle",m.title||""); ti.contentEditable="plaintext-only"; if(ti.contentEditable!=="plaintext-only") ti.contentEditable="true";
+    ti.setAttribute("role","textbox"); ti.setAttribute("aria-label","Milestone title");
+    var no=el("div","tlnote",m.note||""); no.contentEditable=ti.contentEditable; no.dataset.ph="What does done look like?";
+    no.setAttribute("role","textbox"); no.setAttribute("aria-label","Desired outcome");
+    bindCE(ti,m.id,"title",true); bindCE(no,m.id,"note",false);
+    pt.appendChild(ti); pt.appendChild(no);
+    var pa=el("div","tlacts"); var mi=document.createElement("input"); mi.type="month"; mi.value=m.when||""; mi.setAttribute("aria-label","Target month");
+    mi.onchange=function(){ if(/^\d{4}-\d{2}$/.test(mi.value)){ mi.blur(); saveActual(m.id,{when:mi.value}); } };
+    pa.appendChild(mi); pt.appendChild(pa);
+
+    /* actual node — progress ring coloured by state */
+    var an=el("div","anode"+(f.firm||s==="done"?"":" fc")); an.dataset.row=i;
+    an.style.setProperty("--sc","var("+STATE_VAR[s]+")"); an.style.setProperty("--p",s==="done"?100:(+m.progress||0));
+    var ai=el("span","in");
+    if(f.ym){ var q=f.ym.split("-"); ai.appendChild(el("span","m",(MONTHS[(+q[1]||1)-1]||"").slice(0,3))); ai.appendChild(el("span","y",q[0])); }
+    else ai.appendChild(el("span","y","✓"));
+    ai.appendChild(el("span","pc",(s==="done"?100:(+m.progress||0))+"%"));
+    an.appendChild(ai); if(s==="done") an.appendChild(el("span","chk","✓"));
+    an.title=STATE_LABEL[s]+(f.ym?" · "+(f.firm?"":"forecast ")+ymLabel(f.ym):"");
+    /* actual text */
+    var at=el("div","atext"); at.dataset.row=i;
+    var top=el("div","atop"); top.appendChild(el("span","chip "+s,STATE_LABEL[s]));
+    if(sl!=null) top.appendChild(el("span","chip "+(sl>2?"late":sl>0?"slip":"ok"),slipText(sl)));
+    at.appendChild(top);
+    var wh=el("div","awhen");
+    if(s==="done") wh.appendChild(document.createTextNode("Achieved "+(m.actualWhen?ymLabel(m.actualWhen):"")));
+    else if(f.firm) wh.appendChild(document.createTextNode("Expected "+ymLabel(f.ym)));
+    else { wh.appendChild(document.createTextNode("Expected ")); wh.appendChild(el("span","fcl",ymLabel(f.ym)+" — forecast, set a month")); }
+    at.appendChild(wh);
+    var an2=el("div","anote",m.actualNote||""); an2.contentEditable=ti.contentEditable; an2.dataset.ph="Where it stands right now…";
+    an2.setAttribute("role","textbox"); an2.setAttribute("aria-label","Current state");
+    bindCE(an2,m.id,"actualNote",false); at.appendChild(an2);
+    var c=el("div","actl");
+    var ss=document.createElement("select"); ss.setAttribute("aria-label","State");
+    Object.keys(STATE_LABEL).forEach(function(k){ var o=document.createElement("option"); o.value=k; o.textContent=STATE_LABEL[k]; ss.appendChild(o); });
+    ss.value=s; ss.onchange=function(){ saveActual(m.id,{state:ss.value}); };
+    var rg=document.createElement("input"); rg.type="range"; rg.min=0; rg.max=100; rg.step=5; rg.value=s==="done"?100:(+m.progress||0);
+    rg.setAttribute("aria-label","Progress"); var pv=el("span","pv",rg.value+"%");
+    rg.oninput=function(){ pv.textContent=rg.value+"%"; an.style.setProperty("--p",rg.value); };
+    rg.onchange=function(){ var v=+rg.value, patch={progress:v};
+      if(v>0 && v<100 && (s==="todo"||s==="done")) patch.state="doing"; saveActual(m.id,patch); };
+    var am=document.createElement("input"); am.type="month"; am.value=m.actualWhen||""; am.setAttribute("aria-label",s==="done"?"Month achieved":"Expected month");
+    am.title=s==="done"?"Month achieved":"Expected month"; am.onchange=function(){ am.blur(); saveActual(m.id,{actualWhen:am.value}); };
+    c.appendChild(ss); c.appendChild(rg); c.appendChild(pv); c.appendChild(am); at.appendChild(c);
+    road.appendChild(node); road.appendChild(pt); road.appendChild(an); road.appendChild(at);
+  });
+  layoutTimeline();
+}
+/* shared editor binding for contenteditable fields */
+function bindCE(node,id,key,single){
+  var orig=node.textContent;
+  node.onfocus=function(){ orig=node.textContent; };
+  node.onkeydown=function(ev){
+    if(ev.key==="Enter"&&(single||!ev.shiftKey)){ ev.preventDefault(); node.blur(); }
+    if(ev.key==="Escape"){ ev.preventDefault(); ev.stopPropagation(); node.textContent=orig; node.blur(); }
+  };
+  node.oninput=function(){ layoutTimeline(); };
+  node.onblur=function(){
+    var v=node.textContent.replace(/\s+/g," ").trim();
+    if(key==="title"&&!v) v=orig||"Untitled";
+    node.textContent=v;
+    var r=msById(id);
+    if(r && (r[key]||"")!==v){ r=clone(r); r[key]=v; writeMilestone(r,false); }
+    setTimeout(function(){ if(tlPending) renderTimeline(); else layoutTimeline(); },0);
+  };
+}
+function layoutCompare(road,W){
+  var wide=W>=720, R=wide?36:22, rows=road.querySelectorAll(".tlnode").length;
+  var svg=road.querySelector("svg"); if(!svg||!rows) return;
+  var xP=wide?R+14:R+4, xA=wide?Math.round(W/2)+R+18:xP+2*R+16, wig=wide?12:0;
+  var ptx=wide?xP+R+20:xA+R+14, ptw=wide?xA-R-18-ptx-24:W-ptx;
+  var atx=wide?xA+R+20:ptx, atw=W-atx;
+  var heads=road.querySelectorAll(".cmphead");
+  heads[0].style.left="0px"; heads[1].style.left=(wide?xA-R-4:0)+"px";
+  if(!wide){ heads[1].style.top="18px"; heads[0].textContent=""; heads[0].innerHTML="<i></i>Plan"; heads[1].innerHTML="<i></i>Actual"; heads[1].style.left="70px"; heads[1].style.top="0"; }
+  else heads[1].style.top="0";
+  var dv=road.querySelector(".cmpdiv"); dv.style.left=(xA-R-24)+"px"; dv.hidden=!wide; dv.style.display=wide?"":"none";
+  var pn=road.querySelectorAll(".tlnode"), pt=road.querySelectorAll(".ptext"), an=road.querySelectorAll(".anode"), at=road.querySelectorAll(".atext");
+  var y=R+46, P=[], A=[], ms=milestones();
+  for(var i=0;i<rows;i++){
+    var off=(i%2?wig:-wig);
+    pt[i].style.left=ptx+"px"; pt[i].style.width=Math.max(140,ptw)+"px"; pt[i].className=pt[i].className.replace(/\s?\b(l|r)\b/g,"")+" r";
+    at[i].style.left=atx+"px"; at[i].style.width=Math.max(140,atw)+"px";
+    var hP=pt[i].offsetHeight, hA=at[i].offsetHeight, top=y-R+2;
+    if(wide){ pt[i].style.top=top+"px"; at[i].style.top=top+"px"; }
+    else { pt[i].style.top=top+"px"; at[i].style.top=(top+hP+10)+"px"; }
+    var rowH=wide?Math.max(hP,hA,2*R):hP+10+hA;
+    [[pn[i],xP+off],[an[i],xA+off]].forEach(function(n){ n[0].style.width=n[0].style.height=(2*R)+"px"; n[0].style.left=(n[1]-R)+"px"; n[0].style.top=(y-R)+"px"; });
+    P.push([xP+off,y]); A.push([xA+off,y]);
+    y=top+rowH+(wide?40:34)+R-2;
+  }
+  var H=y-R+10; road.style.height=H+"px";
+  svg.setAttribute("viewBox","0 0 "+W+" "+H); svg.setAttribute("height",H); svg.style.height=H+"px";
+  function seg(a,b){ var dy=(b[1]-a[1])*0.5; return "M"+a[0]+" "+a[1]+" C"+a[0]+" "+(a[1]+dy)+" "+b[0]+" "+(b[1]-dy)+" "+b[0]+" "+b[1]; }
+  var sw=wide?12:8, lastP=P[P.length-1];
+  var dP="M"+P[0][0]+" "+(P[0][1]-R-16)+" L"+P[0][0]+" "+P[0][1];
+  for(var j=1;j<P.length;j++) dP+=" "+seg(P[j-1],P[j]).replace(/^M[^C]+/,"");
+  dP+=" L"+lastP[0]+" "+(H-4);
+  var stops=TL_STOPS.map(function(c,k){ return '<stop offset="'+(k/(TL_STOPS.length-1))+'" stop-color="'+c+'"/>'; }).join("");
+  var out='<defs><linearGradient id="tlGrad" gradientUnits="userSpaceOnUse" x1="0" y1="'+P[0][1]+'" x2="0" y2="'+lastP[1]+'">'+stops+'</linearGradient></defs>'+
+    '<path d="'+dP+'" fill="none" stroke="url(#tlGrad)" stroke-width="'+sw+'" stroke-linecap="round"/>';
+  /* actual road: each segment takes the state of the goal it leads into */
+  var lead=[A[0][0],A[0][1]-R-16];
+  for(var k=0;k<A.length;k++){
+    var s=stateOf(ms[k]), col=cssVar(STATE_VAR[s]);
+    var d=k===0?"M"+lead[0]+" "+lead[1]+" L"+A[0][0]+" "+A[0][1]:seg(A[k-1],A[k]);
+    out+='<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="'+sw+'" stroke-linecap="round"'+
+      (s==="todo"?' stroke-dasharray="'+(sw*0.2)+' '+(sw*1.6)+'" opacity=".75"':'')+(s==="blocked"?' opacity=".9"':'')+'/>';
+  }
+  var la=A[A.length-1];
+  out+='<path d="M'+la[0]+' '+la[1]+' L'+la[0]+' '+(H-4)+'" fill="none" stroke="'+cssVar("--off")+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-dasharray="'+(sw*0.2)+' '+(sw*1.6)+'" opacity=".6"/>';
+  svg.innerHTML=out;
+}
+
+function renderTimelineStats(){
+  var ms=milestones(), now=thisYm();
+  var done=ms.filter(function(m){return m.done;}).length;
+  var od=ms.filter(function(m){return !m.done && (m.when||"")<now;}).length;
+  var head=$("#tlHead");
+  if(head){
+    var ys=ms.map(function(m){return (m.when||"").slice(0,4);}).filter(Boolean);
+    head.textContent=ys.length?("Roadmap "+ys[0]+(ys[ys.length-1]!==ys[0]?"–"+ys[ys.length-1]:"")):"Roadmap";
+  }
+  renderTlMode();
+  var st=$("#tlStats"); if(tlMode==="compare") renderCompareStats(ms); else if(st){
+    st.textContent="";
+    [[ms.length,"Milestones",""],[done,"Done","dn"],[od,"Overdue",od?"od":""],[ms.length-done,"Open",""]].forEach(function(s){
+      var d=el("div","tlstat"); d.appendChild(el("div","n num "+s[2],String(s[0]))); d.appendChild(el("div","k",s[1])); st.appendChild(d);
+    });
+  }
+  var nx=$("#tlNext"); if(nx){
+    nx.textContent="";
+    var next=ms.find(function(m){ return !m.done && (m.when||"")>=now; });
+    if(next){ nx.appendChild(document.createTextNode("Next up · ")); nx.appendChild(el("b",null,next.title||"Untitled"));
+              nx.appendChild(document.createTextNode(" — "+ymLabel(next.when))); }
+    else nx.textContent=ms.length?"Nothing scheduled ahead — add the next milestone.":"";
+  }
+}
+
+function renderTimeline(){
+  var road=$("#tlRoad"); if(!road) return;
+  if(!booting) seedTimeline();
+  /* don't rebuild under someone's cursor; catch up when they leave the field */
+  var ae=document.activeElement;
+  if(ae && road.contains(ae) && ae.isContentEditable){ tlPending=true; renderTimelineStats(); return; }
+  tlPending=false;
+  renderTimelineStats();
+  road.textContent="";
+  var ms=milestones(), now=thisYm();
+  if(!ms.length){
+    var e=el("div","tlempty"); e.appendChild(el("h3",null,"No milestones yet"));
+    e.appendChild(el("p",null,"Add your first milestone and it will appear on the road."));
+    road.appendChild(e); road.style.height=""; return;
+  }
+  var svgNS="http://www.w3.org/2000/svg";
+  var svg=document.createElementNS(svgNS,"svg"); svg.setAttribute("aria-hidden","true");
+  road.appendChild(svg);
+  if(tlMode==="compare"){ renderCompare(road,ms); return; }
+  ms.forEach(function(m,i){
+    var t=ms.length>1?i/(ms.length-1):0, c=tlColor(t), past=(m.when||"")<now;
+    var node=el("button","tlnode"+(m.done?" done":"")); node.type="button";
+    node.style.setProperty("--c",c);
+    node.setAttribute("aria-pressed",m.done?"true":"false");
+    node.title=m.done?"Done — tap to reopen":"Tap to mark done";
+    node.setAttribute("aria-label",(m.title||"Milestone")+", "+ymLabel(m.when)+(m.done?", done":""));
+    var inn=el("span","in"); var p=(m.when||"").split("-");
+    inn.appendChild(el("span","m",(MONTHS[(+p[1]||1)-1]||"").slice(0,3)));
+    inn.appendChild(el("span","y",p[0]||""));
+    node.appendChild(inn);
+    if(m.done) node.appendChild(el("span","chk","✓"));
+    node.onclick=function(){ var r=clone(msById(m.id)); r.done=!r.done; writeMilestone(r,true); };
+
+    var tx=el("div","tltext"+(m.done?" done":"")); tx.dataset.ms=m.id;
+    var kick=el("div","tlkick"); kick.appendChild(document.createTextNode(ymLabel(m.when)+(m.category?" · "+m.category:"")));
+    if(m.done){ kick.appendChild(document.createTextNode(" · ")); kick.appendChild(el("span","dn","Done")); }
+    else if(past){ kick.appendChild(document.createTextNode(" · ")); kick.appendChild(el("span","od","Overdue")); }
+    tx.appendChild(kick);
+
+    var ti=el("div","tltitle",m.title||""); ti.contentEditable="plaintext-only";
+    if(ti.contentEditable!=="plaintext-only") ti.contentEditable="true";
+    ti.setAttribute("role","textbox"); ti.setAttribute("aria-label","Milestone title"); ti.spellcheck=true;
+    var no=el("div","tlnote",m.note||""); no.contentEditable=ti.contentEditable;
+    no.setAttribute("role","textbox"); no.setAttribute("aria-label","Note"); no.dataset.ph="Add a note…";
+    function bindEdit(node,key,single){
+      var orig=node.textContent;
+      node.onfocus=function(){ orig=node.textContent; };
+      node.onkeydown=function(ev){
+        if(ev.key==="Enter"&&(single||!ev.shiftKey)){ ev.preventDefault(); node.blur(); }
+        if(ev.key==="Escape"){ ev.preventDefault(); ev.stopPropagation(); node.textContent=orig; node.blur(); }
+      };
+      node.oninput=function(){ layoutTimeline(); };
+      node.onblur=function(){
+        var v=node.textContent.replace(/\s+/g," ").trim();
+        if(key==="title"&&!v){ v=orig||"Untitled"; }
+        node.textContent=v;
+        var r=msById(m.id);
+        if(r && (r[key]||"")!==v){ r=clone(r); r[key]=v; writeMilestone(r,false); }
+        setTimeout(function(){ if(tlPending) renderTimeline(); else layoutTimeline(); },0);
+      };
+    }
+    bindEdit(ti,"title",true); bindEdit(no,"note",false);
+    tx.appendChild(ti); tx.appendChild(no);
+
+    var acts=el("div","tlacts");
+    var dn=el("button","btn"+(m.done?" on":""),m.done?"✓ Done":"Mark done"); dn.type="button";
+    dn.onclick=function(){ var r=clone(msById(m.id)); r.done=!r.done; writeMilestone(r,true); };
+    var mi=document.createElement("input"); mi.type="month"; mi.value=m.when||""; mi.setAttribute("aria-label","Target month");
+    mi.onchange=function(){ if(!/^\d{4}-\d{2}$/.test(mi.value)) return; var r=clone(msById(m.id)); r.when=mi.value; mi.blur(); writeMilestone(r,true); };
+    var cs=document.createElement("select"); cs.setAttribute("aria-label","Category"); fillCatSelect(cs,m.category||"");
+    cs.onchange=function(){ var r=clone(msById(m.id)); r.category=cs.value; writeMilestone(r,true); };
+    var del=el("button","btn btn-ghost"+(tlDelArm===m.id?" arm":""),tlDelArm===m.id?"Tap again to delete":"Delete"); del.type="button";
+    del.onclick=function(){
+      if(tlDelArm!==m.id){ tlDelArm=m.id; del.className="btn btn-ghost arm"; del.textContent="Tap again to delete";
+        clearTimeout(tlDelTimer); tlDelTimer=setTimeout(function(){ tlDelArm=null; del.className="btn btn-ghost"; del.textContent="Delete"; },4000); return; }
+      tlDelArm=null; clearTimeout(tlDelTimer);
+      writeMilestone({id:m.id,kind:"milestone",deleted:true},true);
+    };
+    acts.appendChild(dn); acts.appendChild(mi); acts.appendChild(cs); acts.appendChild(del);
+    tx.appendChild(acts);
+    road.appendChild(node); road.appendChild(tx);
+  });
+  layoutTimeline();
+}
+
+/* positions every node and text block, then draws the road through them */
+function layoutTimeline(){
+  var road=$("#tlRoad"); if(!road || $("#pageTimeline").hidden) return;
+  if(tlMode==="compare"){ layoutCompare(road,road.clientWidth); return; }
+  var nodes=road.querySelectorAll(".tlnode"), texts=road.querySelectorAll(".tltext"), svg=road.querySelector("svg");
+  if(!nodes.length||!svg) return;
+  var W=road.clientWidth, wide=W>=720, R=wide?40:31, gapTxt=wide?22:16;
+  var xsWide=[0.36,0.64], xsNarrow=[R+6,R+40];
+  var pts=[], lastBottom={l:-1e9,r:-1e9}, y=R+28, top0=wide?24:20;
+  for(var i=0;i<nodes.length;i++){
+    var x, side, tx=texts[i];
+    if(wide){ x=Math.round(W*xsWide[i%2]); side=(i%2===0)?"l":"r"; }
+    else { x=xsNarrow[i%2]; side="r"; }
+    tx.className=tx.className.replace(/\s?\b(l|r)\b/g,"")+" "+side;
+    if(side==="l"){ tx.style.left="0px"; tx.style.width=Math.max(120,x-R-gapTxt)+"px"; }
+    else { var lx=wide?x+R+gapTxt:xsNarrow[1]+R+gapTxt; tx.style.left=lx+"px"; tx.style.width=Math.max(140,W-lx)+"px"; }
+    var h=tx.offsetHeight;
+    if(i>0) y=Math.max(y+(wide?118:96), lastBottom[side]+top0+18);
+    tx.style.top=(y-top0)+"px";
+    lastBottom[side]=y-top0+h;
+    nodes[i].style.width=nodes[i].style.height=(2*R)+"px";
+    nodes[i].style.left=(x-R)+"px"; nodes[i].style.top=(y-R)+"px";
+    pts.push([x,y]);
+  }
+  var H=Math.max(y+R+40, lastBottom.l+20, lastBottom.r+20);
+  road.style.height=H+"px";
+  svg.setAttribute("viewBox","0 0 "+W+" "+H); svg.setAttribute("height",H); svg.style.height=H+"px";
+  var first=pts[0], last=pts[pts.length-1];
+  var d="M"+(wide?first[0]-W*0.12:first[0])+" 0 C"+(wide?first[0]-W*0.12:first[0])+" "+(first[1]*0.6)+" "+first[0]+" "+(first[1]*0.4)+" "+first[0]+" "+first[1];
+  for(var j=1;j<pts.length;j++){
+    var a=pts[j-1], b=pts[j], dy=(b[1]-a[1])*0.55;
+    d+=" C"+a[0]+" "+(a[1]+dy)+" "+b[0]+" "+(b[1]-dy)+" "+b[0]+" "+b[1];
+  }
+  d+=" C"+last[0]+" "+(last[1]+40)+" "+last[0]+" "+(H-10)+" "+last[0]+" "+H;
+  var stops=TL_STOPS.map(function(c,k){ return '<stop offset="'+(k/(TL_STOPS.length-1))+'" stop-color="'+c+'"/>'; }).join("");
+  var sw=wide?14:10;
+  svg.innerHTML='<defs><linearGradient id="tlGrad" gradientUnits="userSpaceOnUse" x1="0" y1="'+first[1]+'" x2="0" y2="'+last[1]+'">'+stops+'</linearGradient>'+
+    '<filter id="tlSoft" x="-20%" y="-5%" width="140%" height="110%"><feGaussianBlur stdDeviation="6"/></filter></defs>'+
+    '<path d="'+d+'" fill="none" stroke="url(#tlGrad)" stroke-width="'+(sw+6)+'" stroke-linecap="round" opacity=".22" filter="url(#tlSoft)"/>'+
+    '<path d="'+d+'" fill="none" stroke="url(#tlGrad)" stroke-width="'+sw+'" stroke-linecap="round"/>';
+}
+window.addEventListener("resize",function(){ if(page==="timeline") layoutTimeline(); });
 
 function renderVision(){
   var yEl=$("#vYear"); if(!yEl) return;
@@ -2548,7 +3087,8 @@ $("#aiStyle").onchange=function(){ var p=$("#aiPanel"); p.hidden=true; p.textCon
 function showModal(){ aiReset(); $("#scrim").hidden=false; setTimeout(function(){$("#fTitle").focus();},20); }
 function hideModal(){ aiReset(); $("#scrim").hidden=true; }
 
-$("#newBtn").onclick=function(){ if(page==="vision") $("#vFile").click(); else openNew(); };
+$("#newBtn").onclick=function(){ if(page==="vision") $("#vFile").click(); else if(page==="timeline") addMilestone(); else openNew(); };
+$("#tlAdd").onclick=addMilestone;
 $("#mCancel").onclick=hideModal;
 $("#scrim").onclick=function(e){ if(e.target===$("#scrim")) hideModal(); };
 document.addEventListener("keydown",function(e){
