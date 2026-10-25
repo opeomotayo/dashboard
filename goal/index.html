@@ -222,6 +222,10 @@ textarea{resize:vertical;min-height:66px;line-height:1.5}
 .goutcome{font-size:13px;color:var(--accent-ink);line-height:1.45;margin-bottom:6px;max-width:64ch;font-weight:500}
 .gwhy{font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:11px;max-width:64ch}
 .gwhy b{font-weight:600;color:var(--ink-2)}
+.gprac b{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:5px}
+.gprac ul{margin:0;padding-left:20px;display:grid;gap:3px}
+.gprac li{color:var(--ink-2);padding-left:2px}
+.gprac li::marker{color:var(--accent)}
 .chips{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
 .chip{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
   padding:3px 8px;border-radius:5px;background:var(--sunken);color:var(--muted);white-space:nowrap;
@@ -791,7 +795,8 @@ button.gtl-c:hover{transform:scale(1.05)}
       </div>
       <div class="field">
         <label for="fWhy" id="fWhyLab">Systems/Practices put in place to achieve this goal</label>
-        <textarea id="fWhy" placeholder="What running this reliably actually changes."></textarea>
+        <textarea id="fWhy" rows="4" placeholder="What running this reliably actually changes."></textarea>
+        <span class="hint" id="fWhyHint" hidden>One per line — each line becomes a bullet point.</span>
       </div>
       <div class="field" id="trackWrap">
         <label id="fTrackLab">Kind of goal</label>
@@ -2017,6 +2022,13 @@ function gtlAfterRender(){
   try{ var r=document.createRange(); r.selectNodeContents(t); var s=getSelection(); s.removeAllRanges(); s.addRange(r); }catch(e){}
 }
 
+/* one practice per line; older single-line entries split on commas or
+   semicolons followed by a space, so "£5,000" stays whole */
+function practiceLines(txt){
+  txt=(txt||"").trim(); if(!txt) return [];
+  var parts=txt.indexOf("\n")>=0 ? txt.split(/\n+/) : txt.split(/[;,]\s+|\s+[•·]\s+/);
+  return parts.map(function(t){ return t.replace(/^\s*(?:[-*•·–]|\d+[.)])\s*/,"").trim(); }).filter(Boolean);
+}
 function goalCard(g){
   var st=statusOf(g), roll=rollupOf(g), h=HMAP[g.horizon]||HMAP.monthly;
   var card=el("div","goal"); card.dataset.s=st; card.dataset.done=st==="done"?"1":"0";
@@ -2041,7 +2053,12 @@ function goalCard(g){
   main.appendChild(srow);
   main.appendChild(el("div","gtitle",g.title||"Untitled goal"));
   if(g.outcome) main.appendChild(el("div","goutcome","Done means: "+g.outcome));
-  if(g.why){ var gw=el("div","gwhy"); gw.appendChild(el("b",null,"Systems & practices: ")); gw.appendChild(document.createTextNode(g.why)); main.appendChild(gw); }
+  var practices=practiceLines(g.why);
+  if(practices.length){
+    var gw=el("div","gwhy gprac"); gw.appendChild(el("b",null,"Systems & practices"));
+    var ul=el("ul"); practices.forEach(function(t){ ul.appendChild(el("li",null,t)); });
+    gw.appendChild(ul); main.appendChild(gw);
+  }
   var chips=el("div","chips");
   if(g.category) chips.appendChild(el("span","chip cat",g.category));
   if(g.targetDate) chips.appendChild(el("span","chip","by "+fmtDate(g.targetDate)));
@@ -3037,7 +3054,8 @@ function fillModal(title,showDel){
                                      :"What has to be true for this to count as achieved.";
   $("#fWhyLab").textContent = sys?"Why this process":"Systems/Practices put in place to achieve this goal";
   $("#fWhy").placeholder = sys?"What running this reliably actually changes."
-                              :"Save £5K every month, weekly property check-ins, quarterly finance review…";
+                              :"Save £5K every month\nWeekly property check-ins\nQuarterly finance review";
+  $("#fWhyHint").hidden = sys;
   $("#fHorizonLab").textContent = sys?"Cadence":"Horizon";
   $("#fTargetLab").textContent = sys?"Review on":"Target date";
   $("#fTargetHint").textContent = sys?"Optional. A date to revisit the system."
@@ -3191,7 +3209,7 @@ function aiPrompt(cur){
     "- title: one line, no full stop.",
     "- outcome: one sentence naming an observable end state.",
     isSys?"- why: one or two sentences on why this process matters."
-      :"- why: the systems and practices put in place to achieve the goal, as a short comma-separated list.",
+      :"- why: the systems and practices put in place to achieve the goal, one per line separated by \\n, no bullet characters.",
     "- steps: short imperative lines, same number and same order as given.",
     "- Return a field unchanged if it is already good. Return \"\" for a field that came in empty.",
     "",
