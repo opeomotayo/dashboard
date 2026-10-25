@@ -2221,8 +2221,21 @@ var TL_SEED=[
 ];
 var tlPending=false, tlDelArm=null, tlDelTimer=null;
 
+/* Goals made on the Goals tab ride the road too. They are shown through an
+   adapter and every edit is written back to the goal record itself, so the
+   two tabs never disagree. Example goals stay off the road. */
+function goalAsMilestone(g){
+  var when=(g.targetDate||"").slice(0,7)||(g.createdAt||nowIso()).slice(0,7);
+  return {id:g.id,src:"goal",kind:"milestone",when:when,title:g.title||"",note:g.outcome||"",
+          category:g.category||"",done:(g.status==="done"||g.status==="retired"),
+          state:g.state,progress:g.progress,actualWhen:g.actualWhen||"",actualNote:g.actualNote||"",
+          order:0,createdAt:g.createdAt||""};
+}
+function timelineGoals(){
+  return goals.filter(function(g){ return isGoalRec(g) && !g.deleted && !g.sample; }).map(goalAsMilestone);
+}
 function milestones(){
-  return vrecords.filter(function(r){ return !r.deleted && r.kind==="milestone"; })
+  return vrecords.filter(function(r){ return !r.deleted && r.kind==="milestone"; }).concat(timelineGoals())
     .sort(function(a,b){ return (a.when||"").localeCompare(b.when||"") || (a.order||0)-(b.order||0)
                              || (a.createdAt||"").localeCompare(b.createdAt||""); });
 }
@@ -2250,6 +2263,16 @@ function tlColor(t){
 
 /* save without redrawing, so focus stays where the person is typing */
 function writeMilestone(r,redraw){
+  if(r.src==="goal"){
+    var g=goals.find(function(x){ return x.id===r.id; }); if(!g) return Promise.resolve();
+    g=clone(g); var was=goalAsMilestone(g);
+    g.title=r.title; g.outcome=r.note; g.category=r.category;
+    if(r.when!==was.when){ var day=(g.targetDate||"").slice(8,10)||"01"; g.targetDate=r.when+"-"+day; }
+    if(r.done && !was.done){ g.status="done"; g.doneAt=nowIso(); }
+    if(!r.done && was.done){ g.status="active"; delete g.doneAt; }
+    ["state","progress","actualWhen","actualNote"].forEach(function(k){ if(r[k]!==undefined) g[k]=r[k]; });
+    return writeRecord(g);
+  }
   r.updatedAt=nowIso(); putVision(r);
   if(redraw) renderTimeline(); else renderTimelineStats();
   renderStorage();
@@ -2263,7 +2286,11 @@ function writeMilestone(r,redraw){
     setSaveState("error","Local write failed · "+((e&&(e.name||e.message))||"error"));
   });
 }
-function msById(id){ return vrecords.find(function(r){ return r.id===id; }); }
+function msById(id){
+  var v=vrecords.find(function(r){ return r.id===id; }); if(v) return v;
+  var g=goals.find(function(r){ return r.id===id && isGoalRec(r); });
+  return g?goalAsMilestone(g):null;
+}
 function addMilestone(){
   var ms=milestones(), ym=thisYm();
   var r={id:"ms"+uid(),kind:"milestone",when:ym,title:"New milestone",note:"",category:"",done:false,
@@ -2559,6 +2586,9 @@ function renderTimeline(){
       tlDelArm=null; clearTimeout(tlDelTimer);
       writeMilestone({id:m.id,kind:"milestone",deleted:true},true);
     };
+    if(m.src==="goal"){ del=el("button","btn btn-ghost","Open in Goals"); del.type="button";
+      del.title="This goal lives on the Goals tab — delete or change its systems there";
+      del.onclick=function(){ var g=goals.find(function(x){return x.id===m.id;}); if(g) openEdit(g); }; }
     acts.appendChild(dn); acts.appendChild(mi); acts.appendChild(cs); acts.appendChild(del);
     tx.appendChild(acts);
     road.appendChild(node); road.appendChild(tx);
