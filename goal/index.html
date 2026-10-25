@@ -221,6 +221,7 @@ textarea{resize:vertical;min-height:66px;line-height:1.5}
 .goal[data-done="1"] .gtitle{text-decoration:line-through;text-decoration-thickness:1.5px;color:var(--muted)}
 .goutcome{font-size:13px;color:var(--accent-ink);line-height:1.45;margin-bottom:6px;max-width:64ch;font-weight:500}
 .gwhy{font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:11px;max-width:64ch}
+.gwhy b{font-weight:600;color:var(--ink-2)}
 .chips{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
 .chip{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
   padding:3px 8px;border-radius:5px;background:var(--sunken);color:var(--muted);white-space:nowrap;
@@ -789,7 +790,7 @@ button.gtl-c:hover{transform:scale(1.05)}
         <span class="hint" id="fOutcomeHint">What has to be true for this to count as achieved.</span>
       </div>
       <div class="field">
-        <label for="fWhy" id="fWhyLab">Why it matters</label>
+        <label for="fWhy" id="fWhyLab">Systems/Practices put in place to achieve this goal</label>
         <textarea id="fWhy" placeholder="What running this reliably actually changes."></textarea>
       </div>
       <div class="field" id="trackWrap">
@@ -2040,7 +2041,7 @@ function goalCard(g){
   main.appendChild(srow);
   main.appendChild(el("div","gtitle",g.title||"Untitled goal"));
   if(g.outcome) main.appendChild(el("div","goutcome","Done means: "+g.outcome));
-  if(g.why) main.appendChild(el("div","gwhy",g.why));
+  if(g.why){ var gw=el("div","gwhy"); gw.appendChild(el("b",null,"Systems & practices: ")); gw.appendChild(document.createTextNode(g.why)); main.appendChild(gw); }
   var chips=el("div","chips");
   if(g.category) chips.appendChild(el("span","chip cat",g.category));
   if(g.targetDate) chips.appendChild(el("span","chip","by "+fmtDate(g.targetDate)));
@@ -3034,7 +3035,9 @@ function fillModal(title,showDel){
   $("#fOutcomeLab").textContent = sys?"Outcome it serves":"Done means";
   $("#fOutcomeHint").textContent = sys?"Recorded for context. Never used to score you."
                                      :"What has to be true for this to count as achieved.";
-  $("#fWhyLab").textContent = sys?"Why this process":"Why it matters";
+  $("#fWhyLab").textContent = sys?"Why this process":"Systems/Practices put in place to achieve this goal";
+  $("#fWhy").placeholder = sys?"What running this reliably actually changes."
+                              :"Save £5K every month, weekly property check-ins, quarterly finance review…";
   $("#fHorizonLab").textContent = sys?"Cadence":"Horizon";
   $("#fTargetLab").textContent = sys?"Review on":"Target date";
   $("#fTargetHint").textContent = sys?"Optional. A date to revisit the system."
@@ -3187,7 +3190,8 @@ function aiPrompt(cur){
     "- No emoji, no exclamation marks, no corporate or self-help register.",
     "- title: one line, no full stop.",
     "- outcome: one sentence naming an observable end state.",
-    "- why: one or two sentences.",
+    isSys?"- why: one or two sentences on why this process matters."
+      :"- why: the systems and practices put in place to achieve the goal, as a short comma-separated list.",
     "- steps: short imperative lines, same number and same order as given.",
     "- Return a field unchanged if it is already good. Return \"\" for a field that came in empty.",
     "",
@@ -3208,7 +3212,7 @@ function aiRender(cur,sug){
   function labOf(id,fallback){ var e=$(id); return (e&&e.textContent)||fallback; }
   var fields=[["title",labOf("#fTitleLab","The goal")],
               ["outcome",labOf("#fOutcomeLab","Done means")],
-              ["why",labOf("#fWhyLab","Why it matters")]];
+              ["why",labOf("#fWhyLab","Systems/Practices put in place to achieve this goal")]];
   var shown=0;
 
   fields.forEach(function(f){
