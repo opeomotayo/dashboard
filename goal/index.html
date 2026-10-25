@@ -587,6 +587,65 @@ textarea{resize:vertical;min-height:66px;line-height:1.5}
   .actl input[type=range]{width:90px}
   .cmphead{font-size:9px;letter-spacing:.08em}
 }
+/* ── per-goal timeline ─────────────────────────────────────────────────
+   Each goal carries its own milestones on a horizontal bar: one coloured
+   segment per milestone, circles alternating above and below, the text on
+   the opposite side with a diamond pointing at it. The last stop is the
+   goal's own target date. Everything except the target edits in place. */
+.gtl{margin:16px 0 4px;border-top:1px dashed var(--line);padding-top:14px;cursor:auto}
+.gtl *{cursor:auto}
+.gtl-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.gtl-head .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.gtl-head .meta{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.04em}
+.gtl-head .btn{margin-left:auto;cursor:pointer}
+.gtl-scroll{overflow-x:auto;overflow-y:hidden;margin:0 -6px;padding:4px 6px 10px;scrollbar-width:thin}
+.gtl-grid{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(176px,1fr);grid-template-rows:auto 28px auto;position:relative}
+.gtl-up,.gtl-dn{display:flex;flex-direction:column;align-items:center;padding:0 8px;min-width:0}
+.gtl-up{justify-content:flex-end}
+.gtl-dn{justify-content:flex-start}
+.gtl-stem{width:3px;flex:1 0 18px;background:var(--c);border-radius:2px}
+.gtl-c{width:74px;height:74px;border-radius:50%;flex:none;border:5px solid var(--c);background:var(--surface);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0;position:relative;
+  box-shadow:0 8px 18px -10px color-mix(in srgb,var(--c) 90%,transparent),inset 0 2px 5px rgba(11,16,32,.10);
+  transition:transform .15s}
+button.gtl-c{cursor:pointer}
+button.gtl-c:hover{transform:scale(1.05)}
+.gtl-c .m{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.12em;color:var(--muted);line-height:1}
+.gtl-c .y{font-family:var(--display);font-size:19px;font-weight:800;letter-spacing:-.02em;color:var(--c);line-height:1}
+.gtl-c.done{background:var(--c)}
+.gtl-c.done .m{color:color-mix(in srgb,#fff 80%,transparent)} .gtl-c.done .y{color:#fff}
+.gtl-c .ok{position:absolute;right:-5px;top:-5px;width:22px;height:22px;border-radius:50%;background:var(--hold);color:#fff;font-size:11px;
+  font-weight:700;display:grid;place-items:center;border:2px solid var(--surface)}
+.gtl-c.tgt{border-style:double;border-width:7px}
+.gtl-c.tgt .m{color:var(--c)}
+.gtl-seg{background:var(--c);position:relative;align-self:center;height:16px}
+.gtl-seg.first{border-radius:9px 0 0 9px} .gtl-seg.last{border-radius:0 9px 9px 0}
+.gtl-seg::after{content:"";position:absolute;left:50%;width:14px;height:14px;background:var(--c);transform:translateX(-50%) rotate(45deg)}
+.gtl-seg.pu::after{top:-6px} .gtl-seg.pd::after{bottom:-6px}
+.gtl-t{text-align:center;padding-top:14px;padding-bottom:4px;width:100%}
+.gtl-up .gtl-t{padding-top:4px;padding-bottom:14px}
+.gtl-title{font-family:var(--display);font-size:14.5px;font-weight:700;letter-spacing:.005em;text-transform:uppercase;color:var(--ink-2);
+  line-height:1.25;outline:none;border-radius:5px;word-break:break-word;cursor:text}
+.gtl-u{width:30px;height:3px;border-radius:2px;background:var(--c);margin:7px auto}
+.gtl-note{font-size:12.5px;color:var(--muted);line-height:1.5;outline:none;border-radius:5px;min-height:1.5em;word-break:break-word;cursor:text}
+.gtl-title:focus,.gtl-note:focus{background:var(--sunken);box-shadow:0 0 0 2px var(--accent-soft),0 0 0 5px var(--sunken)}
+.gtl-note:empty::before{content:attr(data-ph);color:var(--faint)}
+.gtl-t.done .gtl-title{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--line-2);color:var(--muted)}
+.gtl-acts{display:flex;gap:4px;justify-content:center;align-items:center;margin-top:8px;flex-wrap:wrap;opacity:0;transition:opacity .15s}
+.gtl-t:hover .gtl-acts,.gtl-t:focus-within .gtl-acts{opacity:1}
+@media (hover:none){.gtl-acts{opacity:1}}
+.gtl-acts input[type=month]{width:auto;font:500 11px var(--mono);padding:4px 6px;border:1px solid var(--line-2);border-radius:6px;background:var(--surface);color:var(--ink-2);min-height:0}
+.gtl-acts .btn{padding:4px 8px;font-size:11.5px;cursor:pointer}
+.gtl-acts .btn.arm{background:var(--stall-soft);color:var(--stall-ink);border-color:var(--stall)}
+.gtl-now{grid-column:1/-1;grid-row:2;position:relative;pointer-events:none;z-index:2}
+.gtl-now span{position:absolute;top:50%;transform:translate(-50%,-50%);font:700 9px var(--mono);letter-spacing:.12em;
+  background:var(--ink);color:var(--paper);padding:4px 7px;border-radius:999px;white-space:nowrap;box-shadow:0 0 0 3px var(--surface)}
+.gtl-empty{font-size:13px;color:var(--muted);padding:8px 0 4px;line-height:1.55}
+@media (max-width:719px){
+  .gtl-grid{grid-auto-columns:minmax(150px,1fr)}
+  .gtl-c{width:62px;height:62px;border-width:4px} .gtl-c .y{font-size:16px}
+  .gtl-title{font-size:13px}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -868,8 +927,10 @@ var HMAP = {}; HORIZONS.forEach(function(h){HMAP[h.k]=h;});
    produces it, and hangs off exactly one goal. Cadence decides which is
    which, so nothing has to be classified by hand. */
 var GOAL_HORIZONS=["monthly","quarterly","yearly"];
-var SYS_HORIZONS=["daily","weekly"];
-function isSystem(r){ return r.kind==="system" || (!r.kind && SYS_HORIZONS.indexOf(r.horizon)>=0); }
+var SYS_HORIZONS=["daily","weekly","monthly"];
+/* records from before `kind` existed: only daily and weekly ones were systems */
+var LEGACY_SYS=["daily","weekly"];
+function isSystem(r){ return r.kind==="system" || (!r.kind && LEGACY_SYS.indexOf(r.horizon)>=0); }
 function isGoalRec(r){ return !isSystem(r); }
 function systemsFor(id){ return goals.filter(function(r){ return isSystem(r) && r.parentId===id; }); }
 function orphanSystems(){ return goals.filter(function(r){ return isSystem(r) && !r.parentId; }); }
@@ -1354,7 +1415,7 @@ function migrateToSystems(){
       delete m.tactics;
     }
     m.stepLog=m.stepLog||{};
-    if(!m.kind) m.kind = SYS_HORIZONS.indexOf(m.horizon)>=0 ? "system" : "goal";
+    if(!m.kind) m.kind = LEGACY_SYS.indexOf(m.horizon)>=0 ? "system" : "goal";
     if(m.kind==="system" && typeof m.parentId!=="string") m.parentId="";
     if(!(m.commitN>0)) m.commitN=1;
     if(!(m.commitM>0)) m.commitM=1;
@@ -1822,6 +1883,139 @@ function renderList(){
   }
 }
 
+/* ========================= per-goal timeline ========================= */
+var GTL_PAL=["#1F5A8E","#3FA2E8","#4CC3D9","#4FC58B","#2E8A74","#86B44A"];
+var gtlDelArm=null, gtlDelTimer=null, gtlFocus=null;
+function gtlYm(d){ return d? d.slice(0,7):""; }
+function editGoalMs(gid,fn){
+  var g=goals.find(function(x){ return x.id===gid; }); if(!g) return;
+  var c=clone(g); c.milestones=(c.milestones||[]).slice(); fn(c.milestones,c); saveGoal(c);
+}
+function gtlAdd(g){
+  var ms=(g.milestones||[]).slice().sort(function(a,b){ return (a.when||"").localeCompare(b.when||""); });
+  var now=thisYm(), last=ms.length?ms[ms.length-1].when:"";
+  var when=now;
+  if(last && last>=now){ var p=last.split("-"), d=new Date(+p[0],+p[1],1); when=d.getFullYear()+"-"+pad(d.getMonth()+1); }
+  var tgt=gtlYm(g.targetDate); if(tgt && when>tgt) when=tgt;
+  var id="m"+uid();
+  gtlFocus=id;
+  openGoals[g.id]=openGoals[g.id];   /* leave the systems panel as it was */
+  editGoalMs(g.id,function(list){ list.push({id:id,when:when,title:"New milestone",note:"",done:false}); });
+}
+function gtlBind(node,gid,mid,key,single){
+  var orig=node.textContent;
+  node.onfocus=function(){ orig=node.textContent; };
+  node.onkeydown=function(ev){
+    if(ev.key==="Enter"&&(single||!ev.shiftKey)){ ev.preventDefault(); node.blur(); }
+    if(ev.key==="Escape"){ ev.preventDefault(); ev.stopPropagation(); node.textContent=orig; node.blur(); }
+  };
+  node.onblur=function(){
+    var v=node.textContent.replace(/\s+/g," ").trim();
+    if(key==="title"&&!v) v=orig||"Milestone";
+    node.textContent=v;
+    if(v!==orig) editGoalMs(gid,function(list){ var m=list.find(function(x){return x.id===mid;}); if(m) m[key]=v; });
+  };
+}
+function goalTimeline(g){
+  var box=el("div","gtl");
+  var ms=(g.milestones||[]).slice().sort(function(a,b){ return (a.when||"").localeCompare(b.when||""); });
+  var tgt=gtlYm(g.targetDate);
+  var items=ms.map(function(m){ return {m:m,when:m.when}; });
+  if(tgt) items.push({target:true,when:tgt});
+
+  var head=el("div","gtl-head");
+  head.appendChild(el("span","k","Timeline"));
+  var bits=[];
+  if(g.startDate) bits.push("from "+fmtDate(g.startDate));
+  if(ms.length) bits.push(ms.filter(function(m){return m.done;}).length+"/"+ms.length+" milestones done");
+  if(bits.length) head.appendChild(el("span","meta",bits.join(" · ")));
+  var add=el("button","btn btn-sm","Add milestone"); add.type="button";
+  add.onclick=function(e){ e.stopPropagation(); gtlAdd(g); };
+  head.appendChild(add);
+  box.appendChild(head);
+
+  if(!items.length){
+    box.appendChild(el("div","gtl-empty","No milestones yet. Add the checkpoints between today and the finish — and set a target date on the goal to put the finish on the line."));
+    return box;
+  }
+  var sc=el("div","gtl-scroll"), grid=el("div","gtl-grid");
+  var n=items.length;
+  items.forEach(function(it,i){
+    var c=it.target?"var(--accent)":GTL_PAL[i%GTL_PAL.length], up=(i%2===0), col=String(i+1);
+    var m=it.m, done=it.target?(g.status==="done"||g.status==="retired"):!!m.done;
+    /* circle */
+    var p=(it.when||"").split("-");
+    var circ=el(it.target?"div":"button","gtl-c"+(done?" done":"")+(it.target?" tgt":""));
+    circ.style.setProperty("--c",c);
+    circ.appendChild(el("span","m",it.target?"GOAL":((MONTHS[(+p[1]||1)-1]||"").slice(0,3).toUpperCase())));
+    circ.appendChild(el("span","y",p[0]||""));
+    if(it.target){ circ.appendChild(el("span","m",(MONTHS[(+p[1]||1)-1]||"").slice(0,3).toUpperCase())); circ.title="Target date "+fmtDate(g.targetDate); }
+    else {
+      circ.type="button"; circ.title=done?"Done — tap to reopen":"Tap to mark done";
+      circ.setAttribute("aria-pressed",done?"true":"false");
+      circ.setAttribute("aria-label",(m.title||"Milestone")+", "+ymLabel(m.when)+(done?", done":""));
+      circ.onclick=function(e){ e.stopPropagation(); editGoalMs(g.id,function(list){ var x=list.find(function(y){return y.id===m.id;}); if(x) x.done=!x.done; }); };
+      if(done) circ.appendChild(el("span","ok","✓"));
+    }
+    var stem=el("div","gtl-stem"); stem.style.setProperty("--c",c);
+    /* text */
+    var t=el("div","gtl-t"+(done?" done":"")); t.style.setProperty("--c",c);
+    if(it.target){
+      t.appendChild(el("div","gtl-title","Goal reached"));
+      t.appendChild(el("div","gtl-u"));
+      t.appendChild(el("div","gtl-note",g.outcome||("By "+fmtDate(g.targetDate))));
+    } else {
+      t.dataset.msid=m.id;
+      var ti=el("div","gtl-title",m.title||""); ti.contentEditable="plaintext-only"; if(ti.contentEditable!=="plaintext-only") ti.contentEditable="true";
+      ti.setAttribute("role","textbox"); ti.setAttribute("aria-label","Milestone title");
+      var no=el("div","gtl-note",m.note||""); no.contentEditable=ti.contentEditable; no.dataset.ph="Add detail…";
+      no.setAttribute("role","textbox"); no.setAttribute("aria-label","Milestone detail");
+      gtlBind(ti,g.id,m.id,"title",true); gtlBind(no,g.id,m.id,"note",false);
+      t.appendChild(ti); t.appendChild(el("div","gtl-u")); t.appendChild(no);
+      var a=el("div","gtl-acts");
+      var mi=document.createElement("input"); mi.type="month"; mi.value=m.when||""; mi.setAttribute("aria-label","Milestone month");
+      mi.onchange=function(){ if(!/^\d{4}-\d{2}$/.test(mi.value)) return; var v=mi.value;
+        editGoalMs(g.id,function(list){ var x=list.find(function(y){return y.id===m.id;}); if(x) x.when=v; }); };
+      var del=el("button","btn btn-ghost"+(gtlDelArm===m.id?" arm":""),gtlDelArm===m.id?"Tap again":"Delete"); del.type="button";
+      del.onclick=function(e){ e.stopPropagation();
+        if(gtlDelArm!==m.id){ gtlDelArm=m.id; del.className="btn btn-ghost arm"; del.textContent="Tap again";
+          clearTimeout(gtlDelTimer); gtlDelTimer=setTimeout(function(){ gtlDelArm=null; del.className="btn btn-ghost"; del.textContent="Delete"; },4000); return; }
+        gtlDelArm=null; clearTimeout(gtlDelTimer);
+        editGoalMs(g.id,function(list){ var k=list.findIndex(function(y){return y.id===m.id;}); if(k>=0) list.splice(k,1); });
+      };
+      a.appendChild(mi); a.appendChild(del); t.appendChild(a);
+    }
+    var upC=el("div","gtl-up"), dnC=el("div","gtl-dn");
+    if(up){ upC.appendChild(circ); upC.appendChild(stem); dnC.appendChild(t); }
+    else { upC.appendChild(t); dnC.appendChild(stem); dnC.appendChild(circ); }
+    var seg=el("div","gtl-seg "+(up?"pd":"pu")+(i===0?" first":"")+(i===n-1?" last":"")); seg.style.setProperty("--c",c);
+    upC.style.gridColumn=seg.style.gridColumn=dnC.style.gridColumn=col;
+    upC.style.gridRow="1"; seg.style.gridRow="2"; dnC.style.gridRow="3";
+    grid.appendChild(upC); grid.appendChild(seg); grid.appendChild(dnC);
+  });
+  /* today, placed between the stops it falls between */
+  var now=thisYm(), nums=items.map(function(it){ return ymNum(it.when); }), tn=ymNum(now), pos=null;
+  if(tn<=nums[0]){
+    var s0=g.startDate?ymNum(gtlYm(g.startDate)):tn;
+    var span=nums[0]-s0; pos=span>0?Math.max(0.12,0.5*(tn-s0)/span):0.12;
+  } else if(tn>nums[n-1]) pos=n-0.12;
+  else for(var k=1;k<n;k++){ if(tn<=nums[k]){ var f=(nums[k]===nums[k-1])?0.5:(tn-nums[k-1])/(nums[k]-nums[k-1]); pos=(k-1)+0.5+f; break; } }
+  if(pos!=null){
+    var nw=el("div","gtl-now"); var pill=el("span",null,"TODAY"); pill.style.left="clamp(32px,"+(pos/n*100).toFixed(2)+"%,calc(100% - 32px))";
+    nw.appendChild(pill); grid.appendChild(nw);
+  }
+  sc.appendChild(grid); box.appendChild(sc);
+  return box;
+}
+function gtlAfterRender(){
+  if(!gtlFocus) return;
+  var t=document.querySelector('.gtl-t[data-msid="'+gtlFocus+'"] .gtl-title'); gtlFocus=null;
+  if(!t) return;
+  var scr=t.closest(".gtl-scroll"); if(scr){ var col=t.closest(".gtl-up,.gtl-dn"); scr.scrollLeft=Math.max(0,col.offsetLeft-scr.clientWidth/2); }
+  t.focus({preventScroll:true});
+  try{ var r=document.createRange(); r.selectNodeContents(t); var s=getSelection(); s.removeAllRanges(); s.addRange(r); }catch(e){}
+}
+
 function goalCard(g){
   var st=statusOf(g), roll=rollupOf(g), h=HMAP[g.horizon]||HMAP.monthly;
   var card=el("div","goal"); card.dataset.s=st; card.dataset.done=st==="done"?"1":"0";
@@ -1876,6 +2070,7 @@ function goalCard(g){
   acts.appendChild(doneBtn); acts.appendChild(editBtn);
   head.appendChild(acts);
   inr.appendChild(head);
+  inr.appendChild(goalTimeline(g));
 
   /* the goal reads as its systems do */
   var kids=systemsFor(g.id);
@@ -1923,7 +2118,7 @@ function goalCard(g){
      their own behaviour, and a click inside the open systems panel is left
      alone — collapsing the thing you are ticking would be maddening. */
   card.onclick=function(e){
-    if(e.target.closest("button,a,input,select,textarea,label,.syswrap")) return;
+    if(e.target.closest("button,a,input,select,textarea,label,.syswrap,.gtl")) return;
     if(window.getSelection && String(window.getSelection())) return;  // let text be selected
     toggleGoal(g.id);
   };
@@ -2170,7 +2365,7 @@ function flashStatus(m){
 
 function render(){
   renderPageNav();
-  if(page==="goals"){ renderHorizons(); renderPeriodNav(); renderReadouts(); renderFilters(); renderList(); }
+  if(page==="goals"){ renderHorizons(); renderPeriodNav(); renderReadouts(); renderFilters(); renderList(); gtlAfterRender(); }
   else if(page==="timeline") renderTimeline();
   else renderVision();
   renderStatus(); renderStorage();
