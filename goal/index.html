@@ -690,6 +690,32 @@ button.gtr-c:hover{transform:scale(1.05)}
 .gtr-now{position:absolute;z-index:3;transform:translate(-50%,-50%);font:700 9px var(--mono);letter-spacing:.12em;background:var(--ink);color:var(--paper);
   padding:4px 8px;border-radius:999px;white-space:nowrap;box-shadow:0 0 0 3px var(--surface);pointer-events:none}
 @media (max-width:719px){ .gtr-title{font-size:16.5px} .gtr-note{font-size:13px} }
+/* milestone system + review */
+.msblk{margin-top:9px}
+.msl{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.msview{display:block;width:100%;text-align:inherit;border:1px dashed transparent;background:transparent;border-radius:7px;padding:3px 6px;margin:0 -6px;cursor:text;color:var(--ink-2);font:inherit}
+.msview:hover{border-color:var(--line-2);background:var(--sunken)}
+.msview ul{margin:0;padding-left:18px;font-size:13px;line-height:1.45;display:grid;gap:2px;text-align:left}
+.gtr-t.l .msview ul{display:inline-grid}
+.msview li::marker{color:var(--c,var(--accent))}
+.msph{font-size:12.5px;color:var(--faint)}
+.msblk textarea{width:100%;font:13px var(--body);line-height:1.45;padding:7px 9px;border:1px solid var(--accent);border-radius:8px;background:var(--surface);color:var(--ink);resize:vertical;text-align:left}
+.mshint{font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:3px}
+.msrev{margin-top:10px;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:var(--sunken);text-align:left}
+.msrev.ok{background:var(--hold-soft);border-color:color-mix(in srgb,var(--hold) 35%,transparent)}
+.msrev.ok .msl{color:var(--hold-ink)}
+.msrev.no{background:var(--stall-soft);border-color:color-mix(in srgb,var(--stall) 35%,transparent)}
+.msrev.no .msl{color:var(--stall-ink)}
+.msrev.ask{background:var(--slip-soft);border-color:color-mix(in srgb,var(--slip) 40%,transparent)}
+.msrev .msblk{margin-top:0}
+.msrev .msview,.msrev .msview ul{text-align:left}
+.msrev > .btn{margin-top:6px;padding:4px 8px;font-size:11.5px}
+.msq{font-size:13px;font-weight:600;color:var(--slip-ink);margin-bottom:8px}
+.msyn{display:flex;gap:6px;flex-wrap:wrap}
+.msyn .yes{border-color:var(--hold);color:var(--hold-ink);background:var(--surface)}
+.msyn .no{border-color:var(--stall);color:var(--stall-ink);background:var(--surface)}
+.gtr-c.missed{filter:grayscale(.55) opacity(.85)}
+.goal{cursor:auto}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -1248,6 +1274,14 @@ function adherenceOf(g){
 }
 function statusOf(g){
   if(g.status==="done"||g.status==="retired") return "done";
+  /* a goal reads through its milestones: past target is stalled, a missed or
+     unreviewed past milestone is slipping */
+  if(isGoalRec(g) && (g.milestones||[]).length){
+    var nowYm=thisYm();
+    if(g.targetDate && g.targetDate.slice(0,7)<nowYm) return "bad";
+    if(g.milestones.some(function(m){ return m.missed || (!m.done && (m.when||"")<nowYm); })) return "warn";
+    return "ok";
+  }
   /* a goal is read through the systems under it, never through a log of its own */
   if(isGoalRec(g)){
     var r=rollupOf(g);
@@ -1913,7 +1947,7 @@ function renderList(){
     items.forEach(function(g){ box.appendChild(goalCard(g)); });
   }
 
-  var loose=orphanSystems().filter(function(r){return statusOf(r)!=="done";});
+  var loose=[];   /* goal-level systems are retired from this view; their records are kept */
   if(loose.length){
     var w=el("div","goal loose");
     var inr=el("div","goal-in");
@@ -1961,6 +1995,64 @@ function gtlBind(node,gid,mid,key,single){
     if(v!==orig) editGoalMs(gid,function(list){ var m=list.find(function(x){return x.id===mid;}); if(m) m[key]=v; });
   };
 }
+/* ---- per-milestone system and end-of-milestone review ---------------- */
+function msPatch(gid,mid,patch){
+  editGoalMs(gid,function(list){ var x=list.find(function(y){return y.id===mid;}); if(x) for(var k in patch) x[k]=patch[k]; });
+}
+/* a bullet list that turns into a text box when clicked; one item per line */
+function bulletEditor(cls,label,ph,val,save,road){
+  var wrap=el("div","msblk "+cls);
+  wrap.appendChild(el("div","msl",label));
+  function show(){
+    while(wrap.childNodes.length>1) wrap.removeChild(wrap.lastChild);
+    var lines=practiceLines(val);
+    var view=el("button","msview"); view.type="button";
+    if(lines.length){ var ul=el("ul"); lines.forEach(function(t){ ul.appendChild(el("li",null,t)); }); view.appendChild(ul); }
+    else view.appendChild(el("span","msph",ph));
+    view.onclick=function(e){ e.stopPropagation(); edit(); };
+    wrap.appendChild(view);
+  }
+  function edit(){
+    while(wrap.childNodes.length>1) wrap.removeChild(wrap.lastChild);
+    var ta=document.createElement("textarea"); ta.rows=Math.max(2,practiceLines(val).length+1);
+    ta.value=practiceLines(val).join("\n"); ta.placeholder="One per line"; ta.setAttribute("aria-label",label);
+    ta.oninput=function(){ ta.rows=Math.max(2,ta.value.split("\n").length+1); layoutGoalRoad(road,true); };
+    ta.onkeydown=function(ev){ if(ev.key==="Escape"){ ev.preventDefault(); ev.stopPropagation(); show(); layoutGoalRoad(road,true); }
+      if(ev.key==="Enter"&&(ev.metaKey||ev.ctrlKey)){ ev.preventDefault(); ta.blur(); } };
+    ta.onblur=function(){ var v=ta.value.split("\n").map(function(t){return t.trim();}).filter(Boolean).join("\n");
+      if(v!==(val||"").trim()){ val=v; save(v); } else { show(); layoutGoalRoad(road,true); } };
+    wrap.appendChild(ta); wrap.appendChild(el("div","mshint","One per line · click away to save"));
+    layoutGoalRoad(road,true); ta.focus();
+  }
+  show();
+  return wrap;
+}
+/* the review appears once a milestone is done, or once its month is over */
+function reviewBlock(g,m,road){
+  var now=thisYm(), ended=(m.when||"")<now;
+  if(!m.done && !m.missed && !ended) return null;
+  var box=el("div","msrev"+(m.done?" ok":m.missed?" no":" ask"));
+  if(!m.done && !m.missed){
+    box.appendChild(el("div","msq",ymLabel(m.when)+" has ended — did you achieve this?"));
+    var r=el("div","msyn");
+    var y=el("button","btn btn-sm yes","Yes, achieved"); y.type="button";
+    y.onclick=function(e){ e.stopPropagation(); msPatch(g.id,m.id,{done:true,missed:false}); };
+    var n=el("button","btn btn-sm no","No, not achieved"); n.type="button";
+    n.onclick=function(e){ e.stopPropagation(); msPatch(g.id,m.id,{missed:true,done:false}); };
+    r.appendChild(y); r.appendChild(n); box.appendChild(r);
+    return box;
+  }
+  var q=m.done?"What was the key to achieving it?":"Why wasn't it achieved?";
+  box.appendChild(bulletEditor("", q, m.done?"Note what made the difference…":"Note what got in the way…", m.review||"",
+    function(v){ msPatch(g.id,m.id,{review:v}); }, road));
+  if(m.missed){
+    var re=el("button","btn btn-ghost btn-sm","Achieved after all"); re.type="button";
+    re.onclick=function(e){ e.stopPropagation(); msPatch(g.id,m.id,{done:true,missed:false}); };
+    box.appendChild(re);
+  }
+  return box;
+}
+
 function goalTimeline(g){
   var box=el("div","gtl");
   var ms=(g.milestones||[]).slice().sort(function(a,b){ return (a.when||"").localeCompare(b.when||""); });
@@ -1999,6 +2091,7 @@ function goalTimeline(g){
     var tx=el("div","gtr-t"+(done?" done":"")+(it.target?" tgt":""));
     var kick=el("div","gtr-k"); kick.appendChild(document.createTextNode(ymLabel(it.when)));
     if(done){ kick.appendChild(document.createTextNode(" · ")); kick.appendChild(el("span","dn",it.target?"Achieved":"Done")); }
+    else if(m&&m.missed){ kick.appendChild(document.createTextNode(" · ")); kick.appendChild(el("span","od","Not achieved")); }
     else if((it.when||"")<now){ kick.appendChild(document.createTextNode(" · ")); kick.appendChild(el("span","od","Overdue")); }
     tx.appendChild(kick);
     if(it.target){
@@ -2009,7 +2102,8 @@ function goalTimeline(g){
       circ.type="button"; circ.title=done?"Done — tap to reopen":"Tap to mark done";
       circ.setAttribute("aria-pressed",done?"true":"false");
       circ.setAttribute("aria-label",(m.title||"Milestone")+", "+ymLabel(m.when)+(done?", done":""));
-      circ.onclick=function(e){ e.stopPropagation(); editGoalMs(g.id,function(list){ var x=list.find(function(y){return y.id===m.id;}); if(x) x.done=!x.done; }); };
+      circ.onclick=function(e){ e.stopPropagation(); msPatch(g.id,m.id,{done:!m.done,missed:false}); };
+      if(m.missed) circ.classList.add("missed");
       tx.dataset.msid=m.id;
       var ti=el("div","gtr-title",m.title||""); ti.contentEditable="plaintext-only"; if(ti.contentEditable!=="plaintext-only") ti.contentEditable="true";
       ti.setAttribute("role","textbox"); ti.setAttribute("aria-label","Milestone title");
@@ -2019,6 +2113,9 @@ function goalTimeline(g){
       ti.addEventListener("input",function(){ layoutGoalRoad(road,true); });
       no.addEventListener("input",function(){ layoutGoalRoad(road,true); });
       tx.appendChild(ti); tx.appendChild(no);
+      tx.appendChild(bulletEditor("mssys","System to achieve it","+ Add the system or practices for this milestone",m.system||"",
+        function(v){ msPatch(g.id,m.id,{system:v}); }, road));
+      var rv=reviewBlock(g,m,road); if(rv) tx.appendChild(rv);
       var a=el("div","gtr-acts");
       var mi=document.createElement("input"); mi.type="month"; mi.value=m.when||""; mi.setAttribute("aria-label","Milestone month");
       mi.onchange=function(){ if(!/^\d{4}-\d{2}$/.test(mi.value)) return; var v=mi.value;
@@ -2116,7 +2213,7 @@ function layoutGoalRoad(road,force){
   if(tn<=nums[0]){ var g=road._g, s0=g&&g.startDate?ymNum(gtlYm(g.startDate)):tn-1; seg=0; frac=nums[0]>s0?Math.min(0.85,Math.max(0.25,(tn-s0)/(nums[0]-s0))):0.5; }
   else for(i=1;i<n;i++){ if(tn<=nums[i]){ seg=i; frac=nums[i]===nums[i-1]?0.5:(tn-nums[i-1])/(nums[i]-nums[i-1]); break; } }
   if(seg==null){ pill.hidden=true; return; }
-  frac=Math.min(0.8,Math.max(0.2,frac));
+  frac=Math.min(0.65,Math.max(0.38,frac));   /* keep the pill clear of both circles */
   var S=segs[seg], u=1-frac;
   function bz(k){ return u*u*u*S[0][k]+3*u*u*frac*S[1][k]+3*u*frac*frac*S[2][k]+frac*frac*frac*S[3][k]; }
   pill.hidden=false; pill.style.left=bz(0)+"px"; pill.style.top=bz(1)+"px";
@@ -2158,8 +2255,6 @@ function goalCard(g){
     ? "A habit goal: the systems under it are the point, and adherence is the verdict."
     : "An achievement goal: a specific result. Systems under it are optional.";
   srow.appendChild(tk);
-  var kidCount=systemsFor(g.id).length;
-  if(kidCount) srow.appendChild(el("span","syscount",kidCount+" system"+(kidCount===1?"":"s")));
   main.appendChild(srow);
   main.appendChild(el("div","gtitle",g.title||"Untitled goal"));
   if(g.outcome) main.appendChild(el("div","goutcome","Done means: "+g.outcome));
@@ -2184,7 +2279,6 @@ function goalCard(g){
   chev.title=open?"Hide systems":"Show systems";
   chev.appendChild(el("span","chevi","\u203a"));
   chev.onclick=function(e){ e.stopPropagation(); toggleGoal(g.id); };
-  acts.appendChild(chev);
   var retired=(g.status==="done"||g.status==="retired");
   var doneBtn=el("button","btn btn-ghost btn-sm",retired?"Reopen":"Mark achieved");
   doneBtn.onclick=function(){
@@ -2200,57 +2294,7 @@ function goalCard(g){
   inr.appendChild(head);
   inr.appendChild(goalTimeline(g));
 
-  /* the goal reads as its systems do */
-  var kids=systemsFor(g.id);
-  if(roll){
-    var rw=el("div","rollup");
-    var bar=el("div","rbar");
-    var fill=el("div","rfill");
-    fill.style.width=(roll.available?Math.round(roll.rate*100):0)+"%";
-    bar.appendChild(fill); rw.appendChild(bar);
-    var rv=el("div","rval");
-    if(roll.available){
-      rv.appendChild(el("b",null,Math.round(roll.rate*100)+"%"));
-      rv.appendChild(document.createTextNode("  "+roll.holding+"/"+roll.count+" systems holding"));
-    } else {
-      /* nothing has come due yet \u2014 0% would read as a failure */
-      rv.appendChild(el("b",null,"\u2013"));
-      rv.appendChild(document.createTextNode("  "+roll.count+" system"+(roll.count===1?"":"s")+
-        ", nothing due yet"));
-    }
-    rw.appendChild(rv);
-    inr.appendChild(rw);
-  }
-
-  var sw=el("div","syswrap");
-  sw.id="sys-"+g.id;
-  sw.hidden=!open;
-  var sh=el("div","thead");
-  sh.appendChild(el("h3",null,kids.length?"Systems that produce it":(isAchievement(g)?"No systems":"No systems yet")));
-  var add=el("button","btn btn-sm","Add a system");
-  add.onclick=function(){ openNewSystem(g.id); };
-  sh.appendChild(add);
-  sw.appendChild(sh);
-  if(!kids.length){
-    sw.appendChild(el("div","sysempty", isAchievement(g)
-      ? "No systems needed \u2014 this one is reached or it is not. Add a daily or weekly action if something has to happen repeatedly to get there."
-      : "A habit goal with no system is a wish. Add the daily or weekly action that moves it."));
-  } else {
-    var sl=el("div","syslist");
-    kids.forEach(function(k){ sl.appendChild(systemRow(k)); });
-    sw.appendChild(sl);
-  }
-  inr.appendChild(sw);
-
-  /* Click anywhere on the goal to show or hide its systems. Controls keep
-     their own behaviour, and a click inside the open systems panel is left
-     alone — collapsing the thing you are ticking would be maddening. */
-  card.onclick=function(e){
-    if(e.target.closest("button,a,input,select,textarea,label,.syswrap,.gtl")) return;
-    if(window.getSelection && String(window.getSelection())) return;  // let text be selected
-    toggleGoal(g.id);
-  };
-
+  /* systems now live on each milestone of the road, not under the goal */
   card.appendChild(inr);
   return card;
 }
