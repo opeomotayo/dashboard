@@ -282,6 +282,105 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
   .months{height:112px}
   .pcash{margin-left:0;flex-basis:100%}
 }
+/* ── portfolio dashboard ───────────────────────────────────────────────
+   The year across the portfolio: the cash-flow equation as headline
+   tiles, a month-by-month statement with a running total, income against
+   costs with the cash flow drawn over them, the cumulative position, and
+   where the rent comes from. Months that have not happened yet are
+   projections: shown faint and kept out of every total. Series hues are
+   the validated categorical order (slots 1, 2, 5); the cash-flow line is
+   ink so it never competes with a series. */
+:root{--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767}}
+:root[data-theme="dark"]{--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767}
+.shell,.topbar-in{max-width:1440px}
+.pagenav{display:flex;gap:3px;background:var(--sunken);border:1px solid var(--line);border-radius:10px;padding:3px}
+.pagenav button{border:0;background:transparent;padding:7px 15px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap}
+.pagenav button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-1);font-weight:600}
+
+.pd{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px;margin-top:18px}
+.pcardd{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-1);padding:15px 17px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.pcardd h3{font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:-.01em;margin:0;color:var(--ink)}
+.pcardd .sub{font-size:11.5px;color:var(--muted);margin-top:-6px}
+.c12{grid-column:span 12}.c9{grid-column:span 9}.c8{grid-column:span 8}.c7{grid-column:span 7}.c6{grid-column:span 6}.c5{grid-column:span 5}.c4{grid-column:span 4}.c3{grid-column:span 3}
+
+/* the equation */
+.peq{display:grid;grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr) 22px minmax(0,1fr) 22px minmax(0,1.1fr);align-items:stretch;gap:8px}
+.peq .op{display:grid;place-items:center;font-family:var(--display);font-size:24px;font-weight:700;color:var(--faint)}
+.pt{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-1);padding:14px 16px;
+  border-top:4px solid var(--c);display:flex;flex-direction:column;gap:5px;min-width:0}
+.pt .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.pt .v{font-family:var(--display);font-size:30px;font-weight:800;letter-spacing:-.025em;color:var(--ink);line-height:1.05;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt .v[data-sign="down"]{color:var(--down)}
+.pt .s{font-size:11.5px;color:var(--muted)}
+.pt.net{background:color-mix(in srgb,var(--c) 7%,var(--surface))}
+.peqnote{grid-column:1/-1;text-align:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+
+/* statement table */
+.ptbl-wrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
+.ptbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:760px}
+.ptbl th{font:500 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:right;padding:7px 8px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+.ptbl th:first-child,.ptbl td:first-child{text-align:left}
+.ptbl td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
+.ptbl td:first-child{font-family:var(--body);color:var(--ink);font-weight:500}
+.ptbl tr.fut td{color:var(--faint)}
+.ptbl tr.fut td:first-child{color:var(--faint);font-weight:400}
+.ptbl tr.cur td{background:var(--accent-soft)}
+.ptbl tr.tot td{border-top:2px solid var(--line-2);border-bottom:0;font-weight:700;color:var(--ink)}
+.ptbl tr.tot td:first-child{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.ptbl td.neg{color:var(--down)}
+.sig{display:inline-flex;align-items:center;gap:5px;font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:5px}
+.sig.pos{background:var(--up-soft);color:var(--up)}
+.sig.neg{background:var(--down-soft);color:var(--down)}
+.sig.na{color:var(--faint);font-weight:500}
+.ptbl tr[data-m]{cursor:pointer}
+.ptbl tr[data-m]:hover td{background:var(--sunken)}
+
+/* charts */
+.pleg{display:flex;gap:6px 15px;flex-wrap:wrap;font-size:12px;color:var(--ink-2)}
+.pleg span{display:inline-flex;align-items:center;gap:6px}
+.pleg i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.pleg i.ln{width:14px;height:3px;border-radius:2px}
+.pch{position:relative;width:100%}
+.pch svg{display:block;width:100%;height:auto;overflow:visible}
+.pch .ax{font:10px var(--mono);fill:var(--faint)}
+.pch .grid{stroke:var(--line);stroke-width:1}
+.pch .zero{stroke:var(--line-2);stroke-width:1.5}
+.ptip{position:fixed;z-index:200;pointer-events:none;background:var(--raised);border:1px solid var(--line);border-radius:9px;box-shadow:var(--shadow-2);padding:8px 10px;font-size:12px;color:var(--ink-2);min-width:150px}
+.ptip b{display:block;font-family:var(--display);font-size:13px;color:var(--ink);margin-bottom:4px}
+.ptip div{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ptip div span{display:inline-flex;align-items:center;gap:6px}
+.ptip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.ptip em{font-style:normal;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donuts */
+.pdon{display:flex;flex-direction:column;align-items:center;gap:10px}
+.pdon svg{width:100%;max-width:180px;height:auto}
+.pdon .c1,.pbrk .c1{font-family:var(--display);font-size:20px;font-weight:800;fill:var(--ink)}
+.pdon .c2,.pbrk .c2{font:8px var(--mono);fill:var(--muted);letter-spacing:.05em}
+.pbrk svg{width:100%;max-width:170px;height:auto}
+.pbrk{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr);gap:16px;align-items:center}
+.plist{display:grid;gap:7px;font-size:12.5px;color:var(--ink-2);min-width:0}
+.plist div{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;gap:8px;align-items:center}
+.plist i{width:10px;height:10px;border-radius:50%}
+.plist span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plist b{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.plist small{font-family:var(--mono);color:var(--muted);min-width:34px;text-align:right}
+.pmeta{display:grid;grid-template-columns:1fr auto;gap:5px 10px;font-size:12.5px;color:var(--ink-2);width:100%}
+.pmeta b{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);text-align:right}
+
+@media (max-width:1100px){
+  .pd{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .c12,.c9,.c8,.c7{grid-column:span 6} .c6,.c5,.c4,.c3{grid-column:span 3}
+  .peq{grid-template-columns:repeat(2,minmax(0,1fr))} .peq .op{display:none}
+}
+@media (max-width:680px){
+  .pd{grid-template-columns:minmax(0,1fr)}
+  .pd>*{grid-column:1/-1!important}
+  .pt .v{font-size:23px}
+  .pbrk{grid-template-columns:minmax(0,1fr)} .pbrk svg{max-width:160px;margin:0 auto}
+  .pagenav{max-width:100%;overflow-x:auto}
+}
 </style>
 
 
@@ -293,6 +392,7 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
       <h1>Property Console</h1>
       <span class="tag" id="todayTag"></span>
     </div>
+    <div class="pagenav" id="pagenav" role="group" aria-label="Section"></div>
     <span class="savepill" id="savepill" data-s="saved">
       <span class="sdot"></span><span id="savetext">Saved</span>
     </span>
@@ -417,7 +517,7 @@ var storageInfo={engine:"connecting…",bytes:null,persisted:null};
 var editing=null, draft={};
 var quickDraft={};
 var now=new Date();
-var view={year:now.getFullYear(), month:now.getMonth()};
+var view={page:"dash", prop:"all", year:now.getFullYear(), month:now.getMonth()};
 
 function $(s){ return document.querySelector(s); }
 function el(t,c,x){ var e=document.createElement(t); if(c)e.className=c; if(x!=null)e.textContent=x; return e; }
@@ -677,12 +777,223 @@ function setCloudSync(on){
   render();
 }
 
+/* ====================== portfolio dashboard ====================== */
+var PSLOT=["var(--s1)","var(--s2)","var(--s5)","var(--s3)","var(--s4)","var(--s6)","var(--s7)","var(--s8)"];
+var SVGNS="http://www.w3.org/2000/svg";
+function svgEl(tag,a,parent){ var e=document.createElementNS(SVGNS,tag); for(var k in a) e.setAttribute(k,a[k]); if(parent) parent.appendChild(e); return e; }
+function inScope(){ var ps=props(); return view.prop==="all"?ps:ps.filter(function(p){ return p.id===view.prop; }); }
+function isFutureKey(y,m){ var n=new Date(); return y>n.getFullYear() || (y===n.getFullYear() && m>n.getMonth()); }
+/* one month for the properties in scope, split the way a statement reads */
+function stmt(y,m){
+  var key=monthKey(y,m), o={m:m,income:0,opex:0,mortgage:0,fut:isFutureKey(y,m)};
+  inScope().forEach(function(p){ var f=figuresFor(p,key); o.income+=f.income; o.opex+=f.insurance+f.mgmt+f.oneOff; o.mortgage+=f.mortgage; });
+  o.noi=o.income-o.opex; o.net=o.noi-o.mortgage; o.ratio=o.income>0?o.opex/o.income:null;
+  return o;
+}
+function yearStmt(y){ var out=[]; for(var m=0;m<12;m++) out.push(stmt(y,m)); return out; }
+function niceStep(x){ if(!(x>0)) return 1; var p=Math.pow(10,Math.floor(Math.log10(x))), f=x/p; return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p; }
+function shortMoney(v){ var a=Math.abs(v), s=v<0?"−":""; return a>=1000?s+"£"+(a/1000).toFixed(a%1000?1:0).replace(/\.0$/,"")+"k":s+"£"+Math.round(a); }
+var tip=null;
+function showTip(ev,title,list){
+  if(!tip){ tip=el("div","ptip"); document.body.appendChild(tip); }
+  tip.textContent=""; tip.appendChild(el("b",null,title));
+  list.forEach(function(r){ var d=el("div"), s=el("span"); if(r.c){ var i=el("i"); i.style.background=r.c; s.appendChild(i); } s.appendChild(document.createTextNode(r.k)); d.appendChild(s); d.appendChild(el("em",null,r.v)); tip.appendChild(d); });
+  tip.hidden=false; var x=ev.clientX+14, y=ev.clientY+14;
+  if(x+tip.offsetWidth>innerWidth-8) x=ev.clientX-tip.offsetWidth-14; if(y+tip.offsetHeight>innerHeight-8) y=ev.clientY-tip.offsetHeight-14;
+  tip.style.left=x+"px"; tip.style.top=y+"px";
+}
+function hideTip(){ if(tip) tip.hidden=true; }
+function pcard(cls,title,sub){ var c=el("section","pcardd "+cls); c.appendChild(el("h3",null,title)); if(sub) c.appendChild(el("div","sub",sub)); return c; }
+
+function renderDash(parent){
+  var ps=props();
+  if(!ps.length){ parent.appendChild(el("div","empty","No properties yet. Add one and the dashboard fills itself in.")); return; }
+  sampleBanner(parent);
+  var ys=yearStmt(view.year), done=ys.filter(function(x){ return !x.fut; });
+  var T={income:0,opex:0,mortgage:0,noi:0,net:0};
+  done.forEach(function(x){ for(var k in T) T[k]+=x[k]; });
+  var scopeTxt=(view.prop==="all"?"across the whole portfolio":"for "+(ps.filter(function(p){return p.id===view.prop;})[0]||{}).name);
+  var periodTxt=done.length===12?"Full year "+view.year:done.length?"Year to date · Jan–"+MON3[done.length-1]+" "+view.year:"No months yet in "+view.year;
+  var grid=el("div","pd");
+
+  /* the equation */
+  var eq=el("div","peq c12");
+  function t(c,k,v,s,net){ var d=el("div","pt"+(net?" net":"")); d.style.setProperty("--c",c); d.appendChild(el("div","k",k));
+    var vv=el("div","v",money(v)); if(net&&v<0) vv.dataset.sign="down"; d.appendChild(vv); if(s) d.appendChild(el("div","s",s)); eq.appendChild(d); }
+  function op(x){ eq.appendChild(el("div","op",x)); }
+  t("var(--s1)","Rental income",T.income,done.length?money(T.income/done.length)+" a month on average":"");
+  op("−"); t("var(--s2)","Operating costs",T.opex,T.income?Math.round(T.opex/T.income*100)+"% of rent · management, insurance, works":"");
+  op("−"); t("var(--s5)","Mortgage",T.mortgage,T.income?Math.round(T.mortgage/T.income*100)+"% of rent":"");
+  op("="); t(T.net<0?"var(--down)":"var(--up)","Net cash flow",T.net,T.income?Math.round(T.net/T.income*100)+"% profit margin":"",true);
+  eq.appendChild(el("div","peqnote",periodTxt+", "+scopeTxt));
+  grid.appendChild(eq);
+
+  grid.appendChild(statementCard(ys,T));
+  grid.appendChild(marginCard(T));
+  grid.appendChild(flowChartCard(ys));
+  grid.appendChild(cumulativeCard(ys));
+  grid.appendChild(incomeSplitCard(done));
+  grid.appendChild(costSplitCard(done));
+  parent.appendChild(grid);
+}
+
+/* month-by-month statement, running total, expense ratio and a signal */
+function statementCard(ys,T){
+  var c=pcard("c9","Monthly cash flow — "+view.year,"Click a month to open it on the Properties page. Faint rows are projections at today's figures and are not counted.");
+  var w=el("div","ptbl-wrap"), tb=el("table","ptbl"), hr=el("tr");
+  ["Month","Rental income","Operating costs","Mortgage","Net operating income","Net cash flow","Cumulative cash","Expense ratio","Signal"].forEach(function(h){ hr.appendChild(el("th",null,h)); });
+  var th=el("thead"); th.appendChild(hr); tb.appendChild(th);
+  var bd=el("tbody"), cum=0, n=new Date();
+  ys.forEach(function(x){
+    var tr=el("tr"+"", x.fut?"fut":(view.year===n.getFullYear()&&x.m===n.getMonth()?"cur":""));
+    tr.dataset.m=x.m; tr.title="Open "+MONTHS[x.m]+" "+view.year;
+    tr.onclick=function(){ view.month=x.m; view.page="month"; render(); scrollTo(0,0); };
+    if(!x.fut) cum+=x.net;
+    function td(v,cls){ var d=el("td",cls||null,v); tr.appendChild(d); return d; }
+    td(MONTHS[x.m]); td(money(x.income)); td(money(x.opex)); td(money(x.mortgage)); td(money(x.noi),x.noi<0?"neg":"");
+    td(money(x.net),x.net<0?"neg":""); td(x.fut?"—":money(cum),!x.fut&&cum<0?"neg":"");
+    td(x.ratio==null?"—":Math.round(x.ratio*100)+"%");
+    var sg=el("td"); var s=el("span","sig "+(x.fut?"na":x.net>=0?"pos":"neg"),x.fut?"projected":x.net>=0?"▲ positive":"▼ negative"); sg.appendChild(s); tr.appendChild(sg);
+    bd.appendChild(tr);
+  });
+  var tt=el("tr","tot");
+  [ys.filter(function(x){return !x.fut;}).length===12?"Total":"Total · YTD",money(T.income),money(T.opex),money(T.mortgage),money(T.noi),money(T.net),money(T.net),
+   T.income?Math.round(T.opex/T.income*100)+"%":"—"].forEach(function(v,i){ tt.appendChild(el("td",(i>=4&&i<=6&&(i===4?T.noi:T.net)<0)?"neg":null,v)); });
+  var sg=el("td"); sg.appendChild(el("span","sig "+(T.net>=0?"pos":"neg"),T.net>=0?"▲ positive":"▼ negative")); tt.appendChild(sg);
+  bd.appendChild(tt); tb.appendChild(bd); w.appendChild(tb); c.appendChild(w);
+  return c;
+}
+
+function donut(segs,c1,c2,label){
+  var S=120,R=46,Tk=15,C=2*Math.PI*R, svg=svgEl("svg",{viewBox:"0 0 "+S+" "+S,role:"img","aria-label":label});
+  svgEl("circle",{cx:60,cy:60,r:R,fill:"none",stroke:"var(--sunken)","stroke-width":Tk},svg);
+  var tot=segs.reduce(function(s,x){ return s+Math.max(0,x.v); },0), off=0, gap=segs.filter(function(x){return x.v>0;}).length>1?2.5:0;
+  if(tot>0) segs.forEach(function(sg){ var len=Math.max(0,sg.v)/tot*C; if(!len) return;
+    var a=svgEl("circle",{cx:60,cy:60,r:R,fill:"none",stroke:sg.c,"stroke-width":Tk,"stroke-dasharray":Math.max(0,len-gap)+" "+C,"stroke-dashoffset":-off,transform:"rotate(-90 60 60)"},svg);
+    a.addEventListener("mousemove",function(e){ showTip(e,sg.label,[{k:money(sg.v),v:Math.round(sg.v/tot*100)+"%",c:sg.c}]); }); a.addEventListener("mouseleave",hideTip);
+    off+=len; });
+  var t1=svgEl("text",{x:60,y:c2?62:66,"text-anchor":"middle",class:"c1"},svg); t1.textContent=c1;
+  if(c2){ var t2=svgEl("text",{x:60,y:76,"text-anchor":"middle",class:"c2"},svg); t2.textContent=c2; }
+  return svg;
+}
+function marginCard(T){
+  var c=pcard("c3","Profit margin"), d=el("div","pdon"), m=T.income>0?T.net/T.income:0;
+  d.appendChild(donut([{v:Math.max(0,T.net),c:"var(--up)",label:"Net cash flow"},{v:T.opex,c:"var(--s2)",label:"Operating costs"},{v:T.mortgage,c:"var(--s5)",label:"Mortgage"}],
+    T.income?Math.round(m*100)+"%":"—","of rent kept","Profit margin: "+Math.round(m*100)+"% of rent kept"));
+  var meta=el("div","pmeta");
+  [["Kept","var(--up)",T.net],["Operating costs","var(--s2)",T.opex],["Mortgage","var(--s5)",T.mortgage]].forEach(function(r){
+    var s=el("span"); s.style.display="inline-flex"; s.style.alignItems="center"; s.style.gap="6px"; var i=el("i"); i.style.cssText="width:9px;height:9px;border-radius:50%;background:"+r[1]; s.appendChild(i); s.appendChild(document.createTextNode(r[0]));
+    meta.appendChild(s); meta.appendChild(el("b",null,money(r[2]))); });
+  d.appendChild(meta); c.appendChild(d);
+  return c;
+}
+
+/* income and total costs as paired bars, net cash flow as a line, one £ axis */
+function flowChartCard(ys){
+  var c=pcard("c7","Income, costs & cash flow");
+  var leg=el("div","pleg");
+  [["var(--s1)","Rental income",""],["var(--s2)","Costs (operating + mortgage)",""],["var(--ink)","Net cash flow","ln"]].forEach(function(l){ var s=el("span"), i=el("i",l[2]||null); i.style.background=l[0]; s.appendChild(i); s.appendChild(document.createTextNode(l[1])); leg.appendChild(s); });
+  c.appendChild(leg);
+  var W=560,H=220,L=50,R=8,Tp=10,B=24;
+  var vals=[]; ys.forEach(function(x){ vals.push(x.income,x.opex+x.mortgage,x.net); });
+  var mx=Math.max(0,Math.max.apply(null,vals)), mn=Math.min(0,Math.min.apply(null,vals));
+  var step=niceStep((mx-mn)/4||1), top=Math.ceil(mx/step)*step||step, bot=Math.floor(mn/step)*step;
+  function Y(v){ return Tp+(H-Tp-B)*(top-v)/(top-bot); }
+  var bw=(W-L-R)/12; function X(i){ return L+bw*(i+.5); }
+  var box=el("div","pch"), svg=svgEl("svg",{viewBox:"0 0 "+W+" "+H,role:"img","aria-label":"Rental income, costs and net cash flow by month in "+view.year});
+  for(var v=bot;v<=top+1e-9;v+=step){ svgEl("line",{x1:L,x2:W-R,y1:Y(v),y2:Y(v),class:v===0?"zero":"grid"},svg); var tx=svgEl("text",{x:L-6,y:Y(v)+3,"text-anchor":"end",class:"ax"},svg); tx.textContent=shortMoney(v); }
+  MON3.forEach(function(m,i){ var t=svgEl("text",{x:X(i),y:H-6,"text-anchor":"middle",class:"ax"},svg); t.textContent=m; });
+  var band=svgEl("rect",{y:Tp,width:bw,height:H-Tp-B,fill:"var(--sunken)",visibility:"hidden"},svg);
+  var barW=Math.max(3,bw*.3), z=Y(0);
+  ys.forEach(function(x,i){
+    [[x.income,"var(--s1)",-1],[x.opex+x.mortgage,"var(--s2)",1]].forEach(function(b){
+      if(!(b[0]>0)) return; var bx=b[2]<0?X(i)-barW-1:X(i)+1, y=Y(b[0]), h=z-y, r=Math.min(3,h,barW/2);
+      svgEl("path",{d:"M"+bx+" "+z+" V"+(y+r)+" Q"+bx+" "+y+" "+(bx+r)+" "+y+" H"+(bx+barW-r)+" Q"+(bx+barW)+" "+y+" "+(bx+barW)+" "+(y+r)+" V"+z+" Z",fill:b[1],opacity:x.fut?.3:1},svg);
+    });
+  });
+  var dA="",dF="", lastDone=-1; ys.forEach(function(x,i){ if(!x.fut) lastDone=i; });
+  ys.forEach(function(x,i){ var p=X(i).toFixed(1)+" "+Y(x.net).toFixed(1); if(!x.fut) dA+=(dA?" L":"M")+p; if(i>=lastDone&&lastDone>=0||lastDone<0) dF+=(dF?" L":"M")+p; });
+  if(dF) svgEl("path",{d:dF,fill:"none",stroke:"var(--ink)","stroke-width":1.5,"stroke-dasharray":"4 4",opacity:.45},svg);
+  if(dA) svgEl("path",{d:dA,fill:"none",stroke:"var(--ink)","stroke-width":2,"stroke-linejoin":"round"},svg);
+  ys.forEach(function(x,i){ svgEl("circle",{cx:X(i),cy:Y(x.net),r:3.2,fill:x.fut?"var(--surface)":"var(--ink)",stroke:"var(--ink)","stroke-width":1.5},svg); });
+  var hit=svgEl("rect",{x:L,y:Tp,width:W-L-R,height:H-Tp-B,fill:"transparent"},svg);
+  hit.addEventListener("mousemove",function(e){ var r=svg.getBoundingClientRect(), i=Math.max(0,Math.min(11,Math.floor(((e.clientX-r.left)/r.width*W-L)/bw))), x=ys[i];
+    band.setAttribute("x",L+bw*i); band.setAttribute("visibility","visible");
+    showTip(e,MONTHS[i]+" "+view.year+(x.fut?" · projected":""),[{k:"Rental income",v:money(x.income),c:"var(--s1)"},{k:"Operating costs",v:money(x.opex),c:"var(--s2)"},{k:"Mortgage",v:money(x.mortgage),c:"var(--s2)"},{k:"Net cash flow",v:money(x.net),c:"var(--ink)"}]); });
+  hit.addEventListener("mouseleave",function(){ band.setAttribute("visibility","hidden"); hideTip(); });
+  box.appendChild(svg); c.appendChild(box);
+  c.appendChild(el("div","sub","Faint bars and the dashed line are months still to come, at today's figures."));
+  return c;
+}
+
+/* running total of net cash flow through the year */
+function cumulativeCard(ys){
+  var c=pcard("c5","Cumulative cash position","Running total of net cash flow through "+view.year);
+  var pts=[], cum=0; ys.forEach(function(x){ if(x.fut) return; cum+=x.net; pts.push({m:x.m,v:cum,net:x.net}); });
+  if(!pts.length){ c.appendChild(el("div","sub","Nothing has happened yet in "+view.year+".")); return c; }
+  var W=460,H=220,L=50,R=12,Tp=12,B=24;
+  var mx=Math.max(0,Math.max.apply(null,pts.map(function(p){return p.v;}))), mn=Math.min(0,Math.min.apply(null,pts.map(function(p){return p.v;})));
+  var step=niceStep((mx-mn)/4||1), top=Math.ceil(mx/step)*step||step, bot=Math.floor(mn/step)*step;
+  function Y(v){ return Tp+(H-Tp-B)*(top-v)/(top-bot); } function X(m){ return L+(W-L-R)*(m/11); }
+  var box=el("div","pch"), svg=svgEl("svg",{viewBox:"0 0 "+W+" "+H,role:"img","aria-label":"Cumulative cash position through "+view.year+": "+money(cum)});
+  for(var v=bot;v<=top+1e-9;v+=step){ svgEl("line",{x1:L,x2:W-R,y1:Y(v),y2:Y(v),class:v===0?"zero":"grid"},svg); var tx=svgEl("text",{x:L-6,y:Y(v)+3,"text-anchor":"end",class:"ax"},svg); tx.textContent=shortMoney(v); }
+  MON3.forEach(function(m,i){ if(i%2===0||W>400){ var t=svgEl("text",{x:X(i),y:H-6,"text-anchor":"middle",class:"ax"},svg); t.textContent=m; } });
+  var d=pts.map(function(p,i){ return (i?"L":"M")+X(p.m).toFixed(1)+" "+Y(p.v).toFixed(1); }).join(" ");
+  svgEl("path",{d:d+" L"+X(pts[pts.length-1].m)+" "+Y(0)+" L"+X(pts[0].m)+" "+Y(0)+" Z",fill:"var(--accent)",opacity:.08},svg);
+  svgEl("path",{d:d,fill:"none",stroke:"var(--accent)","stroke-width":2.2,"stroke-linejoin":"round"},svg);
+  pts.forEach(function(p){ var dot=svgEl("circle",{cx:X(p.m),cy:Y(p.v),r:4,fill:p.v<0?"var(--down)":"var(--accent)",stroke:"var(--surface)","stroke-width":2},svg);
+    var hit=svgEl("circle",{cx:X(p.m),cy:Y(p.v),r:12,fill:"transparent"},svg);
+    hit.addEventListener("mousemove",function(e){ showTip(e,MONTHS[p.m]+" "+view.year,[{k:"Cash position",v:money(p.v),c:"var(--accent)"},{k:"That month",v:money(p.net)}]); });
+    hit.addEventListener("mouseleave",hideTip); });
+  var last=pts[pts.length-1], lt=svgEl("text",{x:Math.min(X(last.m),W-R-4),y:Y(last.v)-10,"text-anchor":"end",class:"ax"},svg);
+  lt.style.fill="var(--ink)"; lt.style.fontWeight="600"; lt.textContent=money(last.v);
+  box.appendChild(svg); c.appendChild(box);
+  return c;
+}
+
+/* where the rent comes from, property by property */
+function incomeSplitCard(done){
+  var c=pcard("c6","Income breakdown by property",done.length?"Rent received, "+(done.length===12?"full year":"year to date"):"");
+  var ps=props(), rowsI=ps.map(function(p,i){ var v=0; done.forEach(function(x){ v+=rentIn(p,monthKey(view.year,x.m)); }); return {p:p,v:v,c:PSLOT[i%PSLOT.length]}; });
+  var tot=rowsI.reduce(function(s,r){ return s+r.v; },0), wrap=el("div","pbrk");
+  wrap.appendChild(donut(rowsI.map(function(r){ return {v:r.v,c:r.c,label:r.p.name}; }),shortMoney(tot),"total rent","Rent by property"));
+  var l=el("div","plist");
+  rowsI.forEach(function(r){ var d=el("div"); var i=el("i"); i.style.background=r.c; d.appendChild(i); d.appendChild(el("span",null,r.p.name));
+    d.appendChild(el("b",null,money(r.v))); d.appendChild(el("small",null,tot?Math.round(r.v/tot*100)+"%":"—"));
+    if(view.prop!=="all" && r.p.id!==view.prop) d.style.opacity=".45"; l.appendChild(d); });
+  wrap.appendChild(l); c.appendChild(wrap);
+  return c;
+}
+function costSplitCard(done){
+  var c=pcard("c6","Where the costs went",done.length?(done.length===12?"Full year":"Year to date")+" · "+(view.prop==="all"?"whole portfolio":"this property"):"");
+  var m={}; function add(k,v){ if(v>0) m[k]=(m[k]||0)+v; }
+  inScope().forEach(function(p){ done.forEach(function(x){ var key=monthKey(view.year,x.m), f=figuresFor(p,key);
+    add("Mortgage",f.mortgage); add("Management",f.mgmt); add("Insurance",f.insurance);
+    expensesOf(p.id,key).forEach(function(e){ add(CATEGORIES.indexOf(e.category)>=0?e.category:"Other",num(e.amount)); }); }); });
+  var arr=Object.keys(m).map(function(k){ return {n:k,v:m[k]}; }).sort(function(a,b){ return b.v-a.v; });
+  if(!arr.length){ c.appendChild(el("div","sub","No costs yet.")); return c; }
+  var top=arr[0].v, tot=arr.reduce(function(s,x){ return s+x.v; },0);
+  arr.forEach(function(x){ var r=el("div","ebar"); r.appendChild(el("div","ename",x.n)); var tr=el("div","etrack"); var i=el("i"); i.style.width=(x.v/top*100).toFixed(1)+"%"; tr.appendChild(i); r.appendChild(tr);
+    r.appendChild(el("div","eval",money(x.v))); r.title=x.n+" — "+Math.round(x.v/tot*100)+"% of costs"; c.appendChild(r); });
+  return c;
+}
+
 /* ============================ render ============================ */
 function render(){
+  renderPageNav();
   renderPeriodNav();
   var body=$("#pageBody"); body.textContent="";
-  renderPage(body);
+  if(view.page==="dash") renderDash(body); else renderPage(body);
   renderStorage();
+}
+function renderPageNav(){
+  var box=$("#pagenav"); if(!box) return; box.textContent="";
+  [["dash","Dashboard"],["month","Properties"]].forEach(function(p){
+    var b=el("button",null,p[1]); b.type="button";
+    b.setAttribute("aria-pressed",view.page===p[0]?"true":"false");
+    b.onclick=function(){ view.page=p[0]; render(); };
+    box.appendChild(b);
+  });
 }
 
 function yearOptions(){
@@ -705,6 +1016,18 @@ function renderPeriodNav(){
     s.value=String(val);
     s.onchange=function(){ on(parseInt(this.value,10)); render(); };
     w.appendChild(s); box.appendChild(w);
+  }
+  if(view.page==="dash"){
+    sel("yearSel","Year",yearOptions().map(function(y){ return {v:y,t:String(y)}; }),view.year,function(v){ view.year=v; });
+    var w=el("label","navsel"); w.appendChild(el("span","navsellab","Property"));
+    var ps=document.createElement("select"); ps.className="monsel"; ps.id="propSel"; ps.setAttribute("aria-label","Property");
+    [{v:"all",t:"All properties"}].concat(props().map(function(p){ return {v:p.id,t:p.name}; })).forEach(function(o){
+      var op=document.createElement("option"); op.value=o.v; op.textContent=o.t; ps.appendChild(op); });
+    if(view.prop!=="all" && !props().some(function(p){ return p.id===view.prop; })) view.prop="all";
+    ps.value=view.prop; ps.onchange=function(){ view.prop=this.value; render(); };
+    w.appendChild(ps); box.appendChild(w);
+    box.appendChild(el("span","navnote",props().length+" propert"+(props().length===1?"y":"ies")));
+    return;
   }
   sel("monthSel","Month",MONTHS.map(function(t,i){ return {v:i,t:t}; }),view.month,
       function(v){ view.month=v; });
