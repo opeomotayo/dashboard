@@ -2,6 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>/* theme: apply the saved light/dark choice before first paint */
+try{var _t=localStorage.getItem("dashboard-theme");if(_t==="light"||_t==="dark")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
+<style>:root[data-theme="light"]{color-scheme:light}:root[data-theme="dark"]{color-scheme:dark}
+.themebtn{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.themebtn .ti{font-size:15px;line-height:1}
+.themebtn.floating{position:fixed;top:16px;right:16px;z-index:50;border:1px solid var(--line-2,#C7D0E0);background:var(--surface,#fff);
+  color:var(--ink-2,#2D3650);padding:8px 13px;border-radius:9px;font:500 13px var(--body,system-ui);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+@media (max-width:560px){.themebtn .tl{display:none}}</style>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Budget Console — a household month in one page: budget against actual by category, who spent what, and savings pots filling up. Local-first, with optional Google Drive sync.">
 <style>
@@ -2588,5 +2596,33 @@ window.addEventListener("online",function(){
 })();
 </script>
 
+<script>/* theme toggle: one choice shared by every console on this site */
+(function(){
+  var KEY="dashboard-theme", root=document.documentElement;
+  function system(){ return window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"; }
+  function current(){ var t=root.getAttribute("data-theme"); return t==="light"||t==="dark"?t:system(); }
+  var b=document.createElement("button"); b.type="button"; b.id="themeBtn";
+  function paint(){
+    var dark=current()==="dark";
+    b.innerHTML='<span class="ti" aria-hidden="true">'+(dark?"☀️":"🌙")+'</span><span class="tl">'+(dark?"Light":"Dark")+'</span>';
+    b.setAttribute("aria-label","Switch to "+(dark?"light":"dark")+" background");
+    b.title="Switch to "+(dark?"light":"dark")+" background";
+  }
+  function apply(t,announce){
+    root.setAttribute("data-theme",t);
+    try{ localStorage.setItem(KEY,t); }catch(e){}
+    paint();
+    if(announce) window.dispatchEvent(new Event("dashboard-theme"));
+  }
+  b.onclick=function(){ apply(current()==="dark"?"light":"dark",true); };
+  var anchor=document.getElementById("exportBtn");
+  if(anchor){ b.className="btn btn-sm themebtn"; anchor.parentNode.insertBefore(b,anchor); }
+  else { b.className="themebtn floating"; document.body.appendChild(b); }
+  paint();
+  /* follow the OS while no choice has been made; follow other tabs once one has */
+  if(window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(){ paint(); window.dispatchEvent(new Event("dashboard-theme")); });
+  window.addEventListener("storage",function(e){ if(e.key===KEY&&(e.newValue==="light"||e.newValue==="dark")){ root.setAttribute("data-theme",e.newValue); paint(); window.dispatchEvent(new Event("dashboard-theme")); } });
+})();
+</script>
 </body>
 </html>
