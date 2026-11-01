@@ -1162,9 +1162,9 @@ function calendarCard(){
 function devCard(){
   var c=card("span5",null,"Financial development "+view.year);
   var leg=el("div","dleg");
-  /* income and expenses as paired bars, savings and loan payments as lines
+  /* income, expenses and savings as grouped bars, loan payments as a line
      over them — one £ scale for all four */
-  var BARS=["income","expense"];
+  var BARS=["income","expense","saving"];
   SERIES.forEach(function(s){ var sp=el("span"); var i=el("i",BARS.indexOf(s.k)>=0?"sq":null); i.style.background=s.c; sp.appendChild(i); sp.appendChild(document.createTextNode(s.label)); leg.appendChild(sp); });
   c.appendChild(leg);
   var now=ymNow(), data=[];
@@ -1179,11 +1179,11 @@ function devCard(){
     var tx=svgEl("text",{x:L-6,y:y+3,"text-anchor":"end",class:"ax"},svg); tx.textContent=shortMoney(v); }
   MON3.forEach(function(mn,i){ var t=svgEl("text",{x:X(i),y:H-6,"text-anchor":"middle",class:"ax"},svg); t.textContent=mn; });
   var band=svgEl("rect",{y:T,width:bw,height:H-T-B,fill:"var(--sunken)",visibility:"hidden"},svg);
-  var barW=Math.max(3,bw*0.3), base=Y(0);
+  var barW=Math.max(3,bw*0.22), base=Y(0), grp=BARS.length*barW+(BARS.length-1)*2;
   data.forEach(function(f,i){ if(!f) return;
     BARS.forEach(function(k,j){
       var s=SERIES.filter(function(x){ return x.k===k; })[0], v=f[k]; if(!(v>0)) return;
-      var x=X(i)+(j===0?-barW-1:1), y=Y(v), h=base-y, r=Math.min(3,h,barW/2);
+      var x=X(i)-grp/2+j*(barW+2), y=Y(v), h=base-y, r=Math.min(3,h,barW/2);
       svgEl("path",{d:"M"+x+" "+base+" V"+(y+r)+" Q"+x+" "+y+" "+(x+r)+" "+y+" H"+(x+barW-r)+" Q"+(x+barW)+" "+y+" "+(x+barW)+" "+(y+r)+" V"+base+" Z",fill:s.c},svg);
     });
   });
