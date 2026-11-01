@@ -198,6 +198,7 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .dtrack i{position:absolute;top:3px;bottom:3px;border-radius:3px;display:block}
 .dbar .dval{font-family:var(--mono);font-size:12.5px;text-align:right;
   font-variant-numeric:tabular-nums;white-space:nowrap}
+.dbar .dval{color:var(--hold-ink)}
 .dbar .dval[data-over="1"]{color:var(--over)}
 
 /* ── expense lines ─────────────────────────────────────────────────── */
@@ -220,12 +221,11 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
   font-variant-numeric:tabular-nums;white-space:nowrap}
 .lfig b{color:var(--ink);font-weight:600}
 .meter{margin-top:10px;height:10px;border-radius:999px;background:var(--sunken);overflow:hidden}
-.meter i{display:block;height:100%;border-radius:999px;background:var(--ess)}
-.line[data-g="nonessential"] .meter i{background:var(--non)}
+.meter i{display:block;height:100%;border-radius:999px;background:var(--hold)}
 .line[data-over="1"] .meter i{background:var(--over)}
 .lacts{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:11px}
 .lacts .grow{flex:1 1 10px}
-.lleft{font-family:var(--mono);font-size:12px;white-space:nowrap;color:var(--muted)}
+.lleft{font-family:var(--mono);font-size:12px;white-space:nowrap;color:var(--hold-ink)}
 .lleft[data-over="1"]{color:var(--over)}
 .amtbox{display:inline-flex;align-items:center;gap:7px}
 .amtbox input{width:106px}
@@ -435,9 +435,10 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .dav{display:grid;gap:4px;font-size:12.5px;color:var(--ink-2)}
 .dav .h{display:flex;justify-content:space-between;gap:8px}
 .dav .h b{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.dav .h b{color:var(--hold-ink)}
 .dav .h b.over{color:var(--over)}
 .dav .t{height:8px;background:var(--sunken);border-radius:4px;overflow:hidden}
-.dav .t i{display:block;height:100%;background:var(--ess);border-radius:4px}
+.dav .t i{display:block;height:100%;background:var(--hold);border-radius:4px}
 .dav .t i.over{background:var(--over)}
 .dav small{font-size:10.5px;color:var(--faint);font-family:var(--mono)}
 
@@ -1619,7 +1620,7 @@ function renderBudget(parent){
     fh.appendChild(el("span","fnote",scopeLabel()));
     fh.appendChild(el("span","grow"));
     var k2=el("div","key");
-    [["var(--accent)","under budget"],["var(--over)","over"]].forEach(function(x){
+    [["var(--hold)","within budget"],["var(--over)","over"]].forEach(function(x){
       var s=el("span"); var i=el("i"); i.style.background=x[0];
       s.appendChild(i); s.appendChild(document.createTextNode(x[1])); k2.appendChild(s);
     });
@@ -1633,7 +1634,7 @@ function renderBudget(parent){
       var z=el("div","zero"); z.style.left="50%"; tr.appendChild(z);
       var bar=el("i");
       bar.style.width=(Math.abs(c.variance)/span*50).toFixed(2)+"%";
-      if(c.variance>=0){ bar.style.left="50%"; bar.style.background="var(--accent)"; }
+      if(c.variance>=0){ bar.style.left="50%"; bar.style.background="var(--hold)"; }
       else { bar.style.right="50%"; bar.style.background="var(--over)"; }
       tr.appendChild(bar); row.appendChild(tr);
       var v=el("div","dval", (c.variance<0?"":"+")+money2(c.variance));
