@@ -365,6 +365,7 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .dleg span{display:inline-flex;align-items:center;gap:6px}
 .dleg i{width:12px;height:4px;border-radius:2px;display:inline-block}
 .dleg i.dot{width:9px;height:9px;border-radius:50%}
+.dleg i.sq{width:10px;height:10px;border-radius:2px}
 .dchart{position:relative;width:100%}
 .dchart svg{display:block;width:100%;height:auto;overflow:visible}
 .dchart .ax{font:10px var(--mono);fill:var(--faint)}
@@ -1145,7 +1146,10 @@ function calendarCard(){
 function devCard(){
   var c=card("span5",null,"Financial development "+view.year);
   var leg=el("div","dleg");
-  SERIES.forEach(function(s){ var sp=el("span"); var i=el("i"); i.style.background=s.c; sp.appendChild(i); sp.appendChild(document.createTextNode(s.label)); leg.appendChild(sp); });
+  /* income and expenses as paired bars, savings and loan payments as lines
+     over them — one £ scale for all four */
+  var BARS=["income","expense"];
+  SERIES.forEach(function(s){ var sp=el("span"); var i=el("i",BARS.indexOf(s.k)>=0?"sq":null); i.style.background=s.c; sp.appendChild(i); sp.appendChild(document.createTextNode(s.label)); leg.appendChild(sp); });
   c.appendChild(leg);
   var now=ymNow(), data=[];
   for(var m=0;m<12;m++){ var ym=monthKey(view.year,m); data.push(ym>now?null:monthFlows(ym)); }
@@ -1153,25 +1157,34 @@ function devCard(){
   data.forEach(function(f){ if(f) SERIES.forEach(function(s){ max=Math.max(max,f[s.k]); }); });
   var step=niceStep(max/4), top=Math.max(step*4,step*Math.ceil(max/step))||4;
   var box=el("div","dchart"), svg=svgEl("svg",{viewBox:"0 0 "+W+" "+H,role:"img","aria-label":"Income, expenses, savings and loan payments by month in "+view.year});
-  function X(i){ return L+(W-L-Rr)*(i/11); } function Y(v){ return T+(H-T-B)*(1-v/top); }
+  var bw=(W-L-Rr)/12;
+  function X(i){ return L+bw*(i+0.5); } function Y(v){ return T+(H-T-B)*(1-v/top); }
   for(var g=0;g<=4;g++){ var v=top/4*g, y=Y(v); svgEl("line",{x1:L,x2:W-Rr,y1:y,y2:y,class:"grid"},svg);
     var tx=svgEl("text",{x:L-6,y:y+3,"text-anchor":"end",class:"ax"},svg); tx.textContent=shortMoney(v); }
   MON3.forEach(function(mn,i){ var t=svgEl("text",{x:X(i),y:H-6,"text-anchor":"middle",class:"ax"},svg); t.textContent=mn; });
-  SERIES.forEach(function(s){
+  var band=svgEl("rect",{y:T,width:bw,height:H-T-B,fill:"var(--sunken)",visibility:"hidden"},svg);
+  var barW=Math.max(3,bw*0.3), base=Y(0);
+  data.forEach(function(f,i){ if(!f) return;
+    BARS.forEach(function(k,j){
+      var s=SERIES.filter(function(x){ return x.k===k; })[0], v=f[k]; if(!(v>0)) return;
+      var x=X(i)+(j===0?-barW-1:1), y=Y(v), h=base-y, r=Math.min(3,h,barW/2);
+      svgEl("path",{d:"M"+x+" "+base+" V"+(y+r)+" Q"+x+" "+y+" "+(x+r)+" "+y+" H"+(x+barW-r)+" Q"+(x+barW)+" "+y+" "+(x+barW)+" "+(y+r)+" V"+base+" Z",fill:s.c},svg);
+    });
+  });
+  SERIES.filter(function(s){ return BARS.indexOf(s.k)<0; }).forEach(function(s){
     var d="", started=false;
     data.forEach(function(f,i){ if(!f) return; d+=(started?" L":"M")+X(i).toFixed(1)+" "+Y(f[s.k]).toFixed(1); started=true; });
     if(d) svgEl("path",{d:d,fill:"none",stroke:s.c,"stroke-width":2,"stroke-linejoin":"round","stroke-linecap":"round"},svg);
     data.forEach(function(f,i){ if(f) svgEl("circle",{cx:X(i),cy:Y(f[s.k]),r:3,fill:s.c,stroke:"var(--surface)","stroke-width":1.5},svg); });
   });
-  var cross=svgEl("line",{y1:T,y2:H-B,stroke:"var(--line-2)","stroke-width":1,visibility:"hidden"},svg);
   var hit=svgEl("rect",{x:L,y:T,width:W-L-Rr,height:H-T-B,fill:"transparent"},svg);
   hit.addEventListener("mousemove",function(e){
-    var r=svg.getBoundingClientRect(), px=(e.clientX-r.left)/r.width*W, i=Math.max(0,Math.min(11,Math.round((px-L)/(W-L-Rr)*11)));
-    cross.setAttribute("x1",X(i)); cross.setAttribute("x2",X(i)); cross.setAttribute("visibility","visible");
+    var r=svg.getBoundingClientRect(), px=(e.clientX-r.left)/r.width*W, i=Math.max(0,Math.min(11,Math.floor((px-L)/bw)));
+    band.setAttribute("x",L+bw*i); band.setAttribute("visibility","visible");
     var f=data[i];
     showTip(e,MONTHS[i]+" "+view.year, f?SERIES.map(function(s){ return {k:s.label,v:money(f[s.k]),c:s.c}; }):[{k:"Not reached yet",v:""}]);
   });
-  hit.addEventListener("mouseleave",function(){ cross.setAttribute("visibility","hidden"); hideTip(); });
+  hit.addEventListener("mouseleave",function(){ band.setAttribute("visibility","hidden"); hideTip(); });
   box.appendChild(svg); c.appendChild(box);
   /* the same figures as a table, for reading exact values */
   var tg=el("button","dtoggle","Show as table"); tg.type="button"; var tb=el("table","dtable"); tb.hidden=true;
