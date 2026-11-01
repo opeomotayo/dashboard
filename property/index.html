@@ -1153,62 +1153,65 @@ function renderPage(parent){
   });
   parent.appendChild(f1);
 
-  /* ── the year, month by month ──────────────────────────────────────
-     Months that have not happened yet are the standing figures repeating,
-     so they are projections: drawn faint and kept out of the running
-     total, which would otherwise read as money already earned. */
-  var series=yearSeries(view.year);
+  /* ── the year, month by month, split by property ────────────────────
+     Each column stacks every property's cash flow for the month: surpluses
+     above the line, a property running at a loss below it. Months that have
+     not happened yet are projections at today's figures, drawn faint and
+     kept out of the running total. Click a column to open that month. */
   var nowY=new Date().getFullYear(), nowM=new Date().getMonth();
   function isFuture(m){ return view.year>nowY || (view.year===nowY && m>nowM); }
-  var actual=series.filter(function(x){ return !isFuture(x.month); });
-  var actualSum=actual.reduce(function(s2,x){ return s2+x.cashflow; },0);
-  var wholeSum=series.reduce(function(s2,x){ return s2+x.cashflow; },0);
-
+  var months=[], actualSum=0, wholeSum=0;
+  for(var mm=0;mm<12;mm++){
+    var kk=monthKey(view.year,mm), parts=ps.map(function(p,i){ return {p:p,i:i,v:figuresFor(p,kk).cashflow}; });
+    var tot=parts.reduce(function(a2,x){ return a2+x.v; },0);
+    months.push({m:mm,parts:parts,tot:tot,fut:isFuture(mm)});
+    wholeSum+=tot; if(!isFuture(mm)) actualSum+=tot;
+  }
   var f2=el("div","figure");
   var h2=el("div","fhead");
-  h2.appendChild(el("h3",null,"Cashflow across "+view.year));
+  h2.appendChild(el("h3",null,"Cashflow across "+view.year+" by property"));
   var caption;
   if(view.year<nowY)      caption=money(wholeSum)+" for the year";
   else if(view.year>nowY) caption=money(wholeSum)+" projected at today's figures";
   else caption=money(actualSum)+" to date \u00b7 later months projected";
   h2.appendChild(el("span","fnote",caption+" \u00b7 click a month"));
   f2.appendChild(h2);
-
-  /* give the baseline only as much room as the negatives actually need */
-  var posMax=Math.max(0,Math.max.apply(null,series.map(function(x){ return x.cashflow; })));
-  var negMax=Math.max(0,-Math.min.apply(null,series.map(function(x){ return x.cashflow; })));
-  var span2=Math.max(1,posMax+negMax);
-  var zeroPct=negMax/span2*100;
-
-  var cols=el("div","months");
-  series.forEach(function(x){
-    var fut=isFuture(x.month), sel=x.month===view.month;
-    var b=el("button","mcol"); b.type="button";
-    b.setAttribute("aria-pressed",sel?"true":"false");
-    b.setAttribute("aria-label",MONTHS[x.month]+" "+view.year+": "+money2(x.cashflow)+
-      (fut?", projected":""));
-    b.title=MONTHS[x.month]+(fut?" (projected)":"")+" \u2014 "+money2(x.income)+" in, "+
-            money2(x.expenses)+" out, "+money2(x.cashflow)+" left";
-    var plot=el("div","mplot");
-    var z=el("div","mzero"); z.style.bottom=zeroPct+"%"; plot.appendChild(z);
-    var bar=el("div","mbar");
-    var h=Math.abs(x.cashflow)/span2*100;
-    bar.style.height=Math.max(x.cashflow===0?0:1.5,h)+"%";
-    if(x.cashflow>=0){ bar.style.bottom=zeroPct+"%"; bar.style.background="var(--up)"; }
-    else { bar.style.top=(100-zeroPct)+"%"; bar.style.background="var(--down)"; }
-    bar.style.opacity = sel ? "1" : (fut ? ".28" : ".5");
-    plot.appendChild(bar);
-    b.appendChild(plot);
-    var lab=el("span","mlab",MON3[x.month]);
-    if(fut) lab.style.opacity=".6";
-    b.appendChild(lab);
-    b.onclick=function(){ view.month=x.month; render(); };
-    cols.appendChild(b);
-  });
-  f2.appendChild(cols);
-  var k2=el("div","key"); k2.style.marginTop="9px";
-  k2.appendChild(el("span",null,"Faint columns are months that have not happened yet"));
+  var k2=el("div","pleg"); k2.style.marginBottom="8px";
+  ps.forEach(function(p,i){ var sp=el("span"), ii=el("i"); ii.style.background=PSLOT[i%PSLOT.length]; sp.appendChild(ii); sp.appendChild(document.createTextNode(p.name)); k2.appendChild(sp); });
   f2.appendChild(k2);
+
+  var W=innerWidth<700?560:1000,H=230,L=52,R=8,Tp=18,B=24, up=0, dn=0;
+  months.forEach(function(x){ var a3=0,b3=0; x.parts.forEach(function(q){ if(q.v>0) a3+=q.v; else b3+=q.v; }); up=Math.max(up,a3); dn=Math.min(dn,b3); });
+  var stepC=niceStep((up-dn)/4||1), topC=Math.ceil(up/stepC)*stepC||stepC, botC=Math.floor(dn/stepC)*stepC;
+  function YC(v){ return Tp+(H-Tp-B)*(topC-v)/(topC-botC); }
+  var bwC=(W-L-R)/12, colW=bwC*.56; function XC(i){ return L+bwC*(i+.5); }
+  var boxC=el("div","pch"), svgC=svgEl("svg",{viewBox:"0 0 "+W+" "+H,role:"img","aria-label":"Cash flow by property for each month of "+view.year});
+  svgEl("rect",{x:L+bwC*view.month,y:Tp-12,width:bwC,height:H-Tp-B+12,fill:"var(--accent-soft)",rx:6},svgC);
+  for(var gv=botC;gv<=topC+1e-9;gv+=stepC){ svgEl("line",{x1:L,x2:W-R,y1:YC(gv),y2:YC(gv),class:gv===0?"zero":"grid"},svgC);
+    var gt=svgEl("text",{x:L-6,y:YC(gv)+3,"text-anchor":"end",class:"ax"},svgC); gt.textContent=shortMoney(gv); }
+  months.forEach(function(x){
+    var op=x.fut?.32:1, pos=0, neg=0, x0=XC(x.m)-colW/2;
+    x.parts.forEach(function(q){
+      if(!q.v) return;
+      var v0=q.v>0?pos:neg, v1=v0+q.v; if(q.v>0) pos=v1; else neg=v1;
+      var y=Math.min(YC(v0),YC(v1)), h=Math.abs(YC(v0)-YC(v1));
+      /* a 1.5px surface edge separates neighbouring properties */
+      svgEl("rect",{x:x0,y:y,width:colW,height:Math.max(.5,h),fill:PSLOT[q.i%PSLOT.length],stroke:"var(--surface)","stroke-width":1.5,opacity:op},svgC);
+    });
+    var lt=svgEl("text",{x:XC(x.m),y:YC(Math.max(0,pos))-5,"text-anchor":"middle",class:"ax"},svgC);
+    lt.textContent=shortMoney(x.tot); lt.style.fill=x.tot<0?"var(--down)":"var(--ink-2)"; lt.style.opacity=x.fut?.5:1;
+    var ml=svgEl("text",{x:XC(x.m),y:H-6,"text-anchor":"middle",class:"ax"},svgC); ml.textContent=MON3[x.m];
+    if(x.m===view.month){ ml.style.fill="var(--ink)"; ml.style.fontWeight="700"; }
+    var hit=svgEl("rect",{x:L+bwC*x.m,y:0,width:bwC,height:H,fill:"transparent",style:"cursor:pointer"},svgC);
+    hit.addEventListener("mousemove",function(e){ showTip(e,MONTHS[x.m]+" "+view.year+(x.fut?" · projected":""),
+      x.parts.map(function(q){ return {k:q.p.name,v:money(q.v),c:PSLOT[q.i%PSLOT.length]}; }).concat([{k:"Total",v:money(x.tot)}])); });
+    hit.addEventListener("mouseleave",hideTip);
+    hit.addEventListener("click",function(){ hideTip(); view.month=x.m; render(); });
+  });
+  boxC.appendChild(svgC); f2.appendChild(boxC);
+  var k3=el("div","key"); k3.style.marginTop="9px"; k3.style.whiteSpace="normal";
+  var k3s=el("span",null,"Highlighted column is the month showing below \u00b7 faint columns have not happened yet"); k3s.style.whiteSpace="normal"; k3.appendChild(k3s);
+  f2.appendChild(k3);
   parent.appendChild(f2);
 
   /* ── where the money went ── */
