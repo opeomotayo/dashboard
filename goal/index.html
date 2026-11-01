@@ -718,6 +718,11 @@ button.gtr-c:hover{transform:scale(1.05)}
 .goal{cursor:auto}
 .msrev .msblk + .msblk{margin-top:9px;padding-top:9px;border-top:1px dashed color-mix(in srgb,var(--stall) 30%,transparent)}
 .msrev.no .msdid .msl{color:var(--ink-2)}
+.mscheer{display:flex;gap:9px;align-items:center;margin:-1px 0 10px;padding-bottom:9px;border-bottom:1px dashed color-mix(in srgb,var(--hold) 35%,transparent)}
+.mscheer .e{font-size:26px;line-height:1;animation:cheer .6s ease-out}
+.mscheer .t{font-size:13px;color:var(--ink-2);line-height:1.4}
+.mscheer b{color:var(--hold-ink);font-weight:700}
+@keyframes cheer{0%{transform:scale(.3) rotate(-20deg);opacity:0}70%{transform:scale(1.2) rotate(6deg)}100%{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -2029,6 +2034,18 @@ function bulletEditor(cls,label,ph,val,save,road){
   show();
   return wrap;
 }
+/* a different emoji and cheer for each milestone, fixed per milestone so it
+   doesn't change on every redraw */
+var CHEERS=[["🎉","Congratulations"],["🏆","Brilliant work"],["🚀","Smashed it"],["🌟","Superb"],["💪","Well done"],
+            ["🥳","Way to go"],["🎯","Bang on target"],["🔥","On fire"],["👏","Hats off"],["✨","Magic"],["🙌","Nailed it"],["🥇","Gold standard"]];
+function congrats(m){
+  var h=0, k=m.id||m.title||""; for(var i=0;i<k.length;i++) h=(h*31+k.charCodeAt(i))>>>0;
+  var c=CHEERS[h%CHEERS.length], d=el("div","mscheer");
+  d.appendChild(el("span","e",c[0]));
+  var t=el("span","t"); t.appendChild(el("b",null,c[1]+"!"));
+  t.appendChild(document.createTextNode(" "+(m.title||"This milestone")+" — achieved."));
+  d.appendChild(t); return d;
+}
 /* the review appears once a milestone is done, or once its month is over */
 function reviewBlock(g,m,road){
   var now=thisYm(), ended=(m.when||"")<now;
@@ -2045,10 +2062,11 @@ function reviewBlock(g,m,road){
     return box;
   }
   if(m.done){
+    box.appendChild(congrats(m));
     box.appendChild(bulletEditor("","What was the key to achieving it?","Note what made the difference…",m.review||"",
       function(v){ msPatch(g.id,m.id,{review:v}); }, road));
   } else {
-    box.appendChild(bulletEditor("msdid","What tasks were completed / done?","List what did get done…",m.completed||"",
+    box.appendChild(bulletEditor("msdid","What was achieved?","List what did get done…",m.completed||"",
       function(v){ msPatch(g.id,m.id,{completed:v}); }, road));
     box.appendChild(bulletEditor("","Why wasn't the milestone achieved?","Note what got in the way…",m.review||"",
       function(v){ msPatch(g.id,m.id,{review:v}); }, road));
