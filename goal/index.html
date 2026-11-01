@@ -2141,13 +2141,10 @@ function goalTimeline(g){
       tx.dataset.msid=m.id;
       var ti=el("div","gtr-title",m.title||""); ti.contentEditable="plaintext-only"; if(ti.contentEditable!=="plaintext-only") ti.contentEditable="true";
       ti.setAttribute("role","textbox"); ti.setAttribute("aria-label","Milestone title");
-      var no=el("div","gtr-note",m.note||""); no.contentEditable=ti.contentEditable; no.dataset.ph="Add detail…";
-      no.setAttribute("role","textbox"); no.setAttribute("aria-label","Milestone detail");
-      gtlBind(ti,g.id,m.id,"title",true); gtlBind(no,g.id,m.id,"note",false);
+      gtlBind(ti,g.id,m.id,"title",true);
       ti.addEventListener("input",function(){ layoutGoalRoad(road,true); });
-      no.addEventListener("input",function(){ layoutGoalRoad(road,true); });
       /* the milestone in one column, its review beside it on wide screens */
-      var col=el("div","gtr-col"); col.appendChild(kick); col.appendChild(ti); col.appendChild(no);
+      var col=el("div","gtr-col"); col.appendChild(kick); col.appendChild(ti);
       col.appendChild(bulletEditor("mssys","System to achieve it","+ Add the system or practices for this milestone",m.system||"",
         function(v){ msPatch(g.id,m.id,{system:v}); }, road));
       var rv=reviewBlock(g,m,road);
