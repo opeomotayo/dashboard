@@ -91,7 +91,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint)}
 
 /* ── shell ─────────────────────────────────────────────────────────── */
-.shell{max-width:1100px;margin:0 auto;
+.shell{max-width:1440px;margin:0 auto;
   padding-left:max(16px,env(safe-area-inset-left,0px));
   padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-block:0 76px}
@@ -99,7 +99,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;
   background:color-mix(in srgb,var(--paper) 86%,transparent);
   backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line)}
-.topbar-in{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+.topbar-in{max-width:1440px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
   padding-left:max(16px,env(safe-area-inset-left,0px));
   padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:13px}
 .brand{display:flex;align-items:baseline;gap:11px;margin-right:auto;min-width:0}
@@ -723,6 +723,14 @@ button.gtr-c:hover{transform:scale(1.05)}
 .mscheer .t{font-size:13px;color:var(--ink-2);line-height:1.4}
 .mscheer b{color:var(--hold-ink);font-weight:700}
 @keyframes cheer{0%{transform:scale(.3) rotate(-20deg);opacity:0}70%{transform:scale(1.2) rotate(6deg)}100%{transform:none;opacity:1}}
+.gtr.wide .gtr-t.has-rev .gtr-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.gtr.wide .gtr-t.has-rev .msrev{margin-top:0}
+.gtr.wide .gtr-t.l.has-rev .gtr-body{direction:rtl} .gtr.wide .gtr-t.l.has-rev .gtr-body>*{direction:ltr}
+@media (min-width:900px){
+  .goal .gmain{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:28px;align-content:start}
+  .goal .gmain>*{grid-column:1}
+  .goal .gmain>.gprac{grid-column:2;grid-row:1/span 6;align-self:start;margin:2px 0 0}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -2138,10 +2146,13 @@ function goalTimeline(g){
       gtlBind(ti,g.id,m.id,"title",true); gtlBind(no,g.id,m.id,"note",false);
       ti.addEventListener("input",function(){ layoutGoalRoad(road,true); });
       no.addEventListener("input",function(){ layoutGoalRoad(road,true); });
-      tx.appendChild(ti); tx.appendChild(no);
-      tx.appendChild(bulletEditor("mssys","System to achieve it","+ Add the system or practices for this milestone",m.system||"",
+      /* the milestone in one column, its review beside it on wide screens */
+      var col=el("div","gtr-col"); col.appendChild(kick); col.appendChild(ti); col.appendChild(no);
+      col.appendChild(bulletEditor("mssys","System to achieve it","+ Add the system or practices for this milestone",m.system||"",
         function(v){ msPatch(g.id,m.id,{system:v}); }, road));
-      var rv=reviewBlock(g,m,road); if(rv) tx.appendChild(rv);
+      var rv=reviewBlock(g,m,road);
+      if(rv){ var body=el("div","gtr-body"); body.appendChild(col); body.appendChild(rv); tx.appendChild(body); tx.classList.add("has-rev"); }
+      else tx.appendChild(col);
       var a=el("div","gtr-acts");
       var mi=document.createElement("input"); mi.type="month"; mi.value=m.when||""; mi.setAttribute("aria-label","Milestone month");
       mi.onchange=function(){ if(!/^\d{4}-\d{2}$/.test(mi.value)) return; var v=mi.value;
@@ -2153,7 +2164,7 @@ function goalTimeline(g){
         gtlDelArm=null; clearTimeout(gtlDelTimer);
         editGoalMs(g.id,function(list){ var k=list.findIndex(function(y){return y.id===m.id;}); if(k>=0) list.splice(k,1); });
       };
-      a.appendChild(mi); a.appendChild(del); tx.appendChild(a);
+      a.appendChild(mi); a.appendChild(del); col.appendChild(a);
     }
     road.appendChild(circ); road.appendChild(tx);
   });
@@ -2175,15 +2186,16 @@ function layoutGoalRoad(road,force){
   if(!force && road._w===W && road._laid) return;
   road._w=W; road._laid=true;
   var items=road._items, n=items.length, wide=W>=720;
+  road.classList.toggle("wide",wide);
   var circs=road.querySelectorAll(".gtr-c"), texts=road.querySelectorAll(".gtr-t"), svg=road.querySelector("svg"), pill=road.querySelector(".gtr-now");
-  var Rmax=wide?64:36, Rmin=wide?32:26, gap=wide?24:14;
+  var Rmax=wide?46:32, Rmin=wide?28:24, gap=wide?20:12;
   var X=[], R=[], side=[];
   for(var i=0;i<n;i++){
     var t=n>1?i/(n-1):1; R[i]=Math.round(Rmax-(Rmax-Rmin)*t);
     if(wide){
       /* like the reference: start left of centre, swing right, loop back, finish up and right */
-      var base=0.36+0.26*t, sw=(i%2?0.13:-0.09);
-      X[i]=Math.round(W*Math.min(0.80,Math.max(0.24,base+sw)));
+      /* alternate sides of the card so neighbouring stops can share height */
+      X[i]=Math.round(W*((i%2?0.58:0.40)+0.03*t));
       side[i]=X[i]<W*0.5?"l":"r";
     } else { X[i]=Rmax+8+(i%2?14:0); side[i]="r"; }
   }
@@ -2192,8 +2204,8 @@ function layoutGoalRoad(road,force){
   for(i=0;i<n;i++){
     var tx=texts[i]; tx.classList.remove("l","r"); tx.classList.add(side[i]);
     var w, left;
-    if(side[i]==="l"){ w=Math.min(300,X[i]-R[i]-gap); left=X[i]-R[i]-gap-w; }
-    else { left=wide?X[i]+R[i]+gap:Rmax*2+36; w=Math.min(wide?300:9999,W-left); }
+    if(side[i]==="l"){ w=Math.min(texts[i].classList.contains("has-rev")?600:400,X[i]-R[i]-gap); left=X[i]-R[i]-gap-w; }
+    else { left=wide?X[i]+R[i]+gap:Rmax*2+36; w=Math.min(wide?(texts[i].classList.contains("has-rev")?600:420):9999,W-left); }
     w=Math.max(120,w); tx.style.width=w+"px"; tx.style.left=Math.max(0,left)+"px";
     H[i]=tx.offsetHeight;
   }
@@ -2202,23 +2214,25 @@ function layoutGoalRoad(road,force){
   var Y=[], lastBottom={l:-1e9,r:-1e9}, y=R[n-1]+10;
   for(var k=n-1;k>=0;k--){
     if(k<n-1){
-      var minStep=R[k+1]+R[k]+(wide?34:26);
-      y=Math.max(y+minStep, lastBottom[side[k]]+12+Math.max(R[k],H[k]/2));
-    } else y=Math.max(y,H[k]/2);
+      var minStep=R[k+1]+R[k]+(wide?10:18);
+      y=Math.max(y+minStep, lastBottom[side[k]]+12+Math.min(H[k]/2,R[k]+12));
+    } else y=Math.max(y,Math.min(H[k]/2,R[k]+12));
     Y[k]=y;
-    var top=y-H[k]/2; texts[k].style.top=top+"px";
+    /* text starts level with the circle and grows downward, so a long
+       review only pushes the stops below it on its own side */
+    var top=y-Math.min(H[k]/2,R[k]+12); texts[k].style.top=top+"px";
     lastBottom[side[k]]=Math.max(top+H[k], y+R[k]*0.4);
     circs[k].style.width=circs[k].style.height=(2*R[k])+"px";
     circs[k].style.left=(X[k]-R[k])+"px"; circs[k].style.top=(y-R[k])+"px";
     var f=Math.max(0.22,R[k]/Rmax);
-    circs[k].querySelector(".y").style.fontSize=Math.round((wide?30:17)*f+ (wide?4:2))+"px";
-    circs[k].querySelector(".m").style.fontSize=Math.max(8,Math.round((wide?12:9)*f+2))+"px";
+    circs[k].querySelector(".y").style.fontSize=Math.round((wide?24:15)*f+ (wide?3:2))+"px";
+    circs[k].querySelector(".m").style.fontSize=Math.max(8,Math.round((wide?10:8)*f+1))+"px";
   }
-  var Hh=Math.max(Y[0]+R[0]+60, lastBottom.l+16, lastBottom.r+16);
+  var Hh=Math.max(Y[0]+R[0]+22, lastBottom.l+16, lastBottom.r+16);
   road.style.height=Hh+"px";
   svg.setAttribute("viewBox","0 0 "+W+" "+Hh); svg.setAttribute("height",Hh); svg.style.height=Hh+"px";
   /* control points for each stretch, so TODAY can sit exactly on the road */
-  var start=[wide?X[0]-W*0.10:X[0],Hh];
+  var start=[X[0],Hh];
   var segs=[[start,[start[0],Hh-(Hh-Y[0])*0.6],[X[0],Y[0]+(Hh-Y[0])*0.5],[X[0],Y[0]]]];
   for(i=1;i<n;i++){
     var a=[X[i-1],Y[i-1]], b=[X[i],Y[i]], dy=(a[1]-b[1])*0.55;
