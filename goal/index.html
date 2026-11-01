@@ -2593,7 +2593,7 @@ function render(){
 function renderPageNav(){
   var nav=$("#pagenav"); if(!nav) return;
   nav.textContent="";
-  [["goals","Goals"],["timeline","Timeline"],["vision","Vision board"]].forEach(function(p){
+  [["goals","Goals"],["timeline","Timeline Vision Board"]]   /* the vision board tab is retired; its cards stay in the database */.forEach(function(p){
     var b=el("button",null,p[1]); b.type="button";
     b.setAttribute("aria-pressed",page===p[0]?"true":"false");
     b.onclick=function(){ setPage(p[0]); };
