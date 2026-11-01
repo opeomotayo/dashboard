@@ -956,7 +956,8 @@ var CAT_SLOTS=["var(--s1)","var(--s2)","var(--s3)","var(--s4)","var(--s5)","var(
 function ymNow(){ var d=new Date(); return monthKey(d.getFullYear(),d.getMonth()); }
 function householdRec(){ return rows.find(function(r){ return r.kind==="household"; }); }
 function members(){ var h=householdRec(); return (h&&Array.isArray(h.members))?h.members:["Ope","Justina"]; }
-function personOf(r){ return r.person||"Shared"; }
+/* "Shared" was the earlier name for Joint; stored values read as Joint */
+function personOf(r){ return (!r.person||r.person==="Shared")?"Joint":r.person; }
 function forPerson(r){ return view.person==="all" || personOf(r)===view.person; }
 function sorted(kind){
   return rows.filter(function(r){ return r.kind===kind; })
@@ -1122,7 +1123,7 @@ function renderRail(){
   slicer("Month",[{v:-1,t:"Whole year"}].concat(MON3.map(function(t,i){ return {v:i,t:t}; })),view.dwhole?-1:view.month,
     function(v){ if(v<0) view.dwhole=true; else { view.dwhole=false; view.month=v; } });
   var ed=el("button",null,"Edit"); ed.type="button"; ed.onclick=editHousehold;
-  var who=members().concat(["Shared"]);
+  var who=members().concat(["Joint"]);
   if(incomes().some(function(i){ return i.person==="Property"; })) who.push("Property");
   slicer("Household",[{v:"all",t:"Everyone"}].concat(who.map(function(m){ return {v:m,t:m}; })),view.person,function(v){ view.person=v; },ed);
   return rail;
@@ -1306,7 +1307,7 @@ function availCard(){
       var over=x.a>x.b, d=el("div","dav"), h=el("div","h"); h.appendChild(el("span",null,x.l.name));
       h.appendChild(el("b",over?"over":null,over?money(x.a-x.b)+" over":money(x.b-x.a)+" left")); d.appendChild(h);
       var t=el("div","t"), i=el("i",over?"over":null); i.style.width=(x.b>0?Math.min(100,x.a/x.b*100):(x.a>0?100:0)).toFixed(1)+"%"; t.appendChild(i); d.appendChild(t);
-      d.appendChild(el("small",null,money(x.a)+" spent of "+money(x.b)+" · "+costOf(x.l)+(x.l.person?" · "+x.l.person:"")));
+      d.appendChild(el("small",null,money(x.a)+" spent of "+money(x.b)+" · "+costOf(x.l)+(x.l.person?" · "+personOf(x.l):"")));
       g.appendChild(d);
     });
   c.appendChild(g); goLink(c,"Go to budget planner","month");
@@ -1400,7 +1401,7 @@ function openForm(title,fields,vals,onSave,onDelete){
   setTimeout(function(){ var f0=inputs[fields[0].k]; if(f0) f0.focus(); },20);
 }
 document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&fScrim&&!fScrim.hidden) fScrim.hidden=true; });
-function peopleOptions(){ return ["Shared"].concat(members()); }
+function peopleOptions(){ return ["Joint"].concat(members()); }
 function openIncome(i){
   openForm(i?"Edit income":"New income",[
     {k:"name",label:"Income",ph:"Salary"},
@@ -1408,7 +1409,7 @@ function openIncome(i){
     {k:"amount",label:"Usual monthly amount",type:"number",ph:"3200"},
     {k:"from",label:"Started",type:"month",hint:"Counts as received each month from here until you record a different figure."},
     {k:"note",label:"Note",ph:"Optional"}],
-    i?{name:i.name,person:personOf(i),amount:i.amount,from:i.from||(i.createdAt||"").slice(0,7),note:i.note}:{person:"Shared",from:ymNow()},
+    i?{name:i.name,person:personOf(i),amount:i.amount,from:i.from||(i.createdAt||"").slice(0,7),note:i.note}:{person:"Joint",from:ymNow()},
     function(v){ if(!v.name) return false; var r=i?clone(i):{id:uid(),kind:"income",createdAt:nowIso(),schema:SCHEMA,order:incomes().length+1,actuals:{}};
       r.name=v.name; r.person=v.person; r.amount=num(v.amount); r.from=v.from||ymNow(); r.note=v.note; save(r); },
     i?function(){ remove(i.id); }:null);
@@ -1422,18 +1423,18 @@ function openLoan(L){
     {k:"monthly",label:"Monthly payment",type:"number",ph:"350"},
     {k:"rate",label:"Interest rate (APR %)",type:"number",ph:"6.9",hint:"Used to work out the debt-free date. Leave empty for 0%."},
     {k:"from",label:"Payments started",type:"month"}],
-    L?{name:L.name,person:personOf(L),original:L.original,remaining:L.remaining,monthly:L.monthly,rate:L.rate||"",from:L.from||(L.createdAt||"").slice(0,7)}:{person:"Shared",from:ymNow()},
+    L?{name:L.name,person:personOf(L),original:L.original,remaining:L.remaining,monthly:L.monthly,rate:L.rate||"",from:L.from||(L.createdAt||"").slice(0,7)}:{person:"Joint",from:ymNow()},
     function(v){ if(!v.name) return false; var r=L?clone(L):{id:uid(),kind:"loan",createdAt:nowIso(),schema:SCHEMA,order:loans().length+1,payments:{}};
       r.name=v.name; r.person=v.person; r.original=num(v.original); r.remaining=num(v.remaining); r.monthly=num(v.monthly); r.rate=num(v.rate); r.from=v.from||ymNow();
       if(!r.original) r.original=r.remaining; save(r); },
     L?function(){ remove(L.id); }:null);
 }
 function editHousehold(){
-  openForm("Household",[{k:"members",label:"People",ph:"Ope, Justina",hint:"Separate names with commas. “Shared” is always available."}],
+  openForm("Household",[{k:"members",label:"People",ph:"Ope, Justina",hint:"Separate names with commas. “Joint” is always available."}],
     {members:members().join(", ")},
     function(v){ var h=householdRec(); var r=h?clone(h):{id:"household",kind:"household",createdAt:nowIso(),schema:SCHEMA};
-      r.members=v.members.split(",").map(function(s){ return s.trim(); }).filter(function(s){ return s && s.toLowerCase()!=="shared"; });
-      if(view.person!=="all" && view.person!=="Shared" && r.members.indexOf(view.person)<0) view.person="all";
+      r.members=v.members.split(",").map(function(s){ return s.trim(); }).filter(function(s){ return s && s.toLowerCase()!=="shared" && s.toLowerCase()!=="joint"; });
+      if(view.person!=="all" && view.person!=="Joint" && r.members.indexOf(view.person)<0) view.person="all";
       save(r); });
 }
 
@@ -1696,7 +1697,7 @@ function lineCard(l){
   var row=el("div","lrow");
   row.appendChild(el("div","lname",l.name||"Untitled"));
   row.appendChild(el("span","lcat",l.category||"Other"));
-  if(l.person && l.person!=="Shared") row.appendChild(el("span","lcat",l.person));
+  if(personOf(l)!=="Joint") row.appendChild(el("span","lcat",personOf(l)));
   var fig=el("div","lfig");
   fig.appendChild(el("b",null,money2(a)));
   fig.appendChild(document.createTextNode(" of "+money(b)));
@@ -1906,7 +1907,7 @@ function fillModal(title,isEdit){
     renderGroupSeg();
     var ps=$("#fPerson"); ps.textContent="";
     peopleOptions().forEach(function(n){ var o=document.createElement("option"); o.value=n; o.textContent=n; ps.appendChild(o); });
-    ps.value=draft.person||"Shared";
+    ps.value=personOf(draft);
     if(!draft.cost) draft.cost=costOf(draft);
     renderCostSeg();
   } else {
@@ -1961,7 +1962,7 @@ $("#mSave").onclick=function(){
     r.kind="line";
     r.category=$("#fCat").value;
     r.group=draft.group==="nonessential"?"nonessential":"essential";
-    r.person=$("#fPerson").value||"Shared";
+    r.person=$("#fPerson").value||"Joint";
     r.cost=draft.cost==="variable"?"variable":"fixed";
     r.budgets=r.budgets||{}; r.actuals=r.actuals||{};
     var key=monthKey(view.year,view.month);
