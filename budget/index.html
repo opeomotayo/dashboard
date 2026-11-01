@@ -1122,7 +1122,9 @@ function renderRail(){
   slicer("Month",[{v:-1,t:"Whole year"}].concat(MON3.map(function(t,i){ return {v:i,t:t}; })),view.dwhole?-1:view.month,
     function(v){ if(v<0) view.dwhole=true; else { view.dwhole=false; view.month=v; } });
   var ed=el("button",null,"Edit"); ed.type="button"; ed.onclick=editHousehold;
-  slicer("Household",[{v:"all",t:"Everyone"}].concat(members().concat(["Shared"]).map(function(m){ return {v:m,t:m}; })),view.person,function(v){ view.person=v; },ed);
+  var who=members().concat(["Shared"]);
+  if(incomes().some(function(i){ return i.person==="Property"; })) who.push("Property");
+  slicer("Household",[{v:"all",t:"Everyone"}].concat(who.map(function(m){ return {v:m,t:m}; })),view.person,function(v){ view.person=v; },ed);
   return rail;
 }
 
@@ -1402,7 +1404,7 @@ function peopleOptions(){ return ["Shared"].concat(members()); }
 function openIncome(i){
   openForm(i?"Edit income":"New income",[
     {k:"name",label:"Income",ph:"Salary"},
-    {k:"person",label:"Whose income",type:"select",options:peopleOptions()},
+    {k:"person",label:"Whose income",type:"select",options:peopleOptions().concat(["Property"])},
     {k:"amount",label:"Usual monthly amount",type:"number",ph:"3200"},
     {k:"from",label:"Started",type:"month",hint:"Counts as received each month from here until you record a different figure."},
     {k:"note",label:"Note",ph:"Optional"}],
