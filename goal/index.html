@@ -716,6 +716,8 @@ button.gtr-c:hover{transform:scale(1.05)}
 .msyn .no{border-color:var(--stall);color:var(--stall-ink);background:var(--surface)}
 .gtr-c.missed{filter:grayscale(.55) opacity(.85)}
 .goal{cursor:auto}
+.msrev .msblk + .msblk{margin-top:9px;padding-top:9px;border-top:1px dashed color-mix(in srgb,var(--stall) 30%,transparent)}
+.msrev.no .msdid .msl{color:var(--ink-2)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -2042,9 +2044,15 @@ function reviewBlock(g,m,road){
     r.appendChild(y); r.appendChild(n); box.appendChild(r);
     return box;
   }
-  var q=m.done?"What was the key to achieving it?":"Why wasn't it achieved?";
-  box.appendChild(bulletEditor("", q, m.done?"Note what made the difference…":"Note what got in the way…", m.review||"",
-    function(v){ msPatch(g.id,m.id,{review:v}); }, road));
+  if(m.done){
+    box.appendChild(bulletEditor("","What was the key to achieving it?","Note what made the difference…",m.review||"",
+      function(v){ msPatch(g.id,m.id,{review:v}); }, road));
+  } else {
+    box.appendChild(bulletEditor("msdid","What tasks were completed / done?","List what did get done…",m.completed||"",
+      function(v){ msPatch(g.id,m.id,{completed:v}); }, road));
+    box.appendChild(bulletEditor("","Why wasn't the milestone achieved?","Note what got in the way…",m.review||"",
+      function(v){ msPatch(g.id,m.id,{review:v}); }, road));
+  }
   if(m.missed){
     var re=el("button","btn btn-ghost btn-sm","Achieved after all"); re.type="button";
     re.onclick=function(e){ e.stopPropagation(); msPatch(g.id,m.id,{done:true,missed:false}); };
