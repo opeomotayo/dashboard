@@ -597,8 +597,10 @@ var MONTHS=["January","February","March","April","May","June",
             "July","August","September","October","November","December"];
 var MON3=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 var LAST_YEAR=2030;
-var CATEGORIES=["Home","Utilities","Food","Transport","Insurance","Health","Childcare",
-                "Debt and loans","Leisure","Shopping","Subscriptions","Giving","Other"];
+var CATEGORIES=["Savings","Utilities","Transport","Insurance","Health","Childcare",
+                "Debts","Leisure","Shopping","Subscriptions","Giving","Other"];
+/* categories that were renamed or retired; lines carrying them are moved over once */
+var CAT_RENAMED={"Home":"Savings","Debt and loans":"Debts","Food":"Other"};
 var GROUPS=[
   {k:"essential",    label:"Essential",     hint:"Rent, food, utilities, insurance — the bills that do not negotiate."},
   {k:"nonessential", label:"Non-essential", hint:"Eating out, subscriptions, days out — the part you could cut if you had to."}
@@ -726,17 +728,17 @@ function sampleRows(){
                  date:k+"-"+pad(Math.min(day,28)),amount:amount,note:note||""});
   }
   return [
-    line("l-mortgage","Mortgage","Home","essential",1450,1450,1,""),
-    line("l-council","Council tax","Home","essential",198,198,2,""),
+    line("l-mortgage","Mortgage","Debts","essential",1450,1450,1,""),
+    line("l-council","Council tax","Utilities","essential",198,198,2,""),
     line("l-energy","Gas and electricity","Utilities","essential",165,187.40,3,"Variable"),
     line("l-water","Water","Utilities","essential",42,42,4,""),
-    line("l-groceries","Groceries","Food","essential",650,612.35,5,"Weekly shop and top-ups"),
+    line("l-groceries","Groceries","Shopping","essential",650,612.35,5,"Weekly shop and top-ups"),
     line("l-insurance","Insurance","Insurance","essential",96,96,6,"Home, life, contents"),
     line("l-fuel","Fuel and travel","Transport","essential",240,268.10,7,""),
     line("l-childcare","Clubs and school extras","Childcare","essential",280,245,8,""),
     line("l-phone","Phone and broadband","Utilities","essential",78,78,9,""),
 
-    line("l-dining","Eating out and dinner","Food","nonessential",160,214.80,20,""),
+    line("l-dining","Eating out and dinner","Leisure","nonessential",160,214.80,20,""),
     line("l-subs","Subscriptions","Subscriptions","nonessential",46,53.97,21,"Streaming, apps"),
     line("l-daysout","Days out","Leisure","nonessential",120,86.50,22,""),
     line("l-shopping","Clothes and shopping","Shopping","nonessential",140,97.25,23,""),
@@ -795,6 +797,16 @@ function idbClear(s){ return idbTx(s,"readwrite",function(os){ return os.clear()
    into the month they fell in. Individual transactions are not carried over
    — the monthly total is what the new shape keeps. Pots are untouched. */
 function migrate(){
+  var renamed=[];
+  records.forEach(function(r){
+    if(r.deleted||r.kind!=="line"||!CAT_RENAMED.hasOwnProperty(r.category)) return;
+    var c=clone(r); c.category=CAT_RENAMED[r.category]; c.updatedAt=nowIso();
+    putRecord(c); renamed.push(c);
+  });
+  if(renamed.length){ if(idb) idbPutMany("records",renamed).catch(function(){}); renamed.forEach(pushOne); refreshView(); }
+  return migrateV1();
+}
+function migrateV1(){
   var cats=records.filter(function(r){ return r.kind==="cat" && !r.deleted; });
   if(!cats.length) return 0;
   var entries=records.filter(function(r){ return r.kind==="entry" && !r.deleted; });
