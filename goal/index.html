@@ -874,7 +874,7 @@ button.gtr-c:hover{transform:scale(1.05)}
         <span class="hint" id="fOutcomeHint">What has to be true for this to count as achieved.</span>
       </div>
       <div class="field">
-        <label for="fWhy" id="fWhyLab">Systems/Practices put in place to achieve this goal</label>
+        <label for="fWhy" id="fWhyLab">Actions that need to be completed to achieve the goal</label>
         <textarea id="fWhy" rows="4" placeholder="What running this reliably actually changes."></textarea>
         <span class="hint" id="fWhyHint" hidden>One per line — each line becomes a bullet point.</span>
       </div>
@@ -2297,7 +2297,7 @@ function goalCard(g){
   if(g.outcome) main.appendChild(el("div","goutcome","Done means: "+g.outcome));
   var practices=practiceLines(g.why);
   if(practices.length){
-    var gw=el("div","gwhy gprac"); gw.appendChild(el("b",null,"Systems & practices"));
+    var gw=el("div","gwhy gprac"); gw.appendChild(el("b",null,"Actions that need to be completed to achieve the goal"));
     var ul=el("ul"); practices.forEach(function(t){ ul.appendChild(el("li",null,t)); });
     gw.appendChild(ul); main.appendChild(gw);
   }
@@ -3243,7 +3243,7 @@ function fillModal(title,showDel){
   $("#fOutcomeLab").textContent = sys?"Outcome it serves":"Done means";
   $("#fOutcomeHint").textContent = sys?"Recorded for context. Never used to score you."
                                      :"What has to be true for this to count as achieved.";
-  $("#fWhyLab").textContent = sys?"Why this process":"Systems/Practices put in place to achieve this goal";
+  $("#fWhyLab").textContent = sys?"Why this process":"Actions that need to be completed to achieve the goal";
   $("#fWhy").placeholder = sys?"What running this reliably actually changes."
                               :"Save £5K every month\nWeekly property check-ins\nQuarterly finance review";
   $("#fWhyHint").hidden = sys;
@@ -3400,7 +3400,7 @@ function aiPrompt(cur){
     "- title: one line, no full stop.",
     "- outcome: one sentence naming an observable end state.",
     isSys?"- why: one or two sentences on why this process matters."
-      :"- why: the systems and practices put in place to achieve the goal, one per line separated by \\n, no bullet characters.",
+      :"- why: the actions that need to be completed to achieve the goal, one per line separated by \\n, no bullet characters.",
     "- steps: short imperative lines, same number and same order as given.",
     "- Return a field unchanged if it is already good. Return \"\" for a field that came in empty.",
     "",
@@ -3421,7 +3421,7 @@ function aiRender(cur,sug){
   function labOf(id,fallback){ var e=$(id); return (e&&e.textContent)||fallback; }
   var fields=[["title",labOf("#fTitleLab","The goal")],
               ["outcome",labOf("#fOutcomeLab","Done means")],
-              ["why",labOf("#fWhyLab","Systems/Practices put in place to achieve this goal")]];
+              ["why",labOf("#fWhyLab","Actions that need to be completed to achieve the goal")]];
   var shown=0;
 
   fields.forEach(function(f){
