@@ -149,7 +149,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .navsel{display:inline-flex;align-items:center;gap:7px}
 .navsellab{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
   color:var(--faint);white-space:nowrap}
-select,input[type=text],input[type=number]{width:100%;background:var(--surface);
+select,input[type=text],input[type=number],input[type=month]{width:100%;background:var(--surface);
   border:1px solid var(--line-2);border-radius:9px;padding:9px 11px;font-size:14px;color:var(--ink)}
 select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
 .monsel{width:auto;min-width:88px;font-family:var(--display);font-weight:600;font-size:14.5px;
@@ -322,6 +322,8 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
   --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
 }
 .shell,.topbar-in{max-width:1440px}
+.qmonth{display:inline-flex;align-items:center;gap:7px}
+.qmonth input{width:auto;font-family:var(--mono);font-size:12.5px}
 .dash{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:16px;margin-top:22px;align-items:start}
 .dgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}
 .dcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-1);
@@ -704,9 +706,10 @@ function byCategory(){
   }).filter(function(x){ return x.budget>0||x.actual>0; })
     .sort(function(a,b){ return a.variance-b.variance; });
 }
+function moveMonth(m){ return m.month||(m.date||"").slice(0,7); }
 function movesOf(potId){
   return rows.filter(function(r){ return r.kind==="move" && r.potId===potId; })
-    .sort(function(a,b){ return (b.date||"").localeCompare(a.date||""); });
+    .sort(function(a,b){ return moveMonth(b).localeCompare(moveMonth(a)) || (b.date||"").localeCompare(a.date||""); });
 }
 function balanceOf(p){ return movesOf(p.id).reduce(function(s,m){ return s+num(m.amount); },0); }
 
@@ -980,7 +983,7 @@ function loanPayIn(L,ym){
   return num(L.monthly);
 }
 function savedIn(ym){
-  return rows.filter(function(r){ return r.kind==="move" && (r.date||"").slice(0,7)===ym && num(r.amount)>0; })
+  return rows.filter(function(r){ return r.kind==="move" && moveMonth(r)===ym && num(r.amount)>0; })
     .reduce(function(s,m){ return s+num(m.amount); },0);
 }
 function monthFlows(ym){
@@ -1810,20 +1813,25 @@ function potCard(p){
   var note=document.createElement("input");
   note.type="text"; note.placeholder="Note (optional)";
   note.setAttribute("aria-label","Note");
+  /* the month the money is saved for — defaults to this month */
+  var mon=document.createElement("input");
+  mon.type="month"; mon.setAttribute("aria-label","Month this saving is for"); mon.title="Month this saving is for";
   var d=quickDraft[p.id]||{};
-  amt.value=d.amount||""; note.value=d.note||"";
-  function keep(){ quickDraft[p.id]={amount:amt.value,note:note.value}; }
-  amt.oninput=keep; note.oninput=keep;
+  amt.value=d.amount||""; note.value=d.note||""; mon.value=d.month||ymNow();
+  function keep(){ quickDraft[p.id]={amount:amt.value,note:note.value,month:mon.value}; }
+  amt.oninput=keep; note.oninput=keep; mon.onchange=keep;
   function add(){
     var v=num(amt.value);
     if(!v){ amt.focus(); return; }
     delete quickDraft[p.id];
-    save({id:uid(),kind:"move",potId:p.id,date:ymd(new Date()),amount:v,
+    var ym=/^\d{4}-\d{2}$/.test(mon.value)?mon.value:ymNow();
+    save({id:uid(),kind:"move",potId:p.id,date:ymd(new Date()),month:ym,amount:v,
           note:note.value.trim(),createdAt:nowIso(),schema:SCHEMA});
   }
   amt.onkeydown=note.onkeydown=function(e){ if(e.key==="Enter") add(); };
   var go=el("button","btn btn-sm","Add money"); go.onclick=add;
-  q.appendChild(amt); q.appendChild(note); q.appendChild(go);
+  var ml=el("label","qmonth"); ml.appendChild(el("span","navsellab","For")); ml.appendChild(mon);
+  q.appendChild(ml); q.appendChild(amt); q.appendChild(note); q.appendChild(go);
   q.appendChild(el("span","ptarget","A negative amount records a withdrawal"));
   card.appendChild(q);
 
@@ -1832,7 +1840,10 @@ function potCard(p){
     var wrap=el("div","entries");
     ms.forEach(function(m){
       var r=el("div","entry");
-      r.appendChild(el("span","edate",(m.date||"").slice(8)+" "+MON3[parseInt((m.date||"").slice(5,7),10)-1]));
+      var mk=moveMonth(m);
+      var dt=el("span","edate",MON3[parseInt(mk.slice(5,7),10)-1]+" "+mk.slice(0,4));
+      dt.title="Saved for "+MONTHS[parseInt(mk.slice(5,7),10)-1]+" "+mk.slice(0,4)+(m.date?" · added "+m.date:"");
+      r.appendChild(dt);
       r.appendChild(el("span","enote",m.note||"—"));
       r.appendChild(el("span","eamt",money2(num(m.amount))));
       var x=el("button","rm","×"); x.type="button";
