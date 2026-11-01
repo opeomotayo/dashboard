@@ -829,10 +829,10 @@ function renderDash(parent){
   function t(c,k,v,s,net){ var d=el("div","pt"+(net?" net":"")); d.style.setProperty("--c",c); d.appendChild(el("div","k",k));
     var vv=el("div","v",money(v)); if(net&&v<0) vv.dataset.sign="down"; d.appendChild(vv); if(s) d.appendChild(el("div","s",s)); eq.appendChild(d); }
   function op(x){ eq.appendChild(el("div","op",x)); }
-  t("var(--s1)","Rental income",T.income,done.length?money(T.income/done.length)+" a month on average":"");
-  op("−"); t("var(--s2)","Operating costs",T.opex,T.income?Math.round(T.opex/T.income*100)+"% of rent · management, insurance, works":"");
-  op("−"); t("var(--s5)","Mortgage",T.mortgage,T.income?Math.round(T.mortgage/T.income*100)+"% of rent":"");
-  op("="); t(T.net<0?"var(--down)":"var(--up)","Net cash flow",T.net,T.income?Math.round(T.net/T.income*100)+"% profit margin":"",true);
+  t(C_INC,"Rental income",T.income,done.length?money(T.income/done.length)+" a month on average":"");
+  op("−"); t(C_OPX,"Operating costs",T.opex,T.income?Math.round(T.opex/T.income*100)+"% of rent · management, insurance, works":"");
+  op("−"); t(C_MTG,"Mortgage",T.mortgage,T.income?Math.round(T.mortgage/T.income*100)+"% of rent":"");
+  op("="); t(T.net<0?"var(--down)":C_NET,"Net cash flow",T.net,T.income?Math.round(T.net/T.income*100)+"% profit margin":"",true);
   eq.appendChild(el("div","peqnote",periodTxt+", "+scopeTxt));
   grid.appendChild(eq);
 
@@ -886,21 +886,24 @@ function donut(segs,c1,c2,label){
 }
 function marginCard(T){
   var c=pcard("c3","Profit margin"), d=el("div","pdon"), m=T.income>0?T.net/T.income:0;
-  d.appendChild(donut([{v:Math.max(0,T.net),c:"var(--up)",label:"Net cash flow"},{v:T.opex,c:"var(--s2)",label:"Operating costs"},{v:T.mortgage,c:"var(--s5)",label:"Mortgage"}],
+  d.appendChild(donut([{v:Math.max(0,T.net),c:C_NET,label:"Net cash flow"},{v:T.opex,c:C_OPX,label:"Operating costs"},{v:T.mortgage,c:C_MTG,label:"Mortgage"}],
     T.income?Math.round(m*100)+"%":"—","of rent kept","Profit margin: "+Math.round(m*100)+"% of rent kept"));
   var meta=el("div","pmeta");
-  [["Kept","var(--up)",T.net],["Operating costs","var(--s2)",T.opex],["Mortgage","var(--s5)",T.mortgage]].forEach(function(r){
+  [["Kept",C_NET,T.net],["Operating costs",C_OPX,T.opex],["Mortgage",C_MTG,T.mortgage]].forEach(function(r){
     var s=el("span"); s.style.display="inline-flex"; s.style.alignItems="center"; s.style.gap="6px"; var i=el("i"); i.style.cssText="width:9px;height:9px;border-radius:50%;background:"+r[1]; s.appendChild(i); s.appendChild(document.createTextNode(r[0]));
     meta.appendChild(s); meta.appendChild(el("b",null,money(r[2]))); });
   d.appendChild(meta); c.appendChild(d);
   return c;
 }
 
-/* income and total costs as paired bars, net cash flow as a line, one £ axis */
+/* per month: income, costs (operating + mortgage stacked in one bar) and
+   net cash flow, all bars on one £ axis; a loss-making month's cash-flow
+   bar hangs below zero */
+var C_INC="var(--s1)", C_OPX="var(--s8)", C_MTG="var(--s2)", C_NET="var(--s3)";
 function flowChartCard(ys){
   var c=pcard("c7","Income, costs & cash flow");
   var leg=el("div","pleg");
-  [["var(--s1)","Rental income",""],["var(--s2)","Costs (operating + mortgage)",""],["var(--ink)","Net cash flow","ln"]].forEach(function(l){ var s=el("span"), i=el("i",l[2]||null); i.style.background=l[0]; s.appendChild(i); s.appendChild(document.createTextNode(l[1])); leg.appendChild(s); });
+  [[C_INC,"Rental income"],[C_OPX,"Operating costs"],[C_MTG,"Mortgage"],[C_NET,"Net cash flow"]].forEach(function(l){ var s=el("span"), i=el("i"); i.style.background=l[0]; s.appendChild(i); s.appendChild(document.createTextNode(l[1])); leg.appendChild(s); });
   c.appendChild(leg);
   var W=560,H=220,L=50,R=8,Tp=10,B=24;
   var vals=[]; ys.forEach(function(x){ vals.push(x.income,x.opex+x.mortgage,x.net); });
@@ -908,29 +911,36 @@ function flowChartCard(ys){
   var step=niceStep((mx-mn)/4||1), top=Math.ceil(mx/step)*step||step, bot=Math.floor(mn/step)*step;
   function Y(v){ return Tp+(H-Tp-B)*(top-v)/(top-bot); }
   var bw=(W-L-R)/12; function X(i){ return L+bw*(i+.5); }
-  var box=el("div","pch"), svg=svgEl("svg",{viewBox:"0 0 "+W+" "+H,role:"img","aria-label":"Rental income, costs and net cash flow by month in "+view.year});
+  var box=el("div","pch"), svg=svgEl("svg",{viewBox:"0 0 "+W+" "+H,role:"img","aria-label":"Rental income, operating costs, mortgage and net cash flow by month in "+view.year});
   for(var v=bot;v<=top+1e-9;v+=step){ svgEl("line",{x1:L,x2:W-R,y1:Y(v),y2:Y(v),class:v===0?"zero":"grid"},svg); var tx=svgEl("text",{x:L-6,y:Y(v)+3,"text-anchor":"end",class:"ax"},svg); tx.textContent=shortMoney(v); }
   MON3.forEach(function(m,i){ var t=svgEl("text",{x:X(i),y:H-6,"text-anchor":"middle",class:"ax"},svg); t.textContent=m; });
   var band=svgEl("rect",{y:Tp,width:bw,height:H-Tp-B,fill:"var(--sunken)",visibility:"hidden"},svg);
-  var barW=Math.max(3,bw*.3), z=Y(0);
+  var barW=Math.max(3,bw*.24), z=Y(0), gap=2;
+  /* a bar from v0 to v1, rounded only at the end away from the baseline */
+  function bar(x0,v0,v1,fill,op,roundEnd){
+    var ya=Y(v0), yb=Y(v1), up=yb<ya, h=Math.abs(ya-yb); if(h<0.5) return;
+    var r=roundEnd?Math.min(3,h,barW/2):0, yt=Math.min(ya,yb), ybt=Math.max(ya,yb), d;
+    if(!r) d="M"+x0+" "+yt+" H"+(x0+barW)+" V"+ybt+" H"+x0+" Z";
+    else if(up) d="M"+x0+" "+ybt+" V"+(yt+r)+" Q"+x0+" "+yt+" "+(x0+r)+" "+yt+" H"+(x0+barW-r)+" Q"+(x0+barW)+" "+yt+" "+(x0+barW)+" "+(yt+r)+" V"+ybt+" Z";
+    else d="M"+x0+" "+yt+" V"+(ybt-r)+" Q"+x0+" "+ybt+" "+(x0+r)+" "+ybt+" H"+(x0+barW-r)+" Q"+(x0+barW)+" "+ybt+" "+(x0+barW)+" "+(ybt-r)+" V"+yt+" Z";
+    svgEl("path",{d:d,fill:fill,opacity:op},svg);
+  }
   ys.forEach(function(x,i){
-    [[x.income,"var(--s1)",-1],[x.opex+x.mortgage,"var(--s2)",1]].forEach(function(b){
-      if(!(b[0]>0)) return; var bx=b[2]<0?X(i)-barW-1:X(i)+1, y=Y(b[0]), h=z-y, r=Math.min(3,h,barW/2);
-      svgEl("path",{d:"M"+bx+" "+z+" V"+(y+r)+" Q"+bx+" "+y+" "+(bx+r)+" "+y+" H"+(bx+barW-r)+" Q"+(bx+barW)+" "+y+" "+(bx+barW)+" "+(y+r)+" V"+z+" Z",fill:b[1],opacity:x.fut?.3:1},svg);
-    });
+    var op=x.fut?.3:1, x0=X(i)-(3*barW+2*gap)/2;
+    if(x.income>0) bar(x0,0,x.income,C_INC,op,true);
+    var x1=x0+barW+gap;
+    /* operating costs at the base, mortgage stacked on top, a 2px surface gap between */
+    if(x.opex>0) bar(x1,0,x.opex,C_OPX,op,!(x.mortgage>0));
+    if(x.mortgage>0){ var g=x.opex>0?(top-bot)*gap/(H-Tp-B):0; bar(x1,x.opex+g,x.opex+x.mortgage,C_MTG,op,true); }
+    if(x.net!==0) bar(x1+barW+gap,0,x.net,C_NET,op,true);
   });
-  var dA="",dF="", lastDone=-1; ys.forEach(function(x,i){ if(!x.fut) lastDone=i; });
-  ys.forEach(function(x,i){ var p=X(i).toFixed(1)+" "+Y(x.net).toFixed(1); if(!x.fut) dA+=(dA?" L":"M")+p; if(i>=lastDone&&lastDone>=0||lastDone<0) dF+=(dF?" L":"M")+p; });
-  if(dF) svgEl("path",{d:dF,fill:"none",stroke:"var(--ink)","stroke-width":1.5,"stroke-dasharray":"4 4",opacity:.45},svg);
-  if(dA) svgEl("path",{d:dA,fill:"none",stroke:"var(--ink)","stroke-width":2,"stroke-linejoin":"round"},svg);
-  ys.forEach(function(x,i){ svgEl("circle",{cx:X(i),cy:Y(x.net),r:3.2,fill:x.fut?"var(--surface)":"var(--ink)",stroke:"var(--ink)","stroke-width":1.5},svg); });
   var hit=svgEl("rect",{x:L,y:Tp,width:W-L-R,height:H-Tp-B,fill:"transparent"},svg);
   hit.addEventListener("mousemove",function(e){ var r=svg.getBoundingClientRect(), i=Math.max(0,Math.min(11,Math.floor(((e.clientX-r.left)/r.width*W-L)/bw))), x=ys[i];
     band.setAttribute("x",L+bw*i); band.setAttribute("visibility","visible");
-    showTip(e,MONTHS[i]+" "+view.year+(x.fut?" · projected":""),[{k:"Rental income",v:money(x.income),c:"var(--s1)"},{k:"Operating costs",v:money(x.opex),c:"var(--s2)"},{k:"Mortgage",v:money(x.mortgage),c:"var(--s2)"},{k:"Net cash flow",v:money(x.net),c:"var(--ink)"}]); });
+    showTip(e,MONTHS[i]+" "+view.year+(x.fut?" · projected":""),[{k:"Rental income",v:money(x.income),c:C_INC},{k:"Operating costs",v:money(x.opex),c:C_OPX},{k:"Mortgage",v:money(x.mortgage),c:C_MTG},{k:"Net cash flow",v:money(x.net),c:C_NET}]); });
   hit.addEventListener("mouseleave",function(){ band.setAttribute("visibility","hidden"); hideTip(); });
   box.appendChild(svg); c.appendChild(box);
-  c.appendChild(el("div","sub","Faint bars and the dashed line are months still to come, at today's figures."));
+  c.appendChild(el("div","sub","Costs bar: operating costs at the bottom, mortgage on top. Faint bars are months still to come, at today's figures."));
   return c;
 }
 
