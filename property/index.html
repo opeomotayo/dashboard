@@ -377,6 +377,16 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .pmeta{display:grid;grid-template-columns:1fr auto;gap:5px 10px;font-size:12.5px;color:var(--ink-2);width:100%}
 .pmeta b{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);text-align:right}
 
+.etrack.estack{display:flex;gap:2px;background:var(--sunken);overflow:hidden;border-radius:4px}
+.etrack.estack i{border-radius:0;flex:none;min-width:2px;cursor:default}
+.etrack.estack i:first-child{border-radius:4px 0 0 4px}
+.etrack.estack i:last-child{border-radius:0 4px 4px 0}
+.etrack.estack i:only-child{border-radius:4px}
+.figure .ebar{grid-template-columns:minmax(110px,230px) 1fr minmax(78px,auto)}
+.figure .ebar .ename{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ebar.etot{padding-bottom:9px;margin-bottom:5px;border-bottom:1px dashed var(--line)}
+.ebar.etot .ename,.ebar.etot .eval{font-weight:700;color:var(--ink)}
+.ebar.etot .etrack{height:20px}
 @media (max-width:1100px){
   .pd{grid-template-columns:repeat(6,minmax(0,1fr))}
   .c12,.c9,.c8,.c7{grid-column:span 6} .c6,.c5,.c4,.c3{grid-column:span 3}
@@ -1214,23 +1224,41 @@ function renderPage(parent){
   f2.appendChild(k3);
   parent.appendChild(f2);
 
-  /* ── where the money went ── */
-  var bd=breakdownFor(key);
-  if(bd.length){
+  /* ── where the money went: one horizontal bar per property, stacked by
+     cost — the portfolio total on top, every bar on the same £ scale ── */
+  var COSTS=[["Mortgage","var(--s2)"],["Management","var(--s1)"],["Insurance","var(--s3)"]]
+    .concat(CATEGORIES.map(function(cn,i){ return [cn,["var(--s4)","var(--s5)","var(--s6)","var(--s7)","var(--s8)","var(--off)"][i%6]]; }));
+  function costParts(list){
+    var m={}; list.forEach(function(p){ var f=figuresFor(p,key);
+      m.Mortgage=(m.Mortgage||0)+f.mortgage; m.Management=(m.Management||0)+f.mgmt; m.Insurance=(m.Insurance||0)+f.insurance;
+      expensesOf(p.id,key).forEach(function(e){ var cn=CATEGORIES.indexOf(e.category)>=0?e.category:"Other"; m[cn]=(m[cn]||0)+num(e.amount); }); });
+    return COSTS.filter(function(cc){ return m[cc[0]]>0; }).map(function(cc){ return {n:cc[0],c:cc[1],v:m[cc[0]]}; });
+  }
+  var rowsW=[{name:"Portfolio",parts:costParts(ps),tot:true}].concat(ps.map(function(p){ return {name:p.name,parts:costParts([p])}; }));
+  rowsW.forEach(function(r){ r.sum=r.parts.reduce(function(a2,x){ return a2+x.v; },0); });
+  if(rowsW[0].sum>0){
     var f3=el("div","figure");
     var h3=el("div","fhead");
     h3.appendChild(el("h3",null,"Where the money went"));
     h3.appendChild(el("span","fnote",money(t.expenses)+" in "+viewLabel()));
     f3.appendChild(h3);
-    var top=Math.max.apply(null,bd.map(function(x){ return x.amount; }));
-    bd.forEach(function(x){
-      var row=el("div","ebar");
-      row.appendChild(el("div","ename",x.name));
-      var tr=el("div","etrack");
-      var i=el("i"); i.style.width=(x.amount/top*100).toFixed(2)+"%";
-      tr.appendChild(i); row.appendChild(tr);
-      row.appendChild(el("div","eval",money2(x.amount)));
-      row.title=x.name+" — "+money2(x.amount)+" ("+Math.round(x.amount/t.expenses*100)+"% of the month)";
+    var used=COSTS.filter(function(cc){ return rowsW[0].parts.some(function(x){ return x.n===cc[0]; }); });
+    var kw=el("div","pleg"); kw.style.marginBottom="10px";
+    used.forEach(function(cc){ var sp=el("span"), ii=el("i"); ii.style.background=cc[1]; sp.appendChild(ii); sp.appendChild(document.createTextNode(cc[0])); kw.appendChild(sp); });
+    f3.appendChild(kw);
+    var scaleW=rowsW[0].sum;
+    rowsW.forEach(function(r){
+      var row=el("div","ebar"+(r.tot?" etot":""));
+      row.appendChild(el("div","ename",r.name));
+      var tr=el("div","etrack estack");
+      r.parts.forEach(function(x){
+        var seg=el("i"); seg.style.width=(x.v/scaleW*100).toFixed(3)+"%"; seg.style.background=x.c;
+        seg.onmousemove=function(e){ showTip(e,r.name+" · "+viewLabel(),r.parts.map(function(q){ return {k:q.n,v:money2(q.v)+"  "+Math.round(q.v/r.sum*100)+"%",c:q.c}; }).concat([{k:"Total",v:money2(r.sum)}])); };
+        seg.onmouseleave=hideTip;
+        tr.appendChild(seg);
+      });
+      row.appendChild(tr);
+      row.appendChild(el("div","eval",money2(r.sum)));
       f3.appendChild(row);
     });
     parent.appendChild(f3);
