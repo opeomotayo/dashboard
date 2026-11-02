@@ -338,7 +338,7 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .ptbl tr.tot td:first-child{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
 .ptbl td.neg{color:var(--down)}
 .sig{display:inline-flex;align-items:center;gap:5px;font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:5px}
-.sig.pos{background:var(--up-soft);color:var(--up)}
+.sig.pos{background:color-mix(in srgb,var(--s3) 16%,transparent);color:var(--hold-ink)}
 .sig.neg{background:var(--down-soft);color:var(--down)}
 .sig.na{color:var(--faint);font-weight:500}
 .ptbl tr[data-m]{cursor:pointer}
@@ -867,7 +867,7 @@ function renderDash(parent){
 function statementCard(ys,T){
   var c=pcard("c9","Monthly cash flow — "+view.year,"Click a month to open it on the Properties page. Faint rows are projections at today's figures and are not counted.");
   var w=el("div","ptbl-wrap"), tb=el("table","ptbl"), hr=el("tr");
-  ["Month","Rental income","Operating costs","Mortgage","Net operating income","Net cash flow","Cumulative cash","Expense ratio","Signal"].forEach(function(h){ hr.appendChild(el("th",null,h)); });
+  ["Month","Rental income","Operating costs","Mortgage","Net operating income","Net cash flow","Cumulative cash","Expense ratio","Cashflow ratio"].forEach(function(h){ var th2=el("th",null,h); if(h==="Cashflow ratio") th2.title="Net cash flow as a share of the rent — how much of every £1 of rent you keep"; hr.appendChild(th2); });
   var th=el("thead"); th.appendChild(hr); tb.appendChild(th);
   var bd=el("tbody"), cum=0, n=new Date();
   ys.forEach(function(x){
@@ -879,13 +879,17 @@ function statementCard(ys,T){
     td(MONTHS[x.m]); td(money(x.income)); td(money(x.opex)); td(money(x.mortgage)); td(money(x.noi),x.noi<0?"neg":"");
     td(money(x.net),x.net<0?"neg":""); td(x.fut?"—":money(cum),!x.fut&&cum<0?"neg":"");
     td(x.ratio==null?"—":Math.round(x.ratio*100)+"%");
-    var sg=el("td"); var s=el("span","sig "+(x.fut?"na":x.net>=0?"pos":"neg"),x.fut?"projected":x.net>=0?"▲ positive":"▼ negative"); sg.appendChild(s); tr.appendChild(sg);
+    /* cashflow ratio: net cash flow as a share of the month's rent */
+    var sg=el("td"), cr=x.income>0?x.net/x.income:null;
+    var s=el("span","sig "+(x.fut?"na":cr==null?"na":cr>=0?"pos":"neg"),cr==null?"—":(cr>=0?"▲ ":"▼ −")+Math.abs(Math.round(cr*100))+"%"+(x.fut?" proj.":""));
+    s.title=cr==null?"No rent this month":money(x.net)+" kept from "+money(x.income)+" of rent"; sg.appendChild(s); tr.appendChild(sg);
     bd.appendChild(tr);
   });
   var tt=el("tr","tot");
   [ys.filter(function(x){return !x.fut;}).length===12?"Total":"Total · YTD",money(T.income),money(T.opex),money(T.mortgage),money(T.noi),money(T.net),money(T.net),
    T.income?Math.round(T.opex/T.income*100)+"%":"—"].forEach(function(v,i){ tt.appendChild(el("td",(i>=4&&i<=6&&(i===4?T.noi:T.net)<0)?"neg":null,v)); });
-  var sg=el("td"); sg.appendChild(el("span","sig "+(T.net>=0?"pos":"neg"),T.net>=0?"▲ positive":"▼ negative")); tt.appendChild(sg);
+  var tcr=T.income>0?T.net/T.income:null;
+  var sg=el("td"); sg.appendChild(el("span","sig "+(tcr==null?"na":tcr>=0?"pos":"neg"),tcr==null?"—":(tcr>=0?"▲ ":"▼ −")+Math.abs(Math.round(tcr*100))+"%")); tt.appendChild(sg);
   bd.appendChild(tt); tb.appendChild(bd); w.appendChild(tb); c.appendChild(w);
   return c;
 }
