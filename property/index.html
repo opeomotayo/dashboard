@@ -387,6 +387,14 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .ebar.etot{padding-bottom:9px;margin-bottom:5px;border-bottom:1px dashed var(--line)}
 .ebar.etot .ename,.ebar.etot .eval{font-weight:700;color:var(--ink)}
 .ebar.etot .etrack{height:20px}
+/* operating costs: a golden yellow, stepped lighter than the categorical
+   yellow so it stays clearly apart from the orange mortgage it is stacked
+   against (light: normal ΔE 19.2, deutan 13.5; dark: normal 18.8, deutan
+   13.5). It sits a touch above the lightness band and under 3:1 on white, so
+   exact figures are always in the hover and the monthly statement. */
+:root{--opx:#e8b923}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--opx:#d9a91c}}
+:root[data-theme="dark"]{--opx:#d9a91c}
 @media (max-width:1100px){
   .pd{grid-template-columns:repeat(6,minmax(0,1fr))}
   .c12,.c9,.c8,.c7{grid-column:span 6} .c6,.c5,.c4,.c3{grid-column:span 3}
@@ -909,7 +917,7 @@ function marginCard(T){
 /* per month: income, costs (operating + mortgage stacked in one bar) and
    net cash flow, all bars on one £ axis; a loss-making month's cash-flow
    bar hangs below zero */
-var C_INC="var(--s1)", C_OPX="var(--s8)", C_MTG="var(--s2)", C_NET="var(--s3)";
+var C_INC="var(--s1)", C_OPX="var(--opx)", C_MTG="var(--s2)", C_NET="var(--s3)";
 function flowChartCard(ys){
   var c=pcard("c7","Income, costs & cash flow");
   var leg=el("div","pleg");
