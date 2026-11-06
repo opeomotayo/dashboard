@@ -2222,9 +2222,16 @@ function layoutGoalRoad(road,force){
   for(i=0;i<n;i++){
     var tx=texts[i]; tx.classList.remove("l","r"); tx.classList.add(side[i]);
     var w, left;
-    /* left-hand stops start at the same x as each other, so the eye has one
-       edge to follow; the width is what stops short of the circle */
-    if(side[i]==="l"){ w=Math.min(texts[i].classList.contains("has-rev")?600:400,X[i]-R[i]-gap); left=0; }
+    /* A left-hand stop is only as wide as its own text, and sits with that
+       width against its circle, so the words stay beside the road instead of
+       stranded at the card's edge. The text reads left-aligned inside it. */
+    if(side[i]==="l"){
+      var avail=Math.max(120,X[i]-R[i]-gap);
+      var cap=Math.min(texts[i].classList.contains("has-rev")?600:400,avail);
+      tx.style.left="0px"; tx.style.width="max-content"; tx.style.maxWidth=cap+"px";
+      w=Math.min(avail,Math.max(240,Math.min(tx.offsetWidth,cap))); tx.style.maxWidth="";
+      left=avail-w;
+    }
     else { left=wide?X[i]+R[i]+gap:Rmax*2+36; w=Math.min(wide?(texts[i].classList.contains("has-rev")?600:420):9999,W-left); }
     w=Math.max(120,w); tx.style.width=w+"px"; tx.style.left=Math.max(0,left)+"px";
     H[i]=tx.offsetHeight;
@@ -3194,7 +3201,14 @@ function layoutTimeline(){
     if(wide){ x=Math.round(W*xsWide[i%2]); side=(i%2===0)?"l":"r"; }
     else { x=xsNarrow[i%2]; side="r"; }
     tx.className=tx.className.replace(/\s?\b(l|r)\b/g,"")+" "+side;
-    if(side==="l"){ tx.style.left="0px"; tx.style.width=Math.max(120,x-R-gapTxt)+"px"; }
+    if(side==="l"){
+      /* only as wide as its own words, sitting against the road, so the text
+         stays beside the line rather than stranded at the page edge */
+      var availL=Math.max(120,x-R-gapTxt);
+      tx.style.left="0px"; tx.style.width="max-content"; tx.style.maxWidth=availL+"px";
+      var tw=Math.min(availL,Math.max(240,tx.offsetWidth)); tx.style.maxWidth="";
+      tx.style.width=tw+"px"; tx.style.left=(availL-tw)+"px";
+    }
     else { var lx=wide?x+R+gapTxt:xsNarrow[1]+R+gapTxt; tx.style.left=lx+"px"; tx.style.width=Math.max(140,W-lx)+"px"; }
     var h=tx.offsetHeight;
     if(i>0) y=Math.max(y+(wide?118:96), lastBottom[side]+top0+18);
