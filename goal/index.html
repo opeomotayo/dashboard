@@ -242,6 +242,18 @@ textarea{resize:vertical;min-height:66px;line-height:1.5}
 .chip.streak{background:var(--accent-soft);color:var(--accent-ink);border-color:transparent}
 .gactions{display:flex;gap:2px;flex:none}
 
+/* drag to reorder */
+.grip{padding:4px 8px;cursor:grab;touch-action:none}
+.grip:active{cursor:grabbing}
+.grip .gripi{display:inline-block;font-size:17px;line-height:1;transform:rotate(90deg);
+  letter-spacing:-.04em}
+.goal.draghold{position:relative;z-index:30;box-shadow:var(--shadow-2);
+  border-color:var(--accent);cursor:grabbing}
+.goal{transition:transform .16s cubic-bezier(.2,.7,.3,1)}
+.goal.draghold{transition:none}
+body.dragging{user-select:none;-webkit-user-select:none}
+body.dragging .goal{cursor:grabbing}
+
 /* the adherence figure sits with the strip, not floating above it */
 .strip-wrap{margin-top:16px;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap}
 .strip-fig{flex:0 0 auto;display:flex;flex-direction:column;gap:1px}
@@ -780,6 +792,7 @@ button.gtr-c:hover{transform:scale(1.05)}
     </select>
     <span class="lbl" style="margin-left:6px">Sort</span>
     <select id="fSort" aria-label="Sort systems">
+      <option value="manual">My order</option>
       <option value="progress">Lowest adherence</option>
       <option value="target">Longest streak</option>
       <option value="created">Recently added</option>
@@ -1044,7 +1057,7 @@ function rollupOf(g){
 var db = null, unsub = null;
 var goals = [];                 // array of {id, ...body}
 var openGoals = {};     // goal id -> true when its systems are showing
-var view  = {horizon:"monthly", cat:"all", status:"open", sort:"progress",
+var view  = {horizon:"monthly", cat:"all", status:"open", sort:"manual",
              year:new Date().getFullYear(), month:new Date().getMonth()};
 var editing = null;             // goal id being edited, or null for new
 var draft = {};
@@ -1758,6 +1771,7 @@ function visibleGoals(){
   if(view.status==="behind") out=out.filter(function(g){var st=statusOf(g);return st==="bad"||st==="warn";});
   var k=view.sort;
   out.sort(function(a,b){
+    if(k==="manual")  return orderOf(a)-orderOf(b);
     if(k==="title")   return (a.title||"").localeCompare(b.title||"");
     if(k==="created") return (b.createdAt||"").localeCompare(a.createdAt||"");
     if(k==="progress"){
@@ -2283,7 +2297,8 @@ function practiceLines(txt){
 }
 function goalCard(g){
   var st=statusOf(g), roll=rollupOf(g), h=HMAP[g.horizon]||HMAP.monthly;
-  var card=el("div","goal"); card.dataset.s=st; card.dataset.done=st==="done"?"1":"0";
+  var card=el("div","goal"); card.dataset.id=g.id;
+  card.dataset.s=st; card.dataset.done=st==="done"?"1":"0";
   var open=!!openGoals[g.id];
   card.dataset.open=open?"1":"0";
   var inr=el("div","goal-in");
@@ -2334,6 +2349,28 @@ function goalCard(g){
   };
   var editBtn=el("button","btn btn-ghost btn-sm","Edit");
   editBtn.onclick=function(){ openEdit(g); };
+  if(view.sort==="manual"){
+    var grip=el("button","btn btn-ghost btn-sm grip");
+    grip.type="button";
+    grip.innerHTML="";
+    grip.appendChild(el("span","gripi","\u2237"));
+    grip.setAttribute("aria-label","Reorder "+(g.title||"this goal")+
+      ". Drag, or use the up and down arrow keys.");
+    grip.title="Drag to reorder \u00b7 arrow keys also work";
+    grip.onclick=function(e){ e.stopPropagation(); };
+    grip.onkeydown=function(e){
+      var d = e.key==="ArrowUp" ? -1 : e.key==="ArrowDown" ? 1 : 0;
+      if(!d) return;
+      e.preventDefault(); e.stopPropagation();
+      if(moveGoal(g.id,d)){
+        /* the list was rebuilt, so put focus back on the grip that moved */
+        var again=document.querySelector('.goal[data-id="'+g.id+'"] .grip');
+        if(again) again.focus();
+      }
+    };
+    grip.addEventListener("pointerdown",function(e){ startDrag(e,g.id,card); });
+    acts.appendChild(grip);
+  }
   acts.appendChild(doneBtn); acts.appendChild(editBtn);
   head.appendChild(acts);
   inr.appendChild(head);
@@ -2342,6 +2379,140 @@ function goalCard(g){
   /* systems now live on each milestone of the road, not under the goal */
   card.appendChild(inr);
   return card;
+}
+
+/* ===================== reorder: drag or arrow keys ===================== */
+/* Hand-set order. A goal with no order yet sorts by when it was created,
+   which is the order the list already had, so turning this on changes
+   nothing until something is actually dragged. */
+function orderOf(g){ return typeof g.order==="number" ? g.order : 1e9; }
+/* Write the given sequence back as 0,1,2... Only the goals whose number
+   actually changes are saved, so a drag touches two or three records
+   rather than every goal on the board. */
+function applyOrder(ids){
+  var writes=[];
+  ids.forEach(function(id,i){
+    var g=goals.find(function(x){ return x.id===id; });
+    if(!g || orderOf(g)===i) return;
+    var c=clone(g); c.order=i; writes.push(c);
+  });
+  if(!writes.length) return;
+  writes.forEach(function(c){
+    var i=records.findIndex(function(x){ return x.id===c.id; });
+    c.updatedAt=nowIso();
+    if(i<0) records.push(c); else records[i]=c;
+  });
+  refreshView();
+  if(idb) idbPutMany("goals",writes).catch(function(){});
+  writes.forEach(pushOne);
+  afterWrite();
+  setSaveState();
+}
+function moveGoal(id,delta){
+  var ids=visibleGoals().map(function(g){ return g.id; });
+  var i=ids.indexOf(id), j=i+delta;
+  if(i<0||j<0||j>=ids.length) return false;
+  ids.splice(j,0,ids.splice(i,1)[0]);
+  applyOrder(ids);
+  renderList();
+  return true;
+}
+/* Pointer-based dragging rather than HTML5 drag-and-drop, so it works the
+   same with a finger as with a mouse. The card follows the pointer and the
+   others slide out of the way; nothing is written until the drop. */
+var dragging=null, dragRaf=0;
+function startDrag(e,id,card){
+  if(dragging || e.button>0) return;
+  e.preventDefault(); e.stopPropagation();
+  var box=document.getElementById("list");
+  var cards=Array.prototype.slice.call(box.querySelectorAll(".goal[data-id]"));
+  var rect=card.getBoundingClientRect(), sy=window.pageYOffset;
+  /* Geometry is read once, here, and in page coordinates. Cards slide out of
+     the way as you drag and the page scrolls under you at the edges, so live
+     rects would move the goalposts mid-drag. */
+  var mids=cards.map(function(c){ var r=c.getBoundingClientRect(); return r.top+sy+r.height/2; });
+  dragging={
+    id:id, card:card, box:box, cards:cards, mids:mids,
+    startPageY:e.clientY+sy, clientY:e.clientY, height:rect.height,
+    gap:(cards.length>1 ? Math.max(0, cards[1].getBoundingClientRect().top
+         - (cards[0].getBoundingClientRect().top+cards[0].getBoundingClientRect().height)) : 11),
+    from:cards.indexOf(card), to:cards.indexOf(card), moved:false
+  };
+  /* hold the list's height so the page does not jump as cards move */
+  box.style.minHeight=box.getBoundingClientRect().height+"px";
+  card.classList.add("draghold");
+  document.body.classList.add("dragging");
+  try{ e.target.setPointerCapture(e.pointerId); }catch(err){}
+  window.addEventListener("pointermove",onDragMove);
+  window.addEventListener("pointerup",endDrag);
+  window.addEventListener("pointercancel",endDrag);
+}
+/* Hold the card against the top or bottom edge and the page scrolls with it,
+   so the last goal can reach the first however long the list is. */
+function dragScroll(){
+  if(!dragging){ dragRaf=0; return; }
+  var d=dragging, zone=84, max=22, h=window.innerHeight, step=0;
+  if(d.clientY<zone)        step=-max*(1-d.clientY/zone);
+  else if(d.clientY>h-zone) step= max*(1-(h-d.clientY)/zone);
+  if(step){
+    var was=window.pageYOffset;
+    window.scrollBy(0,step);
+    if(window.pageYOffset!==was) dragPlace();
+  }
+  dragRaf=requestAnimationFrame(dragScroll);
+}
+function onDragMove(e){
+  if(!dragging) return;
+  dragging.clientY=e.clientY;
+  if(!dragRaf) dragRaf=requestAnimationFrame(dragScroll);
+  dragPlace();
+}
+function dragPlace(){
+  var d=dragging; if(!d) return;
+  var dy=(d.clientY+window.pageYOffset)-d.startPageY;
+  if(!d.moved && Math.abs(dy)<4) return;
+  d.moved=true;
+  d.card.style.transform="translateY("+dy+"px)";
+
+  /* where would it land? measured against where the cards started, since
+     the ones already shifted would otherwise move the goalposts */
+  var centre=d.mids[d.from]+dy, to=d.from, i;
+  for(i=0;i<d.mids.length;i++){
+    if(i===d.from) continue;
+    if(i<d.from && centre<d.mids[i]) { to=Math.min(to,i); }
+    if(i>d.from && centre>d.mids[i]) { to=Math.max(to,i); }
+  }
+  d.to=to;
+  var step=d.height+d.gap;
+  d.cards.forEach(function(c,j){
+    if(c===d.card) return;
+    var shift=0;
+    if(d.from<to && j>d.from && j<=to) shift=-step;
+    if(d.from>to && j>=to && j<d.from) shift=step;
+    c.style.transform=shift?"translateY("+shift+"px)":"";
+  });
+}
+function endDrag(){
+  if(!dragging) return;
+  var d=dragging; dragging=null;
+  if(dragRaf){ cancelAnimationFrame(dragRaf); dragRaf=0; }
+  window.removeEventListener("pointermove",onDragMove);
+  window.removeEventListener("pointerup",endDrag);
+  window.removeEventListener("pointercancel",endDrag);
+  d.cards.forEach(function(c){ c.style.transform=""; });
+  d.card.classList.remove("draghold");
+  document.body.classList.remove("dragging");
+  d.box.style.minHeight="";
+  if(d.moved && d.to!==d.from){
+    var ids=d.cards.map(function(c){ return c.dataset.id; });
+    ids.splice(d.to,0,ids.splice(d.from,1)[0]);
+    applyOrder(ids);
+    renderList();
+    var again=document.querySelector('.goal[data-id="'+d.id+'"] .grip');
+    if(again) again.focus();
+  } else if(d.moved){
+    renderList();
+  }
 }
 
 function toggleGoal(id){
