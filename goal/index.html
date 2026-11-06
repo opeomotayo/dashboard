@@ -535,7 +535,7 @@ body.dragging .goal{cursor:grabbing}
   display:grid;place-items:center;font-size:12px;font-weight:700;border:2px solid var(--paper)}
 .tlnode.done{filter:saturate(.55)}
 .tltext{position:absolute;z-index:1}
-.tltext.l{text-align:right}
+.tltext.l{text-align:left}
 .tlkick{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint)}
 .tlkick .od{color:var(--stall-ink);font-weight:600}
 .tlkick .dn{color:var(--hold-ink);font-weight:600}
@@ -546,7 +546,7 @@ body.dragging .goal{cursor:grabbing}
 .tlnote:empty::before{content:attr(data-ph);color:var(--faint)}
 .tltext.done .tltitle{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-2);text-decoration-thickness:2px}
 .tlacts{display:flex;gap:6px;align-items:center;margin-top:9px;flex-wrap:wrap;opacity:0;transition:opacity .15s}
-.tltext.l .tlacts{justify-content:flex-end}
+.tltext.l .tlacts{justify-content:flex-start}
 .tltext:hover .tlacts,.tltext:focus-within .tlacts{opacity:1}
 @media (hover:none){.tlacts{opacity:1}}
 .tlacts input[type=month],.tlacts select{width:auto;font:500 11.5px var(--mono);padding:5px 7px;border:1px solid var(--line-2);
@@ -690,7 +690,7 @@ button.gtr-c:hover{transform:scale(1.05)}
 .gtr-c .ok{position:absolute;right:2%;top:2%;width:22px;height:22px;border-radius:50%;background:var(--hold);color:#fff;font-size:11px;font-weight:700;
   display:grid;place-items:center;border:2px solid var(--surface)}
 .gtr-t{position:absolute;z-index:1}
-.gtr-t.l{text-align:right}
+.gtr-t.l{text-align:left}
 .gtr-k{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint)}
 .gtr-k .od{color:var(--stall-ink);font-weight:600} .gtr-k .dn{color:var(--hold-ink);font-weight:600}
 .gtr-title{font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:-.02em;line-height:1.2;color:var(--ink);margin-top:3px;
@@ -701,7 +701,7 @@ button.gtr-c:hover{transform:scale(1.05)}
 .gtr-t.done .gtr-title{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--line-2);color:var(--muted)}
 .gtr-t.tgt .gtr-title,.gtr-t.tgt .gtr-note{cursor:auto}
 .gtr-acts{display:flex;gap:5px;align-items:center;margin-top:8px;flex-wrap:wrap;opacity:0;transition:opacity .15s}
-.gtr-t.l .gtr-acts{justify-content:flex-end}
+.gtr-t.l .gtr-acts{justify-content:flex-start}
 .gtr-t:hover .gtr-acts,.gtr-t:focus-within .gtr-acts{opacity:1}
 @media (hover:none){.gtr-acts{opacity:1}}
 .gtr-acts input[type=month]{width:auto;font:500 11px var(--mono);padding:4px 6px;border:1px solid var(--line-2);border-radius:6px;background:var(--surface);color:var(--ink-2);min-height:0}
@@ -716,7 +716,7 @@ button.gtr-c:hover{transform:scale(1.05)}
 .msview{display:block;width:100%;text-align:inherit;border:1px dashed transparent;background:transparent;border-radius:7px;padding:3px 6px;margin:0 -6px;cursor:text;color:var(--ink-2);font:inherit}
 .msview:hover{border-color:var(--line-2);background:var(--sunken)}
 .msview ul{margin:0;padding-left:18px;font-size:13px;line-height:1.45;display:grid;gap:2px;text-align:left}
-.gtr-t.l .msview ul{display:inline-grid}
+.gtr-t.l .msview ul{display:grid}
 .msview li::marker{color:var(--c,var(--accent))}
 .msph{font-size:12.5px;color:var(--faint)}
 .msblk textarea{width:100%;font:13px var(--body);line-height:1.45;padding:7px 9px;border:1px solid var(--accent);border-radius:8px;background:var(--surface);color:var(--ink);resize:vertical;text-align:left}
@@ -745,7 +745,6 @@ button.gtr-c:hover{transform:scale(1.05)}
 @keyframes cheer{0%{transform:scale(.3) rotate(-20deg);opacity:0}70%{transform:scale(1.2) rotate(6deg)}100%{transform:none;opacity:1}}
 .gtr.wide .gtr-t.has-rev .gtr-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
 .gtr.wide .gtr-t.has-rev .msrev{margin-top:0}
-.gtr.wide .gtr-t.l.has-rev .gtr-body{direction:rtl} .gtr.wide .gtr-t.l.has-rev .gtr-body>*{direction:ltr}
 @media (min-width:900px){
   .goal .gmain{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:28px;align-content:start}
   .goal .gmain>*{grid-column:1}
@@ -2223,7 +2222,9 @@ function layoutGoalRoad(road,force){
   for(i=0;i<n;i++){
     var tx=texts[i]; tx.classList.remove("l","r"); tx.classList.add(side[i]);
     var w, left;
-    if(side[i]==="l"){ w=Math.min(texts[i].classList.contains("has-rev")?600:400,X[i]-R[i]-gap); left=X[i]-R[i]-gap-w; }
+    /* left-hand stops start at the same x as each other, so the eye has one
+       edge to follow; the width is what stops short of the circle */
+    if(side[i]==="l"){ w=Math.min(texts[i].classList.contains("has-rev")?600:400,X[i]-R[i]-gap); left=0; }
     else { left=wide?X[i]+R[i]+gap:Rmax*2+36; w=Math.min(wide?(texts[i].classList.contains("has-rev")?600:420):9999,W-left); }
     w=Math.max(120,w); tx.style.width=w+"px"; tx.style.left=Math.max(0,left)+"px";
     H[i]=tx.offsetHeight;
