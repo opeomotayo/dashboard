@@ -859,14 +859,21 @@ function putRecord(r){
   var i=records.findIndex(function(x){ return x.id===r.id; });
   if(i<0) records.push(r); else records[i]=r;
 }
+/* What the standalone Drive layer last told us. Until it speaks, the only
+   store we know about is the local one. */
+var driveInfo={state:"off",text:""};
 function setSaveState(s,detail){
   var pill=$("#savepill"), txt=$("#savetext");
   if(!pill) return;
   if(s==="saving"){ pill.dataset.s="saving"; txt.textContent="Saving…"; return; }
   if(s==="error"){ pill.dataset.s="error"; txt.textContent=(detail||"Not saved"); return; }
   if(!idb){ pill.dataset.s="error"; txt.textContent="No local database"; return; }
-  if(persistMode==="db"&&cloudSync){ pill.dataset.s="saved"; txt.textContent="Saved · synced"; }
-  else { pill.dataset.s="local"; txt.textContent="Saved locally"; }
+  if(persistMode==="db"&&cloudSync){ pill.dataset.s="saved"; txt.textContent="Saved · synced"; return; }
+  if(driveInfo.state==="syncing"){ pill.dataset.s="saving"; txt.textContent="Saving to Drive…"; return; }
+  if(driveInfo.state==="synced"){  pill.dataset.s="saved";  txt.textContent=driveInfo.text||"Saved to Drive"; return; }
+  if(driveInfo.state==="pending"){ pill.dataset.s="local";  txt.textContent=driveInfo.text||"Not yet in Drive"; return; }
+  if(driveInfo.state==="error"){   pill.dataset.s="error";  txt.textContent=driveInfo.text||"Drive error"; return; }
+  pill.dataset.s="local"; txt.textContent="Saved locally";
 }
 function writeRecord(r){
   r.updatedAt=nowIso();
@@ -2126,7 +2133,8 @@ window.__bc={
   data:function(){ return payload(); },
   load:function(p){ var r=mergePayload(p); return r?{added:r.added,updated:r.updated,vision:0}:null; },
   status:function(m){ flashStatus(m); },
-  onChange:null
+  onChange:null,
+  cloud:function(state,text){ driveInfo={state:state||"off",text:text||""}; setSaveState(); }
 };
 function afterWrite(){
   if(window.__bc&&typeof window.__bc.onChange==="function"){
@@ -2248,6 +2256,9 @@ window.addEventListener("online",function(){
   var handle = null, fsTimer = null;
   var clientId = null, token = null, tokenExp = 0, fileId = null;
   var driveTimer = null, syncing = false, lastSync = 0, autoDrive = false;
+  /* A change is dirty until a sync that included it has landed. Sequence
+     numbers, not a flag, so a write made mid-upload is not marked saved. */
+  var dirty = false, retryTimer = null, retries = 0, changeSeq = 0, syncedSeq = 0, inflightSeq = 0;
 
   function byId(x){ return document.getElementById(x); }
   function hhmm(){ var d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
@@ -2284,6 +2295,22 @@ window.addEventListener("online",function(){
 
   /* ======================= Google Drive ======================= */
   function driveState(t){ var e=byId("gdState"); if(e) e.textContent=t; }
+  /* the same news, said where the user is actually looking */
+  function cloudTell(state, text){
+    if (APP && typeof APP.cloud === "function"){ try { APP.cloud(state, text); } catch(e){} }
+  }
+  function pendingText(){
+    var n = changeSeq - syncedSeq;
+    return n <= 0 ? "Not yet in Drive"
+         : n === 1 ? "1 change not yet in Drive"
+                   : n + " changes not yet in Drive";
+  }
+  function scheduleRetry(){
+    clearTimeout(retryTimer);
+    var wait = Math.min(120000, 5000 * Math.pow(3, retries));   /* 5s, 15s, 45s, then every 2m */
+    retries++;
+    retryTimer = setTimeout(function(){ syncDrive(false); }, wait);
+  }
   function driveBusy(b){
     ["gdConnect","gdSync","gdOff"].forEach(function(id){ var e=byId(id); if(e) e.disabled=b; });
   }
@@ -2377,7 +2404,7 @@ window.addEventListener("online",function(){
   function syncDrive(interactive){
     if (!clientId){ driveState("no client id — paste one and connect"); return Promise.resolve(); }
     if (syncing) return Promise.resolve();
-    syncing = true; driveBusy(true); driveState("syncing…");
+    syncing = true; driveBusy(true); driveState("syncing…"); cloudTell("syncing");
     return ensureToken(interactive)
       .then(function(){ return fileId ? { id: fileId } : findFile(); })
       .then(function(f){ if (f){ fileId = f.id; return readFile(f.id); } return null; })
@@ -2387,28 +2414,51 @@ window.addEventListener("online",function(){
           var r = APP.load(remote);
           if (r) pulled = (r.added||0) + (r.updated||0) + (r.vision||0);
         }
+        inflightSeq = changeSeq;
         var text = JSON.stringify(APP.data(), null, 2);
         return (fileId ? writeFileTo(fileId, text) : createFile(text)).then(function(){ return pulled; });
       })
       .then(function(pulled){
         lastSync = Date.now();
         autoDrive = true;
+        syncedSeq = inflightSeq; retries = 0;
+        clearTimeout(retryTimer); retryTimer = null;
+        dirty = changeSeq !== syncedSeq;
         driveState("synced " + hhmm() + (pulled ? " · pulled " + pulled + " records" : ""));
+        if (dirty){ cloudTell("pending", pendingText()); scheduleDrive(); }
+        else cloudTell("synced", "Saved to Drive · " + hhmm());
         metaPut("driveFileId", fileId).catch(function(){});
         showDriveButtons();
       })
       .catch(function(e){
         var m = (e && e.message) || "error";
-        if (m.indexOf("none") > -1 || m.indexOf("cancel") > -1) driveState("not connected");
-        else driveState("error — " + m);
+        if (m.indexOf("none") > -1 || m.indexOf("cancel") > -1){
+          driveState("not connected");
+          cloudTell(dirty ? "pending" : "off", dirty ? pendingText() : "");
+        } else {
+          driveState("error — " + m);
+          /* keep trying: the change is still only on this device */
+          if (dirty && autoDrive) scheduleRetry();
+          cloudTell(dirty ? "pending" : "error", dirty ? pendingText() : ("Drive — " + m));
+        }
         showDriveButtons();
       })
       .then(function(){ syncing = false; driveBusy(false); });
   }
   function scheduleDrive(){
-    if (!autoDrive || !clientId) return;
+    if (!clientId) return;
+    changeSeq++; dirty = true;
+    cloudTell("pending", pendingText());
+    if (!autoDrive) return;
     clearTimeout(driveTimer);
     driveTimer = setTimeout(function(){ syncDrive(false); }, 2500);
+  }
+  /* Leaving the page with a change still sitting in the debounce is the one
+     way a write stays local, so hand it over before the tab goes away. */
+  function flushDrive(){
+    if (!dirty || !autoDrive || !clientId || syncing) return;
+    clearTimeout(driveTimer);
+    syncDrive(false);
   }
 
   /* ======================= local database file ======================= */
@@ -2585,10 +2635,12 @@ window.addEventListener("online",function(){
 
     /* pick up other devices when you come back to the tab */
     document.addEventListener("visibilitychange", function(){
-      if (!document.hidden && autoDrive && Date.now() - lastSync > 20000) syncDrive(false);
+      if (document.hidden) flushDrive();
+      else if (autoDrive && Date.now() - lastSync > 20000) syncDrive(false);
     });
+    window.addEventListener("pagehide", flushDrive);
     window.addEventListener("online", function(){ if (autoDrive) syncDrive(false); });
-    window.addEventListener("beforeunload", function(){ if (handle) writeLocalFile(); });
+    window.addEventListener("beforeunload", function(){ if (handle) writeLocalFile(); flushDrive(); });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
