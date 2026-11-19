@@ -395,6 +395,58 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 :root{--opx:#e8b923}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--opx:#d9a91c}}
 :root[data-theme="dark"]{--opx:#d9a91c}
+/* ---------------------- documents ---------------------- */
+:root{--due:#8A6400; --due-soft:#F7EED2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--due:#E8B923; --due-soft:#272826}}
+:root[data-theme="dark"]{--due:#E8B923; --due-soft:#272826}
+
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:14px;margin-top:4px}
+.dfold{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;padding:17px 18px 15px;cursor:pointer;font:inherit;color:inherit;
+  transition:transform .12s,box-shadow .16s,border-color .16s}
+.dfold:hover{transform:translateY(-2px);box-shadow:var(--shadow-2);border-color:var(--line-2)}
+.dfold:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.dfold-h{display:flex;align-items:center;gap:9px;justify-content:space-between}
+.dfold-n{font-family:var(--display);font-size:16.5px;font-weight:700;letter-spacing:-.02em}
+.dfold-c{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px}
+.dfold-hint{font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.45}
+
+.dchip{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 8px;border-radius:999px;white-space:nowrap;flex:none}
+.dchip[data-s="ok"]{background:var(--hold-soft);color:var(--hold-ink)}
+.dchip[data-s="soon"]{background:var(--due-soft);color:var(--due)}
+.dchip[data-s="lapsed"]{background:var(--down-soft);color:var(--down)}
+.dchip[data-s="none"]{background:var(--off-soft);color:var(--off-ink)}
+
+.dcrumb{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.dcrumb h2{font-family:var(--display);font-size:21px;font-weight:700;letter-spacing:-.025em;margin:0}
+
+.dlist{display:grid;gap:9px}
+.drow{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;padding:13px 15px;flex-wrap:wrap}
+.drow-m{flex:1 1 240px;min-width:0}
+.drow-n{font-weight:500;word-break:break-word}
+.drow-s{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:3px;
+  display:flex;gap:7px;flex-wrap:wrap}
+.drow-a{display:flex;gap:4px;flex:none;flex-wrap:wrap}
+
+.dalert{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--down);
+  border-radius:12px;padding:15px 17px;margin-bottom:18px}
+.dalert.soon{border-left-color:var(--due)}
+.dalert h3{font-family:var(--display);font-size:15.5px;font-weight:700;margin:0 0 9px}
+.dalert ul{margin:0;padding-left:17px;display:grid;gap:4px;font-size:13.5px;color:var(--ink-2)}
+.dalert li::marker{color:var(--faint)}
+
+.dempty{border:1px dashed var(--line-2);border-radius:14px;padding:34px 22px;text-align:center;
+  color:var(--muted);background:var(--surface)}
+.dnote{font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.dfile{display:block;width:100%;font:inherit;color:inherit;padding:9px;border:1px dashed var(--line-2);
+  border-radius:9px;background:var(--sunken)}
+.dprops{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.dprops button{font:inherit}
+.dbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.dbar .grow{flex:1 1 10px}
+@media (max-width:560px){ .drow-a{width:100%} }
 @media (max-width:1100px){
   .pd{grid-template-columns:repeat(6,minmax(0,1fr))}
   .c12,.c9,.c8,.c7{grid-column:span 6} .c6,.c5,.c4,.c3{grid-column:span 3}
@@ -509,6 +561,52 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
   </div>
 </div>
 
+<div class="scrim" id="dScrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <div class="mhead">
+      <h2 id="dTitle">Add document</h2>
+      <p class="snote" id="dSub"></p>
+    </div>
+    <div class="mbody">
+      <div class="field" id="dFileWrap">
+        <label for="dFile">File</label>
+        <input type="file" id="dFile" class="dfile">
+        <span class="hint">Uploaded to your own Drive, under the app's folder. Nothing else in your Drive is visible to this page.</span>
+      </div>
+      <div class="field" id="dLinkWrap">
+        <label for="dLink">Link</label>
+        <input type="url" id="dLink" placeholder="https://…">
+        <span class="hint">Where the document lives, if it is not uploaded here.</span>
+      </div>
+      <div class="field">
+        <label for="dName">Name</label>
+        <input type="text" id="dName" placeholder="Gas safety record 2026">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="dIssued">Issued</label>
+          <input type="date" id="dIssued">
+        </div>
+        <div class="field">
+          <label for="dExpires">Expires</label>
+          <input type="date" id="dExpires">
+          <span class="hint" id="dHint"></span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="dNote">Note</label>
+        <input type="text" id="dNote" placeholder="Optional">
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-danger" id="dDelete" hidden>Remove</button>
+      <span style="flex:1 1 10px"></span>
+      <button class="btn" id="dCancel">Cancel</button>
+      <button class="btn btn-primary" id="dSave">Save</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
 "use strict";
@@ -543,7 +641,8 @@ var storageInfo={engine:"connecting…",bytes:null,persisted:null};
 var editing=null, draft={};
 var quickDraft={};
 var now=new Date();
-var view={page:"dash", prop:"all", year:now.getFullYear(), month:now.getMonth()};
+var view={page:"dash", prop:"all", year:now.getFullYear(), month:now.getMonth(),
+          docProp:null, docFolder:null};
 
 function $(s){ return document.querySelector(s); }
 function el(t,c,x){ var e=document.createElement(t); if(c)e.className=c; if(x!=null)e.textContent=x; return e; }
@@ -1037,12 +1136,14 @@ function render(){
   renderPageNav();
   renderPeriodNav();
   var body=$("#pageBody"); body.textContent="";
-  if(view.page==="dash") renderDash(body); else renderPage(body);
+  if(view.page==="dash") renderDash(body);
+  else if(view.page==="docs") renderDocs(body);
+  else renderPage(body);
   renderStorage();
 }
 function renderPageNav(){
   var box=$("#pagenav"); if(!box) return; box.textContent="";
-  [["dash","Dashboard"],["month","Properties"]].forEach(function(p){
+  [["dash","Dashboard"],["month","Properties"],["docs","Documents"]].forEach(function(p){
     var b=el("button",null,p[1]); b.type="button";
     b.setAttribute("aria-pressed",view.page===p[0]?"true":"false");
     b.onclick=function(){ view.page=p[0]; render(); };
@@ -1070,6 +1171,23 @@ function renderPeriodNav(){
     s.value=String(val);
     s.onchange=function(){ on(parseInt(this.value,10)); render(); };
     w.appendChild(s); box.appendChild(w);
+  }
+  if(view.page==="docs"){
+    var dps=props();
+    if(dps.length){
+      var dw=el("label","navsel"); dw.appendChild(el("span","navsellab","Property"));
+      var dsel=document.createElement("select"); dsel.className="monsel"; dsel.id="docPropSel";
+      dsel.setAttribute("aria-label","Property");
+      dps.forEach(function(o){
+        var op=document.createElement("option"); op.value=o.id; op.textContent=o.name; dsel.appendChild(op); });
+      if(!view.docProp||!dps.some(function(x){ return x.id===view.docProp; })) view.docProp=dps[0].id;
+      dsel.value=view.docProp;
+      dsel.onchange=function(){ view.docProp=this.value; render(); };
+      dw.appendChild(dsel); box.appendChild(dw);
+    }
+    var nd=everyDoc().length;
+    box.appendChild(el("span","navnote",nd+" document"+(nd===1?"":"s")+" filed"));
+    return;
   }
   if(view.page==="dash"){
     sel("yearSel","Year",yearOptions().map(function(y){ return {v:y,t:String(y)}; }),view.year,function(v){ view.year=v; });
@@ -1435,6 +1553,7 @@ function openEdit(p){ editing=p.id; draft=clone(p); fillModal("Edit property",tr
 
 $("#newBtn").onclick=openNew;
 $("#mCancel").onclick=hideModal;
+wireDocModal();
 $("#scrim").onclick=function(e){ if(e.target===$("#scrim")) hideModal(); };
 document.addEventListener("keydown",function(e){
   if(e.key==="Escape" && !$("#scrim").hidden) hideModal();
@@ -1592,6 +1711,286 @@ function afterWrite(){
   if(window.__pc&&typeof window.__pc.onChange==="function"){
     try{ window.__pc.onChange(); }catch(e){}
   }
+}
+
+/* ============================ documents ============================
+   A folder per property, and inside it the ten kinds of paperwork a
+   let generates. The files themselves go to Drive under the app's own
+   folder; what lives here is the record — which property, which kind,
+   when it was issued, when it runs out — so it syncs with everything
+   else and weighs almost nothing.
+
+   `months` is how long that kind of certificate normally runs, used to
+   suggest an expiry when an issue date is typed. 0 means it does not
+   expire on a clock. */
+var DOC_FOLDERS=[
+  {id:"insurance",  label:"Insurance",             months:12, hint:"Buildings, landlord liability and contents policies."},
+  {id:"mortgage",   label:"Mortgage offers",       months:0,  hint:"Offers, product transfers and redemption statements."},
+  {id:"tax",        label:"Tax",                   months:0,  hint:"Self-assessment returns, computations and receipts."},
+  {id:"counciltax", label:"Council tax",           months:12, hint:"Bills, exemption and banding letters."},
+  {id:"eicr",       label:"EICR",                  months:60, hint:"Electrical installation condition reports."},
+  {id:"gas",        label:"Gas safety",            months:12, hint:"CP12 gas safety records."},
+  {id:"hmo",        label:"HMO licence & fire safety", months:60, hint:"Licences, fire risk assessments, alarm and door certificates."},
+  {id:"repairs",    label:"Repairs",               months:0,  hint:"Quotes, invoices and completion notes."},
+  {id:"inventory",  label:"Inventory",             months:0,  hint:"Check-in and check-out schedules of condition."},
+  {id:"tenancy",    label:"Tenancy & management",  months:0,  hint:"Tenancy agreements, renewals and agency contracts."}
+];
+var DUE_WINDOW=60;   /* days ahead that counts as "due soon" */
+
+function folderMeta(id){
+  return DOC_FOLDERS.filter(function(f){ return f.id===id; })[0] || {id:id,label:id,months:0,hint:""};
+}
+function docsIn(propId,folder){
+  return rows.filter(function(r){
+    return r.kind==="doc" && r.propId===propId && (!folder || r.folder===folder);
+  }).sort(function(a,b){
+    return (b.issued||b.updatedAt||"").localeCompare(a.issued||a.updatedAt||"");
+  });
+}
+function daysUntil(iso){
+  if(!iso) return null;
+  var d=new Date(iso+"T00:00:00"); if(isNaN(d)) return null;
+  var t=new Date(); t.setHours(0,0,0,0);
+  return Math.round((d-t)/86400000);
+}
+/* one document's standing: no date set, in date, running out, or past it */
+function docStatus(d){
+  var n=daysUntil(d.expires);
+  if(n===null) return {s:"none",days:null,text:"No expiry"};
+  if(n<0)      return {s:"lapsed",days:n,text:"Lapsed "+Math.abs(n)+"d ago"};
+  if(n<=DUE_WINDOW) return {s:"soon",days:n,text:n===0?"Expires today":"Due in "+n+"d"};
+  return {s:"ok",days:n,text:"Current"};
+}
+/* the worst standing in a set, which is what a folder tile reports */
+function worstStatus(ds){
+  var rank={lapsed:0,soon:1,ok:2,none:3}, best=null;
+  ds.forEach(function(d){
+    var st=docStatus(d);
+    if(!best||rank[st.s]<rank[best.s]) best=st;
+  });
+  return best;
+}
+function everyDoc(){ return rows.filter(function(r){ return r.kind==="doc"; }); }
+function needsAttention(){
+  return everyDoc().map(function(d){
+    return {doc:d,st:docStatus(d)};
+  }).filter(function(x){ return x.st.s==="lapsed"||x.st.s==="soon"; })
+    .sort(function(a,b){ return a.st.days-b.st.days; });
+}
+function propName(id){
+  var p=props().filter(function(x){ return x.id===id; })[0];
+  return p?p.name:"Unknown property";
+}
+function addMonths(iso,m){
+  if(!iso||!m) return "";
+  var d=new Date(iso+"T00:00:00"); if(isNaN(d)) return "";
+  var day=d.getDate();
+  d.setMonth(d.getMonth()+m);
+  if(d.getDate()<day) d.setDate(0);      /* 31st into a short month */
+  d.setDate(d.getDate()-1);              /* a year's cover ends the day before */
+  return ymd(d);
+}
+
+/* ---------------------------- the page ---------------------------- */
+function renderDocs(body){
+  var ps=props();
+  if(!ps.length){
+    var e0=el("div","dempty");
+    e0.appendChild(el("h2",null,"No properties yet"));
+    e0.appendChild(el("p",null,"Add a property on the Properties page and its document folders appear here."));
+    body.appendChild(e0); return;
+  }
+  if(!view.docProp||!ps.some(function(p){ return p.id===view.docProp; })) view.docProp=ps[0].id;
+
+  renderDueBanner(body);
+
+  if(view.docFolder) renderFolder(body);
+  else renderFolderGrid(body);
+}
+
+function renderDueBanner(body){
+  var list=needsAttention();
+  if(!list.length) return;
+  var lapsed=list.filter(function(x){ return x.st.s==="lapsed"; }).length;
+  var box=el("div","dalert"+(lapsed?"":" soon"));
+  box.appendChild(el("h3",null,
+    lapsed ? lapsed+" lapsed · "+(list.length-lapsed)+" due within "+DUE_WINDOW+" days"
+           : list.length+" due within "+DUE_WINDOW+" days"));
+  var ul=el("ul");
+  list.slice(0,8).forEach(function(x){
+    var li=el("li",null,folderMeta(x.doc.folder).label+" — "+propName(x.doc.propId)+" — "+x.st.text.toLowerCase());
+    ul.appendChild(li);
+  });
+  box.appendChild(ul);
+  if(list.length>8) box.appendChild(el("p","dnote","and "+(list.length-8)+" more."));
+  body.appendChild(box);
+}
+
+function renderFolderGrid(body){
+  var grid=el("div","dgrid");
+  DOC_FOLDERS.forEach(function(f){
+    var ds=docsIn(view.docProp,f.id), st=worstStatus(ds);
+    var card=el("button","dfold"); card.type="button";
+    var h=el("div","dfold-h");
+    var left=el("div");
+    left.appendChild(el("div","dfold-n",f.label));
+    left.appendChild(el("div","dfold-c",ds.length?ds.length+(ds.length===1?" document":" documents"):"empty"));
+    h.appendChild(left);
+    if(st){
+      var c=el("span","dchip",st.text); c.dataset.s=st.s; h.appendChild(c);
+    }
+    card.appendChild(h);
+    card.appendChild(el("div","dfold-hint",f.hint));
+    card.setAttribute("aria-label",f.label+" — "+(ds.length||"no")+" documents"+(st?" — "+st.text:""));
+    card.onclick=function(){ view.docFolder=f.id; render(); };
+    grid.appendChild(card);
+  });
+  body.appendChild(grid);
+}
+
+function renderFolder(body){
+  var f=folderMeta(view.docFolder), ds=docsIn(view.docProp,f.id);
+
+  var crumb=el("div","dcrumb");
+  var back=el("button","btn btn-sm","← All folders");
+  back.onclick=function(){ view.docFolder=null; render(); };
+  crumb.appendChild(back);
+  crumb.appendChild(el("h2",null,f.label));
+  crumb.appendChild(el("span","navnote",propName(view.docProp)));
+  body.appendChild(crumb);
+
+  var bar=el("div","dbar");
+  var add=el("button","btn btn-primary","Add document");
+  add.onclick=function(){ openDoc(null); };
+  bar.appendChild(add);
+  bar.appendChild(el("span","grow"));
+  if(!driveReady()) bar.appendChild(el("span","dnote","Connect Drive at the foot of the page to upload files. You can still record a document here and paste a link to it."));
+  body.appendChild(bar);
+
+  if(!ds.length){
+    var e=el("div","dempty");
+    e.appendChild(el("p",null,"Nothing filed under "+f.label.toLowerCase()+" for "+propName(view.docProp)+" yet."));
+    body.appendChild(e); return;
+  }
+
+  var list=el("div","dlist");
+  ds.forEach(function(d){
+    var st=docStatus(d);
+    var row=el("div","drow");
+    var m=el("div","drow-m");
+    m.appendChild(el("div","drow-n",d.name||"Untitled document"));
+    var sub=el("div","drow-s");
+    if(d.issued)  sub.appendChild(el("span",null,"issued "+d.issued));
+    if(d.expires) sub.appendChild(el("span",null,"expires "+d.expires));
+    if(d.size)    sub.appendChild(el("span",null,fmtBytes(d.size)));
+    if(d.note)    sub.appendChild(el("span",null,d.note));
+    if(!sub.childNodes.length) sub.appendChild(el("span",null,"no dates recorded"));
+    m.appendChild(sub);
+    row.appendChild(m);
+
+    var chip=el("span","dchip",st.text); chip.dataset.s=st.s; row.appendChild(chip);
+
+    var acts=el("div","drow-a");
+    if(d.link){
+      var open=el("a","btn btn-sm","Open");
+      open.href=d.link; open.target="_blank"; open.rel="noopener noreferrer";
+      acts.appendChild(open);
+    }
+    var ed=el("button","btn btn-ghost btn-sm","Edit");
+    ed.onclick=function(){ openDoc(d); };
+    acts.appendChild(ed);
+    var rm=el("button","btn btn-ghost btn-sm","Remove");
+    rm.onclick=function(){ removeDoc(d); };
+    acts.appendChild(rm);
+    row.appendChild(acts);
+    list.appendChild(row);
+  });
+  body.appendChild(list);
+}
+
+function driveReady(){
+  return !!(window.__pcFiles && window.__pcFiles.available());
+}
+
+function removeDoc(d){
+  var alsoDrive = d.driveId && driveReady();
+  var msg = alsoDrive
+    ? "Remove “"+(d.name||"this document")+"” from the console and move the file to your Drive bin?"
+    : "Remove “"+(d.name||"this document")+"” from the console?"
+      + (d.driveId?" The file stays in your Drive.":"");
+  if(!window.confirm(msg)) return;
+  if(alsoDrive){
+    window.__pcFiles.trash(d.driveId).catch(function(e){
+      flashStatus("Removed here, but Drive said: "+((e&&e.message)||"error"));
+    });
+  }
+  remove(d.id);
+}
+
+/* ---------------------------- the modal ---------------------------- */
+var docDraft=null, docFile=null;
+
+function openDoc(d){
+  docDraft = d ? clone(d) : {kind:"doc",id:uid(),propId:view.docProp,folder:view.docFolder,
+                             name:"",link:"",issued:"",expires:"",note:""};
+  docFile=null;
+  var f=folderMeta(docDraft.folder);
+  $("#dTitle").textContent=(d?"Edit ":"Add ")+f.label.toLowerCase().replace(/ &.*/,"")+" document";
+  $("#dSub").textContent=propName(docDraft.propId)+" · "+f.label;
+  $("#dName").value=docDraft.name||"";
+  $("#dLink").value=docDraft.link||"";
+  $("#dIssued").value=docDraft.issued||"";
+  $("#dExpires").value=docDraft.expires||"";
+  $("#dNote").value=docDraft.note||"";
+  $("#dFile").value="";
+  $("#dFileWrap").hidden=!driveReady();
+  $("#dLinkWrap").hidden=driveReady()&&!d;
+  $("#dDelete").hidden=!d;
+  $("#dHint").textContent = f.months
+    ? "A "+f.label.toLowerCase()+" normally runs "+(f.months%12?f.months+" months":(f.months/12)+" year"+(f.months>12?"s":""))+"; the expiry fills itself in from the issue date."
+    : "This kind does not expire on a clock — leave the expiry blank unless it has one.";
+  $("#dScrim").hidden=false;
+  setTimeout(function(){ $("#dName").focus(); },20);
+}
+function hideDoc(){ $("#dScrim").hidden=true; docDraft=null; docFile=null; }
+
+function wireDocModal(){
+  $("#dIssued").onchange=function(){
+    var f=folderMeta(docDraft&&docDraft.folder);
+    if(f.months && this.value && !$("#dExpires").value) $("#dExpires").value=addMonths(this.value,f.months);
+  };
+  $("#dFile").onchange=function(){
+    docFile=this.files&&this.files[0]||null;
+    if(docFile && !$("#dName").value) $("#dName").value=docFile.name;
+  };
+  $("#dCancel").onclick=hideDoc;
+  $("#dDelete").onclick=function(){ var d=docDraft; hideDoc(); if(d) removeDoc(d); };
+  $("#dScrim").onclick=function(e){ if(e.target===this) hideDoc(); };
+  $("#dSave").onclick=function(){
+    if(!docDraft) return;
+    var rec=docDraft;
+    rec.name=$("#dName").value.trim();
+    rec.link=$("#dLink").value.trim();
+    rec.issued=$("#dIssued").value;
+    rec.expires=$("#dExpires").value;
+    rec.note=$("#dNote").value.trim();
+    if(!rec.name && !docFile){ $("#dName").focus(); return; }
+
+    if(!docFile){ save(rec); hideDoc(); return; }
+
+    var btn=$("#dSave"); btn.disabled=true; btn.textContent="Uploading…";
+    window.__pcFiles.upload(docFile,propName(rec.propId),folderMeta(rec.folder).label)
+      .then(function(up){
+        rec.name=rec.name||up.name; rec.driveId=up.id; rec.link=up.link;
+        rec.mime=up.mime; rec.size=up.size;
+        save(rec); hideDoc();
+        flashStatus("Uploaded to Drive · "+window.__pcFiles.folder+" / "+propName(rec.propId)+" / "+folderMeta(rec.folder).label);
+      })
+      .catch(function(e){
+        flashStatus("Upload failed · "+((e&&e.message)||"error"));
+      })
+      .then(function(){ btn.disabled=false; btn.textContent="Save"; });
+  };
 }
 
 /* ============================ cloud ============================ */
@@ -1827,6 +2226,89 @@ window.addEventListener("online",function(){
       body: text
     });
   }
+
+  /* ---------------- document files ----------------
+     Same drive.file scope as the database: it covers anything this page
+     creates, which is all we need — a folder per property, a folder per
+     kind inside it, and the documents themselves. Nothing else in the
+     user's Drive is visible to this page. */
+  var DOCROOT = "Property Console Documents";
+  var folderIds = {};
+
+  function findFolder(name, parent){
+    var q = "name='" + String(name).replace(/'/g, "\\'") + "'"
+          + " and mimeType='application/vnd.google-apps.folder' and trashed=false"
+          + (parent ? " and '" + parent + "' in parents" : "");
+    return dFetch("https://www.googleapis.com/drive/v3/files?q=" + encodeURIComponent(q)
+                  + "&fields=files(id)&spaces=drive")
+      .then(function(r){ return r.json(); })
+      .then(function(j){ return (j.files && j.files[0] && j.files[0].id) || null; });
+  }
+  function makeFolder(name, parent){
+    var meta = { name: name, mimeType: "application/vnd.google-apps.folder" };
+    if (parent) meta.parents = [parent];
+    return dFetch("https://www.googleapis.com/drive/v3/files?fields=id", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(meta)
+    }).then(function(r){ return r.json(); }).then(function(j){ return j.id; });
+  }
+  function ensureFolder(name, parent){
+    var key = (parent || "root") + "/" + name;
+    if (folderIds[key]) return Promise.resolve(folderIds[key]);
+    return findFolder(name, parent)
+      .then(function(id){ return id || makeFolder(name, parent); })
+      .then(function(id){ folderIds[key] = id; return id; });
+  }
+
+  function uploadDoc(file, propName, folderLabel){
+    if (!clientId) return Promise.reject(new Error("Connect Drive first"));
+    var target;
+    return ensureToken(true)
+      .then(function(){ return ensureFolder(DOCROOT, null); })
+      .then(function(root){ return ensureFolder(propName || "Unfiled", root); })
+      .then(function(pf){ return ensureFolder(folderLabel, pf); })
+      .then(function(id){ target = id; return file.arrayBuffer(); })
+      .then(function(buf){
+        var b = "bd" + Date.now();
+        var head = "--" + b + "\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"
+                 + JSON.stringify({ name: file.name, parents: [target] })
+                 + "\r\n--" + b + "\r\nContent-Type: "
+                 + (file.type || "application/octet-stream") + "\r\n\r\n";
+        return dFetch("https://www.googleapis.com/upload/drive/v3/files"
+                      + "?uploadType=multipart&fields=id,name,size,mimeType,webViewLink", {
+          method: "POST",
+          headers: { "Content-Type": "multipart/related; boundary=" + b },
+          body: new Blob([head, buf, "\r\n--" + b + "--"])
+        });
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        return { id: j.id, name: j.name || file.name,
+                 size: parseInt(j.size, 10) || file.size,
+                 mime: j.mimeType || file.type || "",
+                 link: j.webViewLink || ("https://drive.google.com/file/d/" + j.id + "/view") };
+      });
+  }
+
+  /* Trashed, not purged: it lands in the Drive bin where it can be restored. */
+  function trashDoc(id){
+    if (!clientId) return Promise.reject(new Error("Connect Drive first"));
+    return ensureToken(true).then(function(){
+      return dFetch("https://www.googleapis.com/drive/v3/files/" + id, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trashed: true })
+      });
+    });
+  }
+
+  window.__pcFiles = {
+    available: function(){ return SERVED && !!clientId; },
+    upload: uploadDoc,
+    trash: trashDoc,
+    folder: DOCROOT
+  };
 
   /* Download, merge into the local database, upload the merged result.
      Records resolve newest-wins, so two devices converge without a server. */
