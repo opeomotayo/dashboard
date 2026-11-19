@@ -571,12 +571,13 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
       <div class="field" id="dFileWrap">
         <label for="dFile">File</label>
         <input type="file" id="dFile" class="dfile">
-        <span class="hint">Uploaded to your own Drive, under the app's folder. Nothing else in your Drive is visible to this page.</span>
+        <span class="hint" id="dFileHint"></span>
+        <button class="btn btn-sm" id="dConnect" hidden style="margin-top:8px;align-self:flex-start">Connect Drive</button>
       </div>
       <div class="field" id="dLinkWrap">
-        <label for="dLink">Link</label>
+        <label for="dLink">Or a link</label>
         <input type="url" id="dLink" placeholder="https://…">
-        <span class="hint">Where the document lives, if it is not uploaded here.</span>
+        <span class="hint">For a document that lives somewhere else and is not uploaded here.</span>
       </div>
       <div class="field">
         <label for="dName">Name</label>
@@ -1713,7 +1714,13 @@ window.__pc={
   load:function(p){ var r=mergePayload(p); return r?{added:r.added,updated:r.updated,vision:0}:null; },
   status:function(m){ flashStatus(m); },
   onChange:null,
-  cloud:function(state,text){ driveInfo={state:state||"off",text:text||""}; setSaveState(); }
+  cloud:function(state,text){
+    var wasOff=driveInfo.state==="off";
+    driveInfo={state:state||"off",text:text||""};
+    setSaveState();
+    /* the upload controls depend on Drive being live, so redraw when that flips */
+    if(view.page==="docs" && wasOff!==(driveInfo.state==="off")) render();
+  }
 };
 function afterWrite(){
   if(window.__pc&&typeof window.__pc.onChange==="function"){
@@ -1872,7 +1879,16 @@ function renderFolder(body){
   add.onclick=function(){ openDoc(null); };
   bar.appendChild(add);
   bar.appendChild(el("span","grow"));
-  if(!driveReady()) bar.appendChild(el("span","dnote","Connect Drive at the foot of the page to upload files. You can still record a document here and paste a link to it."));
+  if(!driveReady()){
+    var warn=el("span","dnote","Google Drive is not connected in this browser, so files cannot be uploaded yet.");
+    bar.appendChild(warn);
+    var cb=el("button","btn btn-sm","Connect Drive");
+    cb.onclick=function(){
+      var id=document.getElementById("gdClient");
+      if(id){ id.scrollIntoView({block:"center",behavior:"smooth"}); setTimeout(function(){ id.focus(); },300); }
+    };
+    bar.appendChild(cb);
+  }
   body.appendChild(bar);
 
   if(!ds.length){
@@ -1951,8 +1967,14 @@ function openDoc(d){
   $("#dExpires").value=docDraft.expires||"";
   $("#dNote").value=docDraft.note||"";
   $("#dFile").value="";
-  $("#dFileWrap").hidden=!driveReady();
-  $("#dLinkWrap").hidden=driveReady()&&!d;
+  /* The upload field stays visible either way. Hiding it when Drive was off
+     left no sign that uploading was possible at all. */
+  var ready=driveReady();
+  $("#dFile").disabled=!ready;
+  $("#dConnect").hidden=ready;
+  $("#dFileHint").textContent = ready
+    ? "Goes to your own Drive, under "+window.__pcFiles.folder+" / "+propName(docDraft.propId)+" / "+f.label+"."
+    : "Google Drive is not connected in this browser, so there is nowhere to put the file yet.";
   $("#dDelete").hidden=!d;
   $("#dHint").textContent = f.months
     ? "A "+f.label.toLowerCase()+" normally runs "+(f.months%12?f.months+" months":(f.months/12)+" year"+(f.months>12?"s":""))+"; the expiry fills itself in from the issue date."
@@ -1970,6 +1992,11 @@ function wireDocModal(){
   $("#dFile").onchange=function(){
     docFile=this.files&&this.files[0]||null;
     if(docFile && !$("#dName").value) $("#dName").value=docFile.name;
+  };
+  $("#dConnect").onclick=function(){
+    hideDoc();
+    var id=document.getElementById("gdClient");
+    if(id){ id.scrollIntoView({block:"center",behavior:"smooth"}); setTimeout(function(){ id.focus(); },300); }
   };
   $("#dCancel").onclick=hideDoc;
   $("#dDelete").onclick=function(){ var d=docDraft; hideDoc(); if(d) removeDoc(d); };
