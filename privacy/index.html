@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Privacy Policy &middot; Dashboard</title>
+<meta name="description" content="How the Dashboard consoles handle your data and your Google account data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#EEF1F6; --surface:#FFFFFF; --sunken:#F4F6FA;
+  --ink:#0B1020; --ink-2:#2D3650; --muted:#5C6880; --faint:#8E99AE;
+  --line:#DFE4EE; --line-2:#C7D0E0;
+  --accent:#3A4FC4; --accent-soft:#E7EAFB;
+  --p2:#B5468C; --p2-soft:#FAE8F3;
+  --p3:#0F7A55; --p3-soft:#E2F2EC;
+  --shadow-1:0 1px 1px rgba(11,16,32,.04), 0 2px 6px -2px rgba(11,16,32,.08);
+  --shadow-2:0 2px 4px rgba(11,16,32,.05), 0 14px 28px -16px rgba(11,16,32,.22);
+  --display:"Bricolage Grotesque","Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#080B14; --surface:#121826; --sunken:#0D1220;
+    --ink:#E9EDF7; --ink-2:#C3CBDD; --muted:#8E99B2; --faint:#68738C;
+    --line:#212A3D; --line-2:#2E3850;
+    --accent:#6478DE; --accent-soft:#1A2142;
+    --p2:#C85C9C; --p2-soft:#2B1626;
+    --p3:#0FA37E; --p3-soft:#0E2A24;
+    --shadow-1:0 1px 1px rgba(0,0,0,.5), 0 2px 8px -2px rgba(0,0,0,.6);
+    --shadow-2:0 2px 6px rgba(0,0,0,.5), 0 18px 34px -18px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#080B14; --surface:#121826; --sunken:#0D1220;
+  --ink:#E9EDF7; --ink-2:#C3CBDD; --muted:#8E99B2; --faint:#68738C;
+  --line:#212A3D; --line-2:#2E3850;
+  --accent:#6478DE; --accent-soft:#1A2142;
+  --p2:#C85C9C; --p2-soft:#2B1626;
+  --p3:#0FA37E; --p3-soft:#0E2A24;
+  --shadow-1:0 1px 1px rgba(0,0,0,.5), 0 2px 8px -2px rgba(0,0,0,.6);
+  --shadow-2:0 2px 6px rgba(0,0,0,.5), 0 18px 34px -18px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;
+  line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:48px max(16px,env(safe-area-inset-left,0px))}
+main{width:100%;max-width:1020px}
+h1{font-family:var(--display);font-size:33px;font-weight:800;letter-spacing:-.035em;margin:0}
+.sub{color:var(--muted);margin:9px 0 0;font-size:15.5px;max-width:52ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:16px;margin-top:30px}
+.card{display:block;text-decoration:none;color:inherit;background:var(--surface);
+  border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-1);padding:24px;
+  transition:transform .12s,box-shadow .16s,border-color .16s}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow-2);border-color:var(--line-2)}
+.card:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.tag{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 9px;
+  display:inline-block}
+.card.budget .tag{color:var(--p2);background:var(--p2-soft)}
+.card.property .tag{color:var(--p3);background:var(--p3-soft)}
+.card h2{font-family:var(--display);font-size:21px;font-weight:700;letter-spacing:-.025em;
+  margin:13px 0 0}
+.card p{color:var(--muted);font-size:14px;margin:7px 0 0}
+.card .go{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:15px;display:block}
+footer{margin-top:28px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--faint)}
+:root[data-theme="light"]{color-scheme:light}:root[data-theme="dark"]{color-scheme:dark}
+.themebtn{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.themebtn .ti{font-size:15px;line-height:1}
+.themebtn.floating{position:fixed;top:16px;right:16px;z-index:50;border:1px solid var(--line-2,#C7D0E0);background:var(--surface,#fff);
+  color:var(--ink-2,#2D3650);padding:8px 13px;border-radius:9px;font:500 13px var(--body,system-ui);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+@media (max-width:560px){.themebtn .tl{display:none}}
+body{display:block;padding:56px max(16px,env(safe-area-inset-left,0px)) 80px}
+main{max-width:720px;margin:0 auto}
+.back{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none}
+.back:hover{color:var(--ink)}
+h1{margin:18px 0 0}
+.updated{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin:10px 0 0;
+  letter-spacing:.06em;text-transform:uppercase}
+h2{font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:-.02em;
+  margin:34px 0 0;padding-top:22px;border-top:1px solid var(--line)}
+h2:first-of-type{border-top:none;padding-top:0}
+p,li{color:var(--ink-2);font-size:15px;line-height:1.62}
+p{margin:11px 0 0}
+ul{margin:11px 0 0;padding-left:20px;display:grid;gap:7px}
+li::marker{color:var(--faint)}
+code{font-family:var(--mono);font-size:12.5px;background:var(--sunken);border:1px solid var(--line);
+  border-radius:5px;padding:1px 6px}
+strong{color:var(--ink);font-weight:500}
+.lede{font-size:16.5px;color:var(--ink-2);margin-top:14px}
+footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<button class="themebtn floating" id="themebtn" type="button" aria-label="Switch theme">
+  <span class="ti" aria-hidden="true">◑</span><span class="tl">Theme</span></button>
+<main>
+  <a class="back" href="../">&larr; Dashboard</a>
+  <h1>Privacy Policy</h1>
+  <p class="updated">Dashboard &middot; opeomotayo.github.io/dashboard &middot; Last updated 20 November 2026</p>
+
+  <p class="lede">Dashboard is a set of three personal web pages &mdash; the Goal Console, the Budget
+  Console and the Property Console &mdash; written and used by Ope Omotayo. They run entirely in your
+  browser. There is no server behind them, no account to create, and no analytics.</p>
+
+  <h2>Who this covers</h2>
+  <p>This policy applies to the pages served at <code>https://opeomotayo.github.io/dashboard/</code>
+  and to the Google OAuth client those pages use to reach Google Drive. The developer and sole
+  operator is Ope Omotayo, who can be reached at <strong>ope.omotayo@gmail.com</strong>.</p>
+
+  <h2>What the app stores, and where</h2>
+  <p>Everything you type into a console &mdash; goals, budget lines, properties, costs, document
+  records &mdash; is written to <strong>IndexedDB in your own browser</strong>. That copy never leaves
+  your device unless you connect Google Drive.</p>
+  <p>If you connect Google Drive, the app additionally keeps:</p>
+  <ul>
+    <li>One JSON file per console in your Drive, holding that console&rsquo;s records, so the same
+        data opens on your other devices.</li>
+    <li>Any document you upload through the Property Console&rsquo;s Documents page, filed under a
+        folder the app creates called <code>Property Console Documents</code>, then a folder per
+        property, then a folder per kind of paperwork.</li>
+  </ul>
+  <p>These files live in <strong>your</strong> Google Drive, under your own Google account. They are
+  not copied anywhere else.</p>
+
+  <h2>What Google user data the app accesses</h2>
+  <p>The app requests exactly one OAuth scope:</p>
+  <ul>
+    <li><code>https://www.googleapis.com/auth/drive.file</code> &mdash; permission to create files and
+        folders in your Google Drive, and to read and change <em>only</em> those the app itself
+        created.</li>
+  </ul>
+  <p>This is Google&rsquo;s per-file scope. The app <strong>cannot see the rest of your Drive</strong>:
+  files you created elsewhere, or that others shared with you, are invisible to it. The app does not
+  request your name, email address, profile, contacts, calendar, or any other Google data.</p>
+
+  <h2>How that data is used</h2>
+  <p>Solely to provide the features you asked for: to save your console data so it survives a reload
+  and reaches your other devices, and to store the documents you choose to upload. The access token
+  Google issues is held in memory for the length of the browser session and is not written down
+  anywhere.</p>
+
+  <h2>Who it is shared with</h2>
+  <p><strong>Nobody.</strong> Your data is not transmitted to the developer, to any server operated by
+  the developer, or to any third party. There is no backend to receive it. The only network requests
+  the pages make are to Google&rsquo;s own APIs on your behalf, and to Google Fonts for typefaces.</p>
+  <p>The app does not use your data for advertising, does not sell or transfer it to data brokers,
+  and does not use it to determine creditworthiness or for lending purposes.</p>
+  <p>Google Workspace APIs are not used to develop, improve, or train generalised or non-personalised
+  AI and/or ML models.</p>
+  <p>Use of information received from Google APIs adheres to the
+  <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank"
+     rel="noopener noreferrer">Google API Services User Data Policy</a>, including the Limited Use
+  requirements.</p>
+
+  <h2>How it is protected</h2>
+  <p>The pages are served over HTTPS. Data at rest in Google Drive is protected by your own Google
+  account and whatever sign-in protections you have on it. Data in your browser is protected by your
+  device and browser profile. Because no copy reaches a server operated by the developer, there is no
+  developer-side database to breach.</p>
+
+  <h2>Retention and deletion</h2>
+  <ul>
+    <li><strong>In your browser:</strong> use <em>Wipe database</em> at the foot of any console, or
+        clear site data for this site in your browser settings.</li>
+    <li><strong>In your Drive:</strong> delete the console&rsquo;s JSON file, or the
+        <code>Property Console Documents</code> folder, from Google Drive like any other file.
+        Removing a document inside the app moves the Drive file to your Drive bin.</li>
+    <li><strong>Revoking access:</strong> remove the app at
+        <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">
+        myaccount.google.com/permissions</a>. The app keeps no copy, so nothing of yours remains with
+        the developer.</li>
+  </ul>
+
+  <h2>Cookies and tracking</h2>
+  <p>The app sets no cookies and runs no analytics, tracking pixels or advertising scripts. It uses
+  your browser&rsquo;s local storage only to remember your light or dark theme choice, and IndexedDB
+  for the data described above. Google&rsquo;s sign-in library may set cookies on Google&rsquo;s own
+  domains when you sign in; that is governed by
+  <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google&rsquo;s
+  privacy policy</a>.</p>
+
+  <h2>Children</h2>
+  <p>These are personal record-keeping tools and are not directed at children under 13.</p>
+
+  <h2>Changes</h2>
+  <p>If the way the app handles your data changes, this page is updated and the date at the top
+  changes with it. The page history is public in the
+  <a href="https://github.com/opeomotayo/dashboard" target="_blank" rel="noopener noreferrer">
+  repository</a>.</p>
+
+  <h2>Contact</h2>
+  <p>Questions about this policy: <strong>ope.omotayo@gmail.com</strong>.</p>
+
+  <footer>Dashboard &middot; private to your browser and your own Google Drive</footer>
+</main>
+<script>/* theme toggle: one choice shared by every console on this site */
+(function(){
+  var KEY="dashboard-theme", root=document.documentElement;
+  function system(){ return window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"; }
+  function current(){ var t=root.getAttribute("data-theme"); return t==="light"||t==="dark"?t:system(); }
+  var b=document.createElement("button"); b.type="button"; b.id="themeBtn";
+  function paint(){
+    var dark=current()==="dark";
+    b.innerHTML='<span class="ti" aria-hidden="true">'+(dark?"☀️":"🌙")+'</span><span class="tl">'+(dark?"Light":"Dark")+'</span>';
+    b.setAttribute("aria-label","Switch to "+(dark?"light":"dark")+" background");
+    b.title="Switch to "+(dark?"light":"dark")+" background";
+  }
+  function apply(t,announce){
+    root.setAttribute("data-theme",t);
+    try{ localStorage.setItem(KEY,t); }catch(e){}
+    paint();
+    if(announce) window.dispatchEvent(new Event("dashboard-theme"));
+  }
+  b.onclick=function(){ apply(current()==="dark"?"light":"dark",true); };
+  var anchor=document.getElementById("exportBtn");
+  if(anchor){ b.className="btn btn-sm themebtn"; anchor.parentNode.insertBefore(b,anchor); }
+  else { b.className="themebtn floating"; document.body.appendChild(b); }
+  paint();
+  /* follow the OS while no choice has been made; follow other tabs once one has */
+  if(window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(){ paint(); window.dispatchEvent(new Event("dashboard-theme")); });
+  window.addEventListener("storage",function(e){ if(e.key===KEY&&(e.newValue==="light"||e.newValue==="dark")){ root.setAttribute("data-theme",e.newValue); paint(); window.dispatchEvent(new Event("dashboard-theme")); } });
+})();
+</script>
+</body>
+</html>
