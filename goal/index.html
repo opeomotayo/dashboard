@@ -4092,10 +4092,11 @@ window.addEventListener("dashboard-theme",function(){ if(!booting) render(); });
   }
   function showDriveButtons(){
     var connected = !!clientId && !!token;
-    var c=byId("gdConnect"), s=byId("gdSync"), o=byId("gdOff");
+    var c=byId("gdConnect"), s=byId("gdSync"), o=byId("gdOff"), h=byId("gdHelp");
     if(c) c.hidden = connected;
     if(s) s.hidden = !connected;
     if(o) o.hidden = !connected;
+    if(h) h.parentNode.hidden = connected;
   }
 
   function loadGis(){
@@ -4318,7 +4319,7 @@ window.addEventListener("dashboard-theme",function(){ if(!booting) render(); });
     var idInput = document.createElement("input");
     idInput.type = "text"; idInput.id = "gdClient";
     idInput.placeholder = "OAuth client ID …apps.googleusercontent.com";
-    idInput.style.cssText = "flex:1 1 280px;min-width:0;font-family:var(--mono);font-size:11.5px";
+    idInput.style.cssText = "flex:1 1 280px;min-width:230px;font-family:var(--mono);font-size:11.5px";
     idInput.onchange = function(){
       clientId = idInput.value.trim() || null;
       metaPut("driveClientId", clientId).catch(function(){});
@@ -4381,7 +4382,36 @@ window.addEventListener("dashboard-theme",function(){ if(!booting) render(); });
       }, true));
     }
 
+    /* Without this nobody can tell what the box above wants. The origin is
+       read from the page itself, so it is always the exact string Google
+       asks for rather than something to transcribe. */
+    var gdHelp = row();
+    gdHelp.style.paddingTop = "0";
+    gdHelp.style.borderTop = "none";
+    var help = document.createElement("p");
+    help.id = "gdHelp";
+    help.style.cssText = "margin:0;font-size:12.5px;line-height:1.5;color:var(--muted);flex:1 1 100%";
+    help.appendChild(document.createTextNode("No client ID yet? Make one once, free, at "));
+    var a1 = document.createElement("a");
+    a1.href = "https://console.cloud.google.com/apis/credentials";
+    a1.target = "_blank"; a1.rel = "noopener noreferrer";
+    a1.textContent = "Google Cloud Console \u2192 Credentials";
+    a1.style.color = "var(--accent)";
+    help.appendChild(a1);
+    help.appendChild(document.createTextNode(
+      ": Create credentials \u2192 OAuth client ID \u2192 Web application. Under "
+      + "Authorised JavaScript origins add exactly "));
+    var code = document.createElement("code");
+    code.textContent = location.origin;
+    code.style.cssText = "font-family:var(--mono);font-size:11.5px;background:var(--sunken);"
+      + "border:1px solid var(--line);border-radius:5px;padding:1px 6px";
+    help.appendChild(code);
+    help.appendChild(document.createTextNode(
+      ", then paste the client ID above. Enable the Google Drive API for the same project."));
+    gdHelp.appendChild(help);
+
     anchor.parentNode.insertBefore(gd, anchor.nextSibling);
+    gd.parentNode.insertBefore(gdHelp, gd.nextSibling);
     gd.parentNode.insertBefore(fsRow, gd.nextSibling);
 
     if (APP) APP.onChange = function(){ scheduleFs(); scheduleDrive(); };
