@@ -4408,6 +4408,14 @@ window.addEventListener("dashboard-theme",function(){ if(!booting) render(); });
     help.appendChild(code);
     help.appendChild(document.createTextNode(
       ", then paste the client ID above. Enable the Google Drive API for the same project."));
+    var p2 = document.createElement("span");
+    p2.style.cssText = "display:block;margin-top:6px";
+    p2.appendChild(document.createTextNode("Refused with \u201chas not completed the Google verification "
+      + "process\u201d? In Google Auth Platform \u2192 Audience, either add your own address under Test "
+      + "users or press Publish app. The drive.file scope this page asks for is non-sensitive, so no "
+      + "Google review is needed \u2014 and publishing avoids the seven-day expiry that testing mode puts "
+      + "on every sign-in."));
+    help.appendChild(p2);
     gdHelp.appendChild(help);
 
     anchor.parentNode.insertBefore(gd, anchor.nextSibling);
