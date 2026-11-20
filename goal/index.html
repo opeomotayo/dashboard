@@ -4133,16 +4133,31 @@ window.addEventListener("dashboard-theme",function(){ if(!booting) render(); });
     });
   }
 
+  /* Google says exactly why it refused, in the response body. Keep it: the
+     difference between a disabled API, a full Drive and a missing scope is
+     the whole diagnosis, and "access denied (403)" carries none of it. */
+  function driveWhy(text){
+    try {
+      var j = JSON.parse(text), e = j && j.error;
+      if (!e) return "";
+      var d = e.errors && e.errors[0];
+      return [(d && d.reason) || e.status || "", e.message || (d && d.message) || ""]
+               .filter(Boolean).join(": ");
+    } catch(_){ return (text || "").replace(/\s+/g, " ").slice(0, 180); }
+  }
   function dFetch(url, opts){
     opts = opts || {};
     opts.headers = Object.assign({ Authorization: "Bearer " + token }, opts.headers || {});
     return fetch(url, opts).then(function(r){
-      if (r.status === 401 || r.status === 403){
-        token = null;
-        return r.text().then(function(){ throw new Error("access denied (" + r.status + ")"); });
-      }
-      if (!r.ok) return r.text().then(function(t){ throw new Error("Drive " + r.status + " " + t.slice(0,120)); });
-      return r;
+      if (r.ok) return r;
+      return r.text().then(function(t){
+        var why = driveWhy(t);
+        if (r.status === 401 || r.status === 403){
+          token = null;
+          throw new Error("access denied (" + r.status + ")" + (why ? " \u2014 " + why : ""));
+        }
+        throw new Error("Drive " + r.status + (why ? " \u2014 " + why : ""));
+      });
     });
   }
 
