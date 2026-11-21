@@ -456,7 +456,9 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .dtile:focus-within{z-index:20;border-color:var(--line)}
 
 .dopen{display:flex;flex-direction:column;align-items:center;gap:9px;width:100%;
-  text-decoration:none;color:inherit;border-radius:9px}
+  text-decoration:none;color:inherit;border-radius:9px;
+  /* a year tile is a button; strip the chrome so it matches a document tile */
+  background:none;border:none;padding:0;margin:0;font:inherit;cursor:pointer;text-align:center}
 .dopen:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
 /* the sheet itself: a fixed stage so tiles line up whatever shape the page is */
@@ -496,6 +498,24 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .dtile:hover .dacts,.dtile:focus-within .dacts{opacity:1}
 @media (hover:none){ .dacts{opacity:1} }
 .dacts .btn{font-size:11.5px;padding:3px 7px}
+/* a year, shown as the stack of sheets it holds */
+.dstack{position:relative;width:104px;height:134px}
+.dstack .dlayer{position:absolute;left:0;top:0;width:100px;height:130px;border-radius:3px;
+  background:var(--surface);border:1px solid var(--line-2)}
+.dstack .dlayer.l3{transform:translate(9px,-7px) rotate(3.5deg)}
+.dstack .dlayer.l2{transform:translate(4px,-3px) rotate(-2deg)}
+.dstack .dfront{position:absolute;left:0;top:0;display:grid;place-items:center}
+.dstack .dfront img{max-width:100px;max-height:130px;width:auto;height:auto;display:block;
+  border-radius:3px;background:#fff;border:1px solid var(--line)}
+.dyear{font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+.dcount{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.03em}
+.dcrumb .link{background:none;border:none;padding:0;font:inherit;color:inherit;cursor:pointer;
+  font-family:var(--display);font-size:21px;font-weight:700;letter-spacing:-.025em}
+.dcrumb .link:hover{text-decoration:underline;text-underline-offset:3px}
+.dcrumb .sep{color:var(--faint);font-size:17px}
+.dfiles{display:grid;gap:5px;margin-top:4px;max-height:132px;overflow:auto}
+.dfiles li{font-size:12.5px;color:var(--ink-2);word-break:break-word}
+.dupnote{font-size:12.5px;color:var(--muted);margin:7px 0 0}
 @media (max-width:1100px){
   .pd{grid-template-columns:repeat(6,minmax(0,1fr))}
   .c12,.c9,.c8,.c7{grid-column:span 6} .c6,.c5,.c4,.c3{grid-column:span 3}
@@ -619,7 +639,8 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
     <div class="mbody">
       <div class="field" id="dFileWrap">
         <label for="dFile">File</label>
-        <input type="file" id="dFile" class="dfile">
+        <input type="file" id="dFile" class="dfile" multiple>
+        <ul class="dfiles" id="dFileList" hidden></ul>
         <span class="hint" id="dFileHint"></span>
         <button class="btn btn-sm" id="dConnect" hidden style="margin-top:8px;align-self:flex-start">Connect Drive</button>
       </div>
@@ -692,7 +713,7 @@ var editing=null, draft={};
 var quickDraft={};
 var now=new Date();
 var view={page:"dash", prop:"all", year:now.getFullYear(), month:now.getMonth(),
-          docProp:null, docFolder:null};
+          docProp:null, docFolder:null, docYear:null};
 
 function $(s){ return document.querySelector(s); }
 function el(t,c,x){ var e=document.createElement(t); if(c)e.className=c; if(x!=null)e.textContent=x; return e; }
@@ -1906,20 +1927,52 @@ function renderFolderGrid(body){
     card.appendChild(h);
     card.appendChild(el("div","dfold-hint",f.hint));
     card.setAttribute("aria-label",f.label+" — "+(ds.length||"no")+" documents"+(st?" — "+st.text:""));
-    card.onclick=function(){ view.docFolder=f.id; render(); };
+    card.onclick=function(){ view.docFolder=f.id; view.docYear=null; render(); };
     grid.appendChild(card);
   });
   body.appendChild(grid);
 }
 
+/* A year's worth of paperwork is one thing to find, so the documents in a
+   folder are gathered by the year they were issued. */
+function yearOf(d){
+  var y=(d.issued||"").slice(0,4);
+  if(/^\d{4}$/.test(y)) return y;
+  y=(d.updatedAt||"").slice(0,4);
+  return /^\d{4}$/.test(y) ? y : "Undated";
+}
+function yearsIn(propId,folder){
+  var by={};
+  docsIn(propId,folder).forEach(function(d){
+    var y=yearOf(d); (by[y]=by[y]||[]).push(d);
+  });
+  return Object.keys(by).sort(function(a,b){
+    if(a==="Undated") return 1;
+    if(b==="Undated") return -1;
+    return b.localeCompare(a);
+  }).map(function(y){ return {year:y, docs:by[y]}; });
+}
+
 function renderFolder(body){
   var f=folderMeta(view.docFolder), ds=docsIn(view.docProp,f.id);
+  var years=yearsIn(view.docProp,f.id);
+  if(view.docYear && !years.some(function(g){ return g.year===view.docYear; })) view.docYear=null;
 
   var crumb=el("div","dcrumb");
   var back=el("button","btn btn-sm","← All folders");
-  back.onclick=function(){ view.docFolder=null; render(); };
+  back.onclick=function(){ view.docFolder=null; view.docYear=null; render(); };
   crumb.appendChild(back);
-  crumb.appendChild(el("h2",null,f.label));
+  if(view.docYear){
+    var up=el("button","link",f.label);
+    up.type="button";
+    up.title="Back to the years in "+f.label;
+    up.onclick=function(){ view.docYear=null; render(); };
+    crumb.appendChild(up);
+    crumb.appendChild(el("span","sep","/"));
+    crumb.appendChild(el("h2",null,view.docYear));
+  } else {
+    crumb.appendChild(el("h2",null,f.label));
+  }
   crumb.appendChild(el("span","navnote",propName(view.docProp)));
   body.appendChild(crumb);
 
@@ -1947,8 +2000,43 @@ function renderFolder(body){
   }
 
   var list=el("div","dtiles");
-  ds.forEach(function(d){ list.appendChild(docTile(d)); });
+  if(view.docYear){
+    var grp=years.filter(function(g){ return g.year===view.docYear; })[0];
+    (grp?grp.docs:[]).forEach(function(d){ list.appendChild(docTile(d)); });
+  } else {
+    years.forEach(function(g){ list.appendChild(yearTile(g,f)); });
+  }
   body.appendChild(list);
+}
+
+/* The newest document in the year is the face of the stack. */
+function yearTile(g,f){
+  var st=worstStatus(g.docs), top=g.docs[0], n=g.docs.length;
+  var tile=el("div","dtile");
+
+  var sheet=el("div","dsheet");
+  var stack=el("div","dstack");
+  if(n>2) stack.appendChild(el("div","dlayer l3"));
+  if(n>1) stack.appendChild(el("div","dlayer l2"));
+  var front=el("div","dfront");
+  front.appendChild(blankSheet(top));
+  stack.appendChild(front);
+  sheet.appendChild(stack);
+
+  var cap=el("div","dcap");
+  cap.appendChild(el("div","dyear",g.year));
+  cap.appendChild(el("div","dcount",n+(n===1?" document":" documents")));
+  if(st){ var chip=el("span","dchip",st.text); chip.dataset.s=st.s; cap.appendChild(chip); }
+
+  var box=el("button","dopen");
+  box.type="button";
+  box.setAttribute("aria-label",g.year+" — "+n+" document"+(n===1?"":"s")+" in "+f.label);
+  box.appendChild(sheet); box.appendChild(cap);
+  box.onclick=function(){ view.docYear=g.year; render(); };
+  tile.appendChild(box);
+
+  paintThumb(front,top);
+  return tile;
 }
 
 /* Thumbnails are fetched once per page load and held here. Drive's URLs
@@ -2050,12 +2138,13 @@ function removeDoc(d){
 }
 
 /* ---------------------------- the modal ---------------------------- */
-var docDraft=null, docFile=null;
+var docDraft=null, docFiles=[];
 
 function openDoc(d){
   docDraft = d ? clone(d) : {kind:"doc",id:uid(),propId:view.docProp,folder:view.docFolder,
                              name:"",link:"",issued:"",expires:"",note:""};
-  docFile=null;
+  docFiles=[];
+  $("#dFileList").hidden=true; $("#dFileList").textContent="";
   var f=folderMeta(docDraft.folder);
   $("#dTitle").textContent=(d?"Edit ":"Add ")+f.label.toLowerCase().replace(/ &.*/,"")+" document";
   $("#dSub").textContent=propName(docDraft.propId)+" · "+f.label;
@@ -2070,8 +2159,10 @@ function openDoc(d){
   var ready=driveReady();
   $("#dFile").disabled=!ready;
   $("#dConnect").hidden=ready;
+  $("#dName").disabled=false;
+  $("#dName").placeholder="Gas safety record 2026";
   $("#dFileHint").textContent = ready
-    ? "Goes to your own Drive, under "+window.__pcFiles.folder+" / "+propName(docDraft.propId)+" / "+f.label+"."
+    ? "Pick one or several. They go to your own Drive, under "+window.__pcFiles.folder+" / "+propName(docDraft.propId)+" / "+f.label+"."
     : "Google Drive is not connected in this browser, so there is nowhere to put the file yet.";
   $("#dDelete").hidden=!d;
   $("#dHint").textContent = f.months
@@ -2080,7 +2171,7 @@ function openDoc(d){
   $("#dScrim").hidden=false;
   setTimeout(function(){ $("#dName").focus(); },20);
 }
-function hideDoc(){ $("#dScrim").hidden=true; docDraft=null; docFile=null; }
+function hideDoc(){ $("#dScrim").hidden=true; docDraft=null; docFiles=[]; }
 
 function wireDocModal(){
   $("#dIssued").onchange=function(){
@@ -2088,8 +2179,16 @@ function wireDocModal(){
     if(f.months && this.value && !$("#dExpires").value) $("#dExpires").value=addMonths(this.value,f.months);
   };
   $("#dFile").onchange=function(){
-    docFile=this.files&&this.files[0]||null;
-    if(docFile && !$("#dName").value) $("#dName").value=docFile.name;
+    docFiles=this.files?Array.prototype.slice.call(this.files):[];
+    var ul=$("#dFileList"); ul.textContent=""; ul.hidden=!docFiles.length;
+    docFiles.forEach(function(f){ ul.appendChild(el("li",null,f.name+" · "+fmtBytes(f.size))); });
+    /* one file can be renamed; several keep their own names, so the Name
+       field would only be able to describe one of them */
+    var many=docFiles.length>1;
+    $("#dName").disabled=many;
+    $("#dName").placeholder=many?"each file keeps its own name":"Gas safety record 2026";
+    if(many) $("#dName").value="";
+    else if(docFiles.length===1 && !$("#dName").value) $("#dName").value=docFiles[0].name;
   };
   $("#dConnect").onclick=function(){
     hideDoc();
@@ -2107,22 +2206,39 @@ function wireDocModal(){
     rec.issued=$("#dIssued").value;
     rec.expires=$("#dExpires").value;
     rec.note=$("#dNote").value.trim();
-    if(!rec.name && !docFile){ $("#dName").focus(); return; }
+    if(!rec.name && !docFiles.length){ $("#dName").focus(); return; }
 
-    if(!docFile){ save(rec); hideDoc(); return; }
+    if(!docFiles.length){ save(rec); hideDoc(); return; }
 
-    var btn=$("#dSave"); btn.disabled=true; btn.textContent="Uploading…";
-    window.__pcFiles.upload(docFile,propName(rec.propId),folderMeta(rec.folder).label)
-      .then(function(up){
-        rec.name=rec.name||up.name; rec.driveId=up.id; rec.link=up.link;
-        rec.mime=up.mime; rec.size=up.size;
-        save(rec); hideDoc();
-        flashStatus("Uploaded to Drive · "+window.__pcFiles.folder+" / "+propName(rec.propId)+" / "+folderMeta(rec.folder).label);
-      })
-      .catch(function(e){
-        flashStatus("Upload failed · "+((e&&e.message)||"error"));
-      })
-      .then(function(){ btn.disabled=false; btn.textContent="Save"; });
+    var btn=$("#dSave"), total=docFiles.length, done=0, failed=[];
+    var where=window.__pcFiles.folder+" / "+propName(rec.propId)+" / "+folderMeta(rec.folder).label;
+    btn.disabled=true;
+
+    /* One at a time: Drive is happier, and a failure half way through leaves
+       the files already up still recorded rather than losing the lot. */
+    function step(i){
+      if(i>=total){
+        hideDoc();
+        if(done) flashStatus(done+(done===1?" document":" documents")+" uploaded to Drive · "+where
+                             +(failed.length?" — "+failed.length+" failed":""));
+        if(failed.length) flashStatus("Could not upload "+failed.join(", ")+" · "+(failed.why||""));
+        btn.disabled=false; btn.textContent="Save";
+        return;
+      }
+      var file=docFiles[i];
+      btn.textContent=total>1?("Uploading "+(i+1)+" of "+total+"…"):"Uploading…";
+      window.__pcFiles.upload(file,propName(rec.propId),folderMeta(rec.folder).label)
+        .then(function(up){
+          var one=(total===1)?rec:clone(rec);
+          if(total>1){ one.id=uid(); one.name=up.name; }
+          else one.name=rec.name||up.name;
+          one.driveId=up.id; one.link=up.link; one.mime=up.mime; one.size=up.size;
+          save(one); done++;
+        })
+        .catch(function(e){ failed.push(file.name); failed.why=(e&&e.message)||"error"; })
+        .then(function(){ step(i+1); });
+    }
+    step(0);
   };
 }
 
