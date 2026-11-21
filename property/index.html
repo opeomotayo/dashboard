@@ -174,15 +174,29 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .figure .grow{flex:1 1 10px}
 .key{display:flex;gap:15px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
 .key span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.dfoot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin-top:11px;padding-top:10px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.dfoot .dfootv{color:var(--ink-2)}
+.dfoot .dfootv[data-sign="down"]{color:var(--down)}
 .key i{width:9px;height:9px;border-radius:2px;flex:none}
 
 /* diverging bars: name, bar either side of a centre line, value */
-.dbar{display:grid;grid-template-columns:minmax(96px,168px) 1fr minmax(86px,auto);
+.dbar{display:grid;grid-template-columns:minmax(118px,196px) 1fr minmax(94px,auto);
   align-items:center;gap:13px;padding:5px 0}
 .dbar .dname{font-size:13.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dtrack{position:relative;height:19px;background:var(--sunken);border-radius:5px}
-.dtrack .zero{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--line-2)}
-.dtrack i{position:absolute;top:3px;bottom:3px;border-radius:3px;display:block}
+/* no per-row track fill: eight of them stacked read as banding and fight
+   the bars. The zero rule is the only furniture the eye needs. */
+.dtrack{position:relative;height:22px}
+.dtrack .zero{position:absolute;top:-4px;bottom:-4px;width:1px;background:var(--line-2)}
+/* ends squared at zero, rounded where the data stops */
+.dtrack i{position:absolute;top:4px;bottom:4px;display:block}
+.dtrack i[data-s="up"]{border-radius:0 4px 4px 0}
+.dtrack i[data-s="down"]{border-radius:4px 0 0 4px}
+.dbar{border-radius:7px;padding:1px 6px;margin:0 -6px;transition:background .12s}
+.dbar:hover{background:var(--sunken)}
+.dbar .dname{line-height:1.3}
+@media (prefers-reduced-motion:reduce){ .dbar{transition:none} }
 .dbar .dval{font-family:var(--mono);font-size:12.5px;text-align:right;
   font-variant-numeric:tabular-nums;white-space:nowrap}
 .dbar .dval[data-sign="down"]{color:var(--down)}
@@ -427,14 +441,6 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .dcrumb{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .dcrumb h2{font-family:var(--display);font-size:21px;font-weight:700;letter-spacing:-.025em;margin:0}
 
-.dlist{display:grid;gap:9px}
-.drow{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);
-  border-radius:12px;padding:13px 15px;flex-wrap:wrap}
-.drow-m{flex:1 1 240px;min-width:0}
-.drow-n{font-weight:500;word-break:break-word}
-.drow-s{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:3px;
-  display:flex;gap:7px;flex-wrap:wrap}
-.drow-a{display:flex;gap:4px;flex:none;flex-wrap:wrap}
 
 .dalert{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--down);
   border-radius:12px;padding:15px 17px;margin-bottom:18px}
@@ -450,9 +456,10 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
   border-radius:9px;background:var(--sunken)}
 .dprops{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .dprops button{font:inherit}
-.dbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
-.dbar .grow{flex:1 1 10px}
-@media (max-width:560px){ .drow-a{width:100%} }
+/* named docbar, not dbar: the cashflow and expense charts own .dbar and this
+   rule was overriding their grid, collapsing every bar to nothing */
+.docbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.docbar .grow{flex:1 1 10px}
 /* ---- documents as tiles, the way a file browser shows them ---- */
 .dtiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(166px,1fr));gap:54px 16px;
   margin-top:46px;padding:4px 2px}
@@ -495,7 +502,7 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .dblank .dlines i:nth-child(4){width:62%}
 
 .dcap{width:100%;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
-.dname{font-size:12.5px;line-height:1.35;color:var(--ink);word-break:break-word;
+.docname{font-size:12.5px;line-height:1.35;color:var(--ink);word-break:break-word;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .dmeta{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.03em}
 .dtile .dchip{font-size:9.5px;padding:2px 7px}
@@ -1365,27 +1372,59 @@ function renderPage(parent){
   h1.appendChild(k1);
   f1.appendChild(h1);
 
-  var flows=ps.map(function(p){ return {p:p,f:figuresFor(p,key)}; });
-  var span=Math.max(1,Math.max.apply(null,flows.map(function(x){ return Math.abs(x.f.cashflow); })));
+  /* Best earner at the top, worst at the bottom: the question this answers is
+     which properties are carrying the month and which are eating it. */
+  var flows=ps.map(function(p){ return {p:p,f:figuresFor(p,key)}; })
+              .sort(function(a,b){ return b.f.cashflow-a.f.cashflow; });
+
+  var posMax=0, negMax=0, net=0;
   flows.forEach(function(x){
+    var v=x.f.cashflow; net+=v;
+    if(v>posMax) posMax=v;
+    if(-v>negMax) negMax=-v;
+  });
+  /* One linear scale across the whole row, with the zero rule sitting where
+     the two extents meet. A fixed centre would give a £1,700 surplus the same
+     half as a £13,000 hole and squeeze it to a stub. */
+  var reach=posMax+negMax;
+  var zeroPct=reach?negMax/reach*100:50;
+
+  flows.forEach(function(x){
+    var v=x.f.cashflow, up=v>=0;
     var row=el("div","dbar");
     row.appendChild(el("div","dname",x.p.name));
     var track=el("div","dtrack");
-    var zero=el("div","zero"); zero.style.left="50%"; track.appendChild(zero);
-    var bar=el("i");
-    var w=Math.abs(x.f.cashflow)/span*50;
-    bar.style.width=w.toFixed(2)+"%";
-    if(x.f.cashflow>=0){ bar.style.left="50%"; bar.style.background="var(--up)"; }
-    else { bar.style.right="50%"; bar.style.background="var(--down)"; }
-    track.appendChild(bar);
+    var zero=el("div","zero"); zero.style.left=zeroPct.toFixed(3)+"%"; track.appendChild(zero);
+    if(v!==0){
+      var bar=el("i");
+      bar.dataset.s=up?"up":"down";
+      bar.style.width=(Math.abs(v)/reach*100).toFixed(3)+"%";
+      if(up){ bar.style.left=zeroPct.toFixed(3)+"%"; bar.style.background="var(--up)"; }
+      else  { bar.style.right=(100-zeroPct).toFixed(3)+"%"; bar.style.background="var(--down)"; }
+      track.appendChild(bar);
+    }
     row.appendChild(track);
-    var val=el("div","dval",money2(x.f.cashflow));
-    if(x.f.cashflow<0) val.dataset.sign="down";
+    var val=el("div","dval",money2(v));
+    if(v<0) val.dataset.sign="down";
     row.appendChild(val);
-    row.title=x.p.name+" — "+money2(x.f.income)+" in, "+money2(x.f.expenses)+
-              " out, "+money2(x.f.cashflow)+(x.f.cashflow<0?" short":" left");
+
+    row.onmousemove=function(ev){
+      showTip(ev,x.p.name,[
+        {k:"Rent in",   v:money2(x.f.income)},
+        {k:"Costs out", v:money2(x.f.expenses)},
+        {k:up?"Left over":"Short by", v:money2(Math.abs(v)), c:up?"var(--up)":"var(--down)"}
+      ]);
+    };
+    row.onmouseleave=hideTip;
     f1.appendChild(row);
   });
+
+  var foot=el("div","dfoot");
+  foot.appendChild(el("span",null,flows.length+" propert"+(flows.length===1?"y":"ies")));
+  var ft=el("span","dfootv",money2(net)+(net<0?" short across the month":" across the month"));
+  if(net<0) ft.dataset.sign="down";
+  foot.appendChild(ft);
+  f1.appendChild(foot);
   parent.appendChild(f1);
 
   /* ── the year, month by month, split by property ────────────────────
@@ -2068,7 +2107,7 @@ function renderFolder(body){
   crumb.appendChild(el("span","navnote",propName(view.docProp)));
   body.appendChild(crumb);
 
-  var bar=el("div","dbar");
+  var bar=el("div","docbar");
   var add=el("button","btn btn-primary","Add document");
   add.onclick=function(){ openDoc(null); };
   bar.appendChild(add);
@@ -2177,7 +2216,7 @@ function docTile(d){
   sheet.appendChild(blankSheet(d));
 
   var cap=el("div","dcap");
-  cap.appendChild(el("div","dname",d.name||"Untitled document"));
+  cap.appendChild(el("div","docname",d.name||"Untitled document"));
   var bits=[];
   if(d.folder==="certificates" && certMeta(d.certType)) bits.push(certMeta(d.certType).label);
   if(d.issued)  bits.push("issued "+d.issued);
