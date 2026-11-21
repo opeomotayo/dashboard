@@ -653,6 +653,11 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
         <label for="dName">Name</label>
         <input type="text" id="dName" placeholder="Gas safety record 2026">
       </div>
+      <div class="field" id="dCertWrap" hidden>
+        <label for="dCert">Certificate</label>
+        <select id="dCert"></select>
+        <span class="hint">Sets how long it runs, so the expiry fills itself in.</span>
+      </div>
       <div class="row2">
         <div class="field">
           <label for="dIssued">Issued</label>
@@ -926,6 +931,7 @@ function pushOne(r){
     setSaveState("error","Saved locally · sync "+((e&&e.code)||"failed"));
   });
 }
+function migrateAfterMerge(){ if(migrateCertFolders()) render(); }
 function applySnapshot(snap){
   if(!cloudSync) return;
   var wasEmpty=records.length===0;
@@ -1815,17 +1821,40 @@ function afterWrite(){
    suggest an expiry when an issue date is typed. 0 means it does not
    expire on a clock. */
 var DOC_FOLDERS=[
-  {id:"insurance",  label:"Insurance",             months:12, hint:"Buildings, landlord liability and contents policies."},
+  {id:"insurance",  label:"Insurances",            months:12, hint:"Buildings, landlord liability and contents policies."},
   {id:"mortgage",   label:"Mortgage offers",       months:0,  hint:"Offers, product transfers and redemption statements."},
-  {id:"tax",        label:"Tax",                   months:0,  hint:"Self-assessment returns, computations and receipts."},
-  {id:"counciltax", label:"Council tax",           months:12, hint:"Bills, exemption and banding letters."},
-  {id:"eicr",       label:"EICR",                  months:60, hint:"Electrical installation condition reports."},
-  {id:"gas",        label:"Gas safety",            months:12, hint:"CP12 gas safety records."},
-  {id:"hmo",        label:"HMO licence & fire safety", months:60, hint:"Licences, fire risk assessments, alarm and door certificates."},
+  {id:"tax",        label:"Taxes",                 months:0,  hint:"Self-assessment returns, computations and receipts."},
+  {id:"counciltax", label:"Council taxes",         months:12, hint:"Bills, exemption and banding letters."},
+  {id:"certificates", label:"Certificates",        months:0,  hint:"Gas safety, EICR, EPC, HMO licence and fire safety."},
   {id:"repairs",    label:"Repairs",               months:0,  hint:"Quotes, invoices and completion notes."},
-  {id:"inventory",  label:"Inventory",             months:0,  hint:"Check-in and check-out schedules of condition."},
-  {id:"tenancy",    label:"Tenancy & management",  months:0,  hint:"Tenancy agreements, renewals and agency contracts."}
+  {id:"inventory",  label:"Inventories",           months:0,  hint:"Check-in and check-out schedules of condition."},
+  {id:"tenancy",    label:"Tenancies & management",months:0,  hint:"Tenancy agreements, renewals and agency contracts."}
 ];
+/* Certificates share a drawer but not a lifespan, so each one carries its
+   kind and the term that kind normally runs. */
+var CERT_TYPES=[
+  {id:"gas",   label:"Gas safety",     months:12},
+  {id:"eicr",  label:"EICR",           months:60},
+  {id:"epc",   label:"EPC",            months:120},
+  {id:"hmo",   label:"HMO licence",    months:60},
+  {id:"fire",  label:"Fire safety",    months:12},
+  {id:"other", label:"Other",          months:0}
+];
+function certMeta(id){
+  return CERT_TYPES.filter(function(c){ return c.id===id; })[0] || null;
+}
+/* how long this document runs: its certificate kind if it has one, else the
+   term the folder normally carries */
+function termFor(folder,certType){
+  var c=(folder==="certificates") && certMeta(certType);
+  return c ? c.months : folderMeta(folder).months;
+}
+/* what to call it in a list: "Gas safety" beats "Certificates" */
+function docKind(d){
+  var c=(d.folder==="certificates") && certMeta(d.certType);
+  return c ? c.label : folderMeta(d.folder).label;
+}
+
 var DUE_WINDOW=60;   /* days ahead that counts as "due soon" */
 
 function folderMeta(id){
@@ -1883,6 +1912,31 @@ function addMonths(iso,m){
 }
 
 /* ---------------------------- the page ---------------------------- */
+/* EICR, gas safety and the HMO licence were three folders; they are one
+   drawer now. Records written under the old ids are rewritten once, keeping
+   which kind of certificate each one is. */
+var CERT_WAS={gas:"gas", eicr:"eicr", hmo:"hmo"};
+function migrateCertFolders(){
+  var writes=[];
+  records.forEach(function(r){
+    if(r.kind!=="doc" || r.deleted) return;
+    var was=CERT_WAS[r.folder];
+    if(!was) return;
+    var c=clone(r);
+    c.folder="certificates";
+    c.certType=c.certType||was;
+    c.updatedAt=nowIso();
+    writes.push(c);
+  });
+  if(!writes.length) return 0;
+  writes.forEach(putRecord);
+  refreshView();
+  if(idb) idbPutMany("records",writes).catch(function(){});
+  writes.forEach(pushOne);
+  afterWrite();
+  return writes.length;
+}
+
 function renderDocs(body){
   var ps=props();
   if(!ps.length){
@@ -1909,7 +1963,7 @@ function renderDueBanner(body){
            : list.length+" due within "+DUE_WINDOW+" days"));
   var ul=el("ul");
   list.slice(0,8).forEach(function(x){
-    var li=el("li",null,folderMeta(x.doc.folder).label+" — "+propName(x.doc.propId)+" — "+x.st.text.toLowerCase());
+    var li=el("li",null,docKind(x.doc)+" — "+propName(x.doc.propId)+" — "+x.st.text.toLowerCase());
     ul.appendChild(li);
   });
   box.appendChild(ul);
@@ -2093,6 +2147,7 @@ function docTile(d){
   var cap=el("div","dcap");
   cap.appendChild(el("div","dname",d.name||"Untitled document"));
   var bits=[];
+  if(d.folder==="certificates" && certMeta(d.certType)) bits.push(certMeta(d.certType).label);
   if(d.issued)  bits.push("issued "+d.issued);
   if(d.expires) bits.push("expires "+d.expires);
   if(!bits.length && d.size) bits.push(fmtBytes(d.size));
@@ -2167,12 +2222,25 @@ function openDoc(d){
   $("#dConnect").hidden=ready;
   $("#dName").disabled=false;
   $("#dName").placeholder="Gas safety record 2026";
+  var isCert=docDraft.folder==="certificates";
+  $("#dCertWrap").hidden=!isCert;
+  if(isCert){
+    var sel=$("#dCert"); sel.textContent="";
+    CERT_TYPES.forEach(function(c){
+      var o=document.createElement("option");
+      o.value=c.id;
+      o.textContent=c.label+(c.months?" \u00b7 "+(c.months%12?c.months+" months":(c.months/12)+" year"+(c.months>12?"s":"")):"");
+      sel.appendChild(o);
+    });
+    sel.value=docDraft.certType||"gas";
+  }
   $("#dFileHint").textContent = ready
     ? "Pick one or several. They go to your own Drive, under "+window.__pcFiles.folder+" / "+propName(docDraft.propId)+" / "+f.label+"."
     : "Google Drive is not connected in this browser, so there is nowhere to put the file yet.";
   $("#dDelete").hidden=!d;
-  $("#dHint").textContent = f.months
-    ? "A "+f.label.toLowerCase()+" normally runs "+(f.months%12?f.months+" months":(f.months/12)+" year"+(f.months>12?"s":""))+"; the expiry fills itself in from the issue date."
+  var term=termFor(docDraft.folder,docDraft.certType||"gas");
+  $("#dHint").textContent = term
+    ? "This normally runs "+(term%12?term+" months":(term/12)+" year"+(term>12?"s":""))+"; the expiry fills itself in from the issue date."
     : "This kind does not expire on a clock — leave the expiry blank unless it has one.";
   $("#dScrim").hidden=false;
   setTimeout(function(){ $("#dName").focus(); },20);
@@ -2180,9 +2248,20 @@ function openDoc(d){
 function hideDoc(){ $("#dScrim").hidden=true; docDraft=null; docFiles=[]; }
 
 function wireDocModal(){
-  $("#dIssued").onchange=function(){
-    var f=folderMeta(docDraft&&docDraft.folder);
-    if(f.months && this.value && !$("#dExpires").value) $("#dExpires").value=addMonths(this.value,f.months);
+  function autoExpiry(){
+    if(!docDraft) return;
+    var m=termFor(docDraft.folder, $("#dCertWrap").hidden?null:$("#dCert").value);
+    var d=$("#dIssued").value;
+    if(m && d && !$("#dExpires").value) $("#dExpires").value=addMonths(d,m);
+  }
+  $("#dIssued").onchange=autoExpiry;
+  $("#dCert").onchange=function(){
+    if(!docDraft) return;
+    var m=termFor("certificates",this.value);
+    $("#dHint").textContent = m
+      ? "This normally runs "+(m%12?m+" months":(m/12)+" year"+(m>12?"s":""))+"; the expiry fills itself in from the issue date."
+      : "This kind does not expire on a clock — leave the expiry blank unless it has one.";
+    autoExpiry();
   };
   $("#dFile").onchange=function(){
     docFiles=this.files?Array.prototype.slice.call(this.files):[];
@@ -2212,6 +2291,7 @@ function wireDocModal(){
     rec.issued=$("#dIssued").value;
     rec.expires=$("#dExpires").value;
     rec.note=$("#dNote").value.trim();
+    if(!$("#dCertWrap").hidden) rec.certType=$("#dCert").value;
     if(!rec.name && !docFiles.length){ $("#dName").focus(); return; }
 
     if(!docFiles.length){ save(rec); hideDoc(); return; }
@@ -2310,6 +2390,8 @@ window.addEventListener("online",function(){
   }).then(function(m){
     if(m&&typeof m.v==="boolean") cloudSync=m.v;
     purgeTombstones();
+    refreshView();
+    migrateCertFolders();
     refreshView(); render(); setSaveState();
     requestPersistence();
     return connectCloud();
