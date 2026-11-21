@@ -339,6 +339,36 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .peqnote{grid-column:1/-1;text-align:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-top:2px}
 
 /* statement table */
+/* ---- the year as a grid: months across, figures down ---- */
+.hm{width:100%;border-collapse:separate;border-spacing:0;font-size:11px;min-width:0}
+.hm th,.hm td{padding:0;white-space:nowrap}
+.hm thead th{font:500 10px var(--mono);letter-spacing:.07em;text-transform:uppercase;
+  color:var(--muted);text-align:center;padding:0 0 7px}
+.hm thead th.rowlab{text-align:left}
+.hm thead th.fut{color:var(--faint)}
+.hm thead th.cur{color:var(--accent-ink)}
+.hm tbody th{font:500 11.5px var(--body);color:var(--ink);text-align:left;
+  padding:0 10px 0 0;white-space:nowrap;position:sticky;left:0;background:var(--surface);z-index:1}
+.hm td{text-align:center;padding:2px 1px}
+.hm .cell{position:relative;display:block;border-radius:5px;padding:7px 3px;
+  font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-2);
+  cursor:pointer;transition:box-shadow .12s}
+.hm .cell i{position:absolute;inset:0;border-radius:5px;pointer-events:none}
+.hm .cell span{position:relative}
+.hm tr[data-k="net"] .cell{font-weight:700;color:var(--ink)}
+.hm tr[data-k="net"] .cell.dn span{color:var(--down)}
+.hm col.cur{background:var(--accent-soft)}
+.hm .cell:hover{box-shadow:0 0 0 2px var(--accent)}
+.hm .fut .cell{color:var(--faint)}
+.hm tr[data-k="net"] .fut .cell{color:var(--faint);font-weight:500}
+.hm .tot .cell{cursor:default;font-weight:700;color:var(--ink)}
+.hm .tot .cell:hover{box-shadow:none}
+.hm th.totlab,.hm td.tot{padding-left:9px}
+.hm .sep{border-left:1px solid var(--line-2)}
+.hmnote{margin-top:11px;font-family:var(--mono);font-size:10.5px;color:var(--faint);
+  display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.hmnote .ramp{display:inline-flex;align-items:center;gap:5px}
+.hmnote .ramp u{display:block;width:17px;height:9px;border-radius:2px;text-decoration:none}
 .ptbl-wrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
 .ptbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:760px}
 .ptbl th{font:500 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:right;padding:7px 8px;border-bottom:1px solid var(--line-2);white-space:nowrap}
@@ -1078,40 +1108,94 @@ function renderDash(parent){
 
 /* month-by-month statement, running total, expense ratio and a signal */
 function statementCard(ys,T){
-  var c=pcard("c9","Monthly cash flow — "+view.year,"Click a month to open it on the Month View page. Faint rows are projections at today's figures and are not counted.");
-  var w=el("div","ptbl-wrap"), tb=el("table","ptbl"), hr=el("tr");
-  ["Month","Rental income","Operating costs","Mortgage","Net cash flow"]
-    .forEach(function(h){ hr.appendChild(el("th",h==="Net cash flow"?"netc":null,h)); });
-  var th=el("thead"); th.appendChild(hr); tb.appendChild(th);
-  var bd=el("tbody"), n=new Date();
-  /* one scale for the column, the largest month either way */
-  var netMax=1;
-  ys.forEach(function(x){ if(Math.abs(x.net)>netMax) netMax=Math.abs(x.net); });
+  var c=pcard("c9","Monthly cash flow — "+view.year,
+    "Months across, the figures down. Each cell is shaded by its size within its own row, so a month out of step shows as a darker column. Click one to open it. Faded months are projections and are not counted.");
+
+  var n=new Date(), curM=(view.year===n.getFullYear())?n.getMonth():-1;
+  var ROWS=[
+    {k:"income",   label:"Rental income",   tot:T.income},
+    {k:"opex",     label:"Operating costs", tot:T.opex},
+    {k:"mortgage", label:"Mortgage",        tot:T.mortgage},
+    {k:"net",      label:"Net cash flow",   tot:T.net, div:true}
+  ];
+
+  var w=el("div","ptbl-wrap"), tb=el("table","hm");
+
+  /* a tinted column marks the month you are in without touching the cells */
+  var cg=el("colgroup");
+  cg.appendChild(el("col"));
+  ys.forEach(function(x){ var co=el("col"); if(x.m===curM) co.className="cur"; cg.appendChild(co); });
+  cg.appendChild(el("col"));
+  tb.appendChild(cg);
+
+  var hr=el("tr");
+  hr.appendChild(el("th","rowlab",""));
   ys.forEach(function(x){
-    var tr=el("tr"+"", x.fut?"fut":(view.year===n.getFullYear()&&x.m===n.getMonth()?"cur":""));
-    tr.dataset.m=x.m; tr.title="Open "+MONTHS[x.m]+" "+view.year;
-    tr.onclick=function(){ view.month=x.m; view.page="month"; render(); scrollTo(0,0); };
-    function td(v,cls){ var d=el("td",cls||null,v); tr.appendChild(d); return d; }
-    td(MONTHS[x.m]); td(money(x.income)); td(money(x.opex)); td(money(x.mortgage));
-    var nc=el("td","netc"+(x.net<0?" neg":""));
-    if(x.net){
-      var fill=el("i");
-      fill.dataset.s=x.net<0?"down":"up";
-      fill.style.width="calc("+(Math.abs(x.net)/netMax*100).toFixed(2)+"% - 8px)";
-      nc.appendChild(fill);
-    }
-    nc.appendChild(el("span",null,money(x.net)));
-    tr.appendChild(nc);
+    var th2=el("th",(x.fut?"fut":(x.m===curM?"cur":null)),MON3[x.m]);
+    hr.appendChild(th2);
+  });
+  hr.appendChild(el("th","totlab",ys.filter(function(x){return !x.fut;}).length===12?"Total":"YTD"));
+  var hd=el("thead"); hd.appendChild(hr); tb.appendChild(hd);
+
+  var bd=el("tbody");
+  ROWS.forEach(function(r){
+    /* each row is shaded against its own largest month: rent and mortgage are
+       different sizes of number and a shared scale would flatten one of them */
+    var span=1;
+    ys.forEach(function(x){ if(Math.abs(x[r.k])>span) span=Math.abs(x[r.k]); });
+
+    var tr=el("tr"); tr.dataset.k=r.k;
+    tr.appendChild(el("th",null,r.label));
+    ys.forEach(function(x){
+      var v=x[r.k], down=r.div&&v<0;
+      var td=el("td",x.fut?"fut":null);
+      var cell=el("span","cell"+(down?" dn":""));
+      var tint=el("i");
+      tint.style.background=r.div?(down?"var(--down)":"var(--up)"):"var(--ink-2)";
+      /* floor the tint so an empty-ish month still reads as a cell */
+      tint.style.opacity=(v===0?0:0.05+Math.abs(v)/span*(r.div?0.30:0.22)).toFixed(3);
+      cell.appendChild(tint);
+      cell.appendChild(el("span",null,money(v)));
+      cell.onclick=function(){ view.month=x.m; view.page="month"; render(); scrollTo(0,0); };
+      cell.onmousemove=function(ev){
+        showTip(ev,MONTHS[x.m]+" "+view.year+(x.fut?" · projected":""),[
+          {k:"Rental income",   v:money(x.income)},
+          {k:"Operating costs", v:money(x.opex)},
+          {k:"Mortgage",        v:money(x.mortgage)},
+          {k:x.net<0?"Short by":"Net cash flow", v:money(Math.abs(x.net)),
+           c:x.net<0?"var(--down)":"var(--up)"}
+        ]);
+      };
+      cell.onmouseleave=hideTip;
+      cell.setAttribute("role","button"); cell.tabIndex=0;
+      cell.setAttribute("aria-label",r.label+", "+MONTHS[x.m]+": "+money(v)+". Opens the month.");
+      cell.onkeydown=function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); cell.onclick(); } };
+      td.appendChild(cell);
+      tr.appendChild(td);
+    });
+    var tt=el("td","tot sep");
+    var tc=el("span","cell"+(r.div&&r.tot<0?" dn":""));
+    tc.appendChild(el("span",null,money(r.tot)));
+    tt.appendChild(tc); tr.appendChild(tt);
     bd.appendChild(tr);
   });
-  var tt=el("tr","tot");
-  [ys.filter(function(x){return !x.fut;}).length===12?"Total":"Total · YTD",
-   money(T.income),money(T.opex),money(T.mortgage),money(T.net)]
-    .forEach(function(v,i){ tt.appendChild(el("td",(i===4&&T.net<0)?"neg":null,v)); });
-  bd.appendChild(tt); tb.appendChild(bd); w.appendChild(tb); c.appendChild(w);
+  tb.appendChild(bd); w.appendChild(tb); c.appendChild(w);
+
+  var note=el("div","hmnote");
+  var r1=el("span","ramp");
+  r1.appendChild(document.createTextNode("smaller"));
+  [0.07,0.14,0.21,0.27].forEach(function(o){ var u=el("u"); u.style.background="var(--ink-2)"; u.style.opacity=o; r1.appendChild(u); });
+  r1.appendChild(document.createTextNode("larger"));
+  note.appendChild(r1);
+  var r2=el("span","ramp");
+  var up=el("u"); up.style.background="var(--up)"; up.style.opacity=.3; r2.appendChild(up);
+  r2.appendChild(document.createTextNode("surplus"));
+  var dn=el("u"); dn.style.background="var(--down)"; dn.style.opacity=.3; r2.appendChild(dn);
+  r2.appendChild(document.createTextNode("deficit"));
+  note.appendChild(r2);
+  c.appendChild(note);
   return c;
 }
-
 function donut(segs,c1,c2,label){
   var S=120,R=46,Tk=15,C=2*Math.PI*R, svg=svgEl("svg",{viewBox:"0 0 "+S+" "+S,role:"img","aria-label":label});
   svgEl("circle",{cx:60,cy:60,r:R,fill:"none",stroke:"var(--sunken)","stroke-width":Tk},svg);
