@@ -1062,29 +1062,23 @@ function renderDash(parent){
 function statementCard(ys,T){
   var c=pcard("c9","Monthly cash flow — "+view.year,"Click a month to open it on the Month View page. Faint rows are projections at today's figures and are not counted.");
   var w=el("div","ptbl-wrap"), tb=el("table","ptbl"), hr=el("tr");
-  ["Month","Rental income","Operating costs","Mortgage","Net operating income","Net cash flow","Cumulative cash","Expense ratio","Cashflow ratio"].forEach(function(h){ var th2=el("th",null,h); if(h==="Cashflow ratio") th2.title="Net cash flow as a share of the rent — how much of every £1 of rent you keep"; hr.appendChild(th2); });
+  ["Month","Rental income","Operating costs","Mortgage","Net cash flow"]
+    .forEach(function(h){ hr.appendChild(el("th",null,h)); });
   var th=el("thead"); th.appendChild(hr); tb.appendChild(th);
-  var bd=el("tbody"), cum=0, n=new Date();
+  var bd=el("tbody"), n=new Date();
   ys.forEach(function(x){
     var tr=el("tr"+"", x.fut?"fut":(view.year===n.getFullYear()&&x.m===n.getMonth()?"cur":""));
     tr.dataset.m=x.m; tr.title="Open "+MONTHS[x.m]+" "+view.year;
     tr.onclick=function(){ view.month=x.m; view.page="month"; render(); scrollTo(0,0); };
-    if(!x.fut) cum+=x.net;
     function td(v,cls){ var d=el("td",cls||null,v); tr.appendChild(d); return d; }
-    td(MONTHS[x.m]); td(money(x.income)); td(money(x.opex)); td(money(x.mortgage)); td(money(x.noi),x.noi<0?"neg":"");
-    td(money(x.net),x.net<0?"neg":""); td(x.fut?"—":money(cum),!x.fut&&cum<0?"neg":"");
-    td(x.ratio==null?"—":Math.round(x.ratio*100)+"%");
-    /* cashflow ratio: net cash flow as a share of the month's rent */
-    var sg=el("td"), cr=x.income>0?x.net/x.income:null;
-    var s=el("span","sig "+(x.fut?"na":cr==null?"na":cr>=0?"pos":"neg"),cr==null?"—":(cr>=0?"▲ ":"▼ −")+Math.abs(Math.round(cr*100))+"%"+(x.fut?" proj.":""));
-    s.title=cr==null?"No rent this month":money(x.net)+" kept from "+money(x.income)+" of rent"; sg.appendChild(s); tr.appendChild(sg);
+    td(MONTHS[x.m]); td(money(x.income)); td(money(x.opex)); td(money(x.mortgage));
+    td(money(x.net),x.net<0?"neg":"");
     bd.appendChild(tr);
   });
   var tt=el("tr","tot");
-  [ys.filter(function(x){return !x.fut;}).length===12?"Total":"Total · YTD",money(T.income),money(T.opex),money(T.mortgage),money(T.noi),money(T.net),money(T.net),
-   T.income?Math.round(T.opex/T.income*100)+"%":"—"].forEach(function(v,i){ tt.appendChild(el("td",(i>=4&&i<=6&&(i===4?T.noi:T.net)<0)?"neg":null,v)); });
-  var tcr=T.income>0?T.net/T.income:null;
-  var sg=el("td"); sg.appendChild(el("span","sig "+(tcr==null?"na":tcr>=0?"pos":"neg"),tcr==null?"—":(tcr>=0?"▲ ":"▼ −")+Math.abs(Math.round(tcr*100))+"%")); tt.appendChild(sg);
+  [ys.filter(function(x){return !x.fut;}).length===12?"Total":"Total · YTD",
+   money(T.income),money(T.opex),money(T.mortgage),money(T.net)]
+    .forEach(function(v,i){ tt.appendChild(el("td",(i===4&&T.net<0)?"neg":null,v)); });
   bd.appendChild(tt); tb.appendChild(bd); w.appendChild(tb); c.appendChild(w);
   return c;
 }
