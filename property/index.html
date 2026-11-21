@@ -447,6 +447,55 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .dbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
 .dbar .grow{flex:1 1 10px}
 @media (max-width:560px){ .drow-a{width:100%} }
+/* ---- documents as tiles, the way a file browser shows them ---- */
+.dtiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(166px,1fr));gap:54px 16px;
+  margin-top:46px;padding:4px 2px}
+.dtile{position:relative;display:flex;flex-direction:column;gap:9px;align-items:center;
+  padding:10px 8px 11px;border-radius:12px;border:1px solid transparent;transition:border-color .14s,background .14s}
+.dtile:hover{z-index:20;border-color:var(--line);background:var(--surface)}
+.dtile:focus-within{z-index:20;border-color:var(--line)}
+
+.dopen{display:flex;flex-direction:column;align-items:center;gap:9px;width:100%;
+  text-decoration:none;color:inherit;border-radius:9px}
+.dopen:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* the sheet itself: a fixed stage so tiles line up whatever shape the page is */
+.dsheet{position:relative;width:104px;height:134px;display:grid;place-items:center;
+  /* lifts from its base, so the caption below stays put and the growth has
+     somewhere to go — the row gap above is sized for it */
+  transform-origin:50% 100%;
+  transition:transform .18s cubic-bezier(.2,.7,.3,1),box-shadow .18s;
+  filter:drop-shadow(0 1px 2px rgba(11,16,32,.14)) drop-shadow(0 6px 14px rgba(11,16,32,.10))}
+.dtile:hover .dsheet,.dtile:focus-within .dsheet{transform:scale(1.5);
+  filter:drop-shadow(0 3px 6px rgba(11,16,32,.18)) drop-shadow(0 18px 34px rgba(11,16,32,.22))}
+@media (prefers-reduced-motion:reduce){
+  .dsheet{transition:none}
+  .dtile:hover .dsheet,.dtile:focus-within .dsheet{transform:none}
+}
+.dsheet img{max-width:104px;max-height:134px;width:auto;height:auto;display:block;
+  border-radius:3px;background:#fff;border:1px solid var(--line)}
+
+/* shown until a thumbnail arrives, and kept when none ever does */
+.dblank{width:100px;height:130px;border-radius:3px;background:var(--surface);
+  border:1px solid var(--line-2);display:grid;place-items:center;gap:0;position:relative;overflow:hidden}
+.dblank::before{content:"";position:absolute;top:0;right:0;border-width:0 18px 18px 0;border-style:solid;
+  border-color:var(--sunken) var(--paper)}
+.dext{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--faint)}
+.dblank .dlines{position:absolute;left:12px;right:12px;top:30px;display:grid;gap:5px}
+.dblank .dlines i{display:block;height:3px;border-radius:2px;background:var(--line)}
+.dblank .dlines i:nth-child(4){width:62%}
+
+.dcap{width:100%;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.dname{font-size:12.5px;line-height:1.35;color:var(--ink);word-break:break-word;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dmeta{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.03em}
+.dtile .dchip{font-size:9.5px;padding:2px 7px}
+
+.dacts{display:flex;gap:2px;opacity:0;transition:opacity .14s}
+.dtile:hover .dacts,.dtile:focus-within .dacts{opacity:1}
+@media (hover:none){ .dacts{opacity:1} }
+.dacts .btn{font-size:11.5px;padding:3px 7px}
 @media (max-width:1100px){
   .pd{grid-template-columns:repeat(6,minmax(0,1fr))}
   .c12,.c9,.c8,.c7{grid-column:span 6} .c6,.c5,.c4,.c3{grid-column:span 3}
@@ -1897,39 +1946,88 @@ function renderFolder(body){
     body.appendChild(e); return;
   }
 
-  var list=el("div","dlist");
-  ds.forEach(function(d){
-    var st=docStatus(d);
-    var row=el("div","drow");
-    var m=el("div","drow-m");
-    m.appendChild(el("div","drow-n",d.name||"Untitled document"));
-    var sub=el("div","drow-s");
-    if(d.issued)  sub.appendChild(el("span",null,"issued "+d.issued));
-    if(d.expires) sub.appendChild(el("span",null,"expires "+d.expires));
-    if(d.size)    sub.appendChild(el("span",null,fmtBytes(d.size)));
-    if(d.note)    sub.appendChild(el("span",null,d.note));
-    if(!sub.childNodes.length) sub.appendChild(el("span",null,"no dates recorded"));
-    m.appendChild(sub);
-    row.appendChild(m);
-
-    var chip=el("span","dchip",st.text); chip.dataset.s=st.s; row.appendChild(chip);
-
-    var acts=el("div","drow-a");
-    if(d.link){
-      var open=el("a","btn btn-sm","Open");
-      open.href=d.link; open.target="_blank"; open.rel="noopener noreferrer";
-      acts.appendChild(open);
-    }
-    var ed=el("button","btn btn-ghost btn-sm","Edit");
-    ed.onclick=function(){ openDoc(d); };
-    acts.appendChild(ed);
-    var rm=el("button","btn btn-ghost btn-sm","Remove");
-    rm.onclick=function(){ removeDoc(d); };
-    acts.appendChild(rm);
-    row.appendChild(acts);
-    list.appendChild(row);
-  });
+  var list=el("div","dtiles");
+  ds.forEach(function(d){ list.appendChild(docTile(d)); });
   body.appendChild(list);
+}
+
+/* Thumbnails are fetched once per page load and held here. Drive's URLs
+   expire, so nothing goes into the record — a stale one would sync to every
+   device and show a broken image on all of them. */
+var thumbs={};
+
+function extOf(d){
+  var m=/\.([A-Za-z0-9]{1,5})$/.exec(d.name||"");
+  if(m) return m[1];
+  if((d.mime||"").indexOf("pdf")>-1) return "pdf";
+  if((d.mime||"").indexOf("image/")===0) return (d.mime.split("/")[1]||"img");
+  return "file";
+}
+function blankSheet(d){
+  var blank=el("div","dblank");
+  var lines=el("div","dlines");
+  for(var i=0;i<4;i++) lines.appendChild(el("i"));
+  blank.appendChild(lines);
+  blank.appendChild(el("span","dext",extOf(d)));
+  return blank;
+}
+/* Put the picture in only once it has loaded, so a tile never flashes a
+   broken image; if it fails, the blank sheet it replaces simply stays. */
+function paintThumb(sheet,d){
+  if(!d.driveId || !window.__pcFiles || !window.__pcFiles.thumb) return;
+  if(thumbs[d.driveId]==="none") return;
+  var put=function(url){
+    var img=new Image();
+    img.onload=function(){ sheet.textContent=""; img.alt=d.name||"Document"; sheet.appendChild(img); };
+    img.onerror=function(){ thumbs[d.driveId]="none"; };
+    img.src=url;
+  };
+  if(thumbs[d.driveId]) return put(thumbs[d.driveId]);
+  window.__pcFiles.thumb(d.driveId,400).then(function(r){
+    if(!r.thumb){ thumbs[d.driveId]="none"; return; }
+    thumbs[d.driveId]=r.thumb; put(r.thumb);
+  }).catch(function(){ thumbs[d.driveId]="none"; });
+}
+
+function docTile(d){
+  var st=docStatus(d);
+  var tile=el("div","dtile");
+
+  var sheet=el("div","dsheet");
+  sheet.appendChild(blankSheet(d));
+
+  var cap=el("div","dcap");
+  cap.appendChild(el("div","dname",d.name||"Untitled document"));
+  var bits=[];
+  if(d.issued)  bits.push("issued "+d.issued);
+  if(d.expires) bits.push("expires "+d.expires);
+  if(!bits.length && d.size) bits.push(fmtBytes(d.size));
+  if(bits.length) cap.appendChild(el("div","dmeta",bits.join(" \u00b7 ")));
+  var chip=el("span","dchip",st.text); chip.dataset.s=st.s; cap.appendChild(chip);
+
+  if(d.link){
+    var a=el("a","dopen");
+    a.href=d.link; a.target="_blank"; a.rel="noopener noreferrer";
+    a.title="Open "+(d.name||"this document");
+    a.appendChild(sheet); a.appendChild(cap);
+    tile.appendChild(a);
+  } else {
+    var box=el("div","dopen");
+    box.appendChild(sheet); box.appendChild(cap);
+    tile.appendChild(box);
+  }
+
+  var acts=el("div","dacts");
+  var ed=el("button","btn btn-ghost btn-sm","Edit");
+  ed.onclick=function(e){ e.preventDefault(); e.stopPropagation(); openDoc(d); };
+  acts.appendChild(ed);
+  var rm=el("button","btn btn-ghost btn-sm","Remove");
+  rm.onclick=function(e){ e.preventDefault(); e.stopPropagation(); removeDoc(d); };
+  acts.appendChild(rm);
+  tile.appendChild(acts);
+
+  paintThumb(sheet,d);
+  return tile;
 }
 
 function driveReady(){
@@ -2380,10 +2478,30 @@ window.addEventListener("online",function(){
     });
   }
 
+  /* Drive renders page one of a PDF (and a preview of most other types) and
+     hands back a short-lived URL for it. Short-lived is why nothing is stored:
+     it is fetched per page load and kept in memory only. `size` asks for a
+     bigger render than the default 220px so it survives being magnified. */
+  function thumbFor(id, size){
+    if (!clientId) return Promise.reject(new Error("Drive not connected"));
+    return ensureToken(false)
+      .then(function(){
+        return dFetch("https://www.googleapis.com/drive/v3/files/" + id
+                      + "?fields=thumbnailLink,mimeType");
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var t = j.thumbnailLink || "";
+        if (t && size) t = t.replace(/=s\d+$/, "=s" + size);
+        return { thumb: t, mime: j.mimeType || "" };
+      });
+  }
+
   window.__pcFiles = {
     available: function(){ return SERVED && !!clientId; },
     upload: uploadDoc,
     trash: trashDoc,
+    thumb: thumbFor,
     folder: DOCROOT
   };
 
