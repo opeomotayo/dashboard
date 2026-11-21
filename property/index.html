@@ -1060,7 +1060,7 @@ function renderDash(parent){
 
 /* month-by-month statement, running total, expense ratio and a signal */
 function statementCard(ys,T){
-  var c=pcard("c9","Monthly cash flow — "+view.year,"Click a month to open it on the Properties page. Faint rows are projections at today's figures and are not counted.");
+  var c=pcard("c9","Monthly cash flow — "+view.year,"Click a month to open it on the Month View page. Faint rows are projections at today's figures and are not counted.");
   var w=el("div","ptbl-wrap"), tb=el("table","ptbl"), hr=el("tr");
   ["Month","Rental income","Operating costs","Mortgage","Net operating income","Net cash flow","Cumulative cash","Expense ratio","Cashflow ratio"].forEach(function(h){ var th2=el("th",null,h); if(h==="Cashflow ratio") th2.title="Net cash flow as a share of the rent — how much of every £1 of rent you keep"; hr.appendChild(th2); });
   var th=el("thead"); th.appendChild(hr); tb.appendChild(th);
@@ -1239,7 +1239,7 @@ function render(){
 }
 function renderPageNav(){
   var box=$("#pagenav"); if(!box) return; box.textContent="";
-  [["dash","Dashboard"],["month","Properties"],["docs","Documents"]].forEach(function(p){
+  [["month","Month View"],["dash","Annual View"],["docs","Documents"]].forEach(function(p){
     var b=el("button",null,p[1]); b.type="button";
     b.setAttribute("aria-pressed",view.page===p[0]?"true":"false");
     b.onclick=function(){
@@ -2010,7 +2010,7 @@ function renderDocs(body){
   if(!ps.length){
     var e0=el("div","dempty");
     e0.appendChild(el("h2",null,"No properties yet"));
-    e0.appendChild(el("p",null,"Add a property on the Properties page and its document folders appear here."));
+    e0.appendChild(el("p",null,"Add a property on the Month View page and its document folders appear here."));
     body.appendChild(e0); return;
   }
   if(!view.docProp||!ps.some(function(p){ return p.id===view.docProp; })) view.docProp=ps[0].id;
