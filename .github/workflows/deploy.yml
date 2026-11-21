@@ -9,10 +9,15 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  # deploy-pages finds the artifact through the Actions API. Naming any
+  # permission sets every unnamed one to none, so without this the download
+  # comes back empty and the step reports no github-pages artifact exists.
+  actions: read
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # a half-finished deployment is worse than a queued one, so let a run end
+  cancel-in-progress: false
 
 jobs:
   deploy:
