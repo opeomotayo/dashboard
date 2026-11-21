@@ -343,7 +343,21 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .ptbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:760px}
 .ptbl th{font:500 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:right;padding:7px 8px;border-bottom:1px solid var(--line-2);white-space:nowrap}
 .ptbl th:first-child,.ptbl td:first-child{text-align:left}
-.ptbl td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
+.ptbl td{padding:8px 8px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
+/* The net column carries a bar as well as a figure: twelve rows of near
+   identical numbers hide the one month that went wrong, and a length does
+   not have to be read to be seen. The number stays exact on top of it. */
+.ptbl td.netc{position:relative;padding-right:10px}
+.ptbl td.netc i{position:absolute;right:4px;top:50%;transform:translateY(-50%);
+  height:13px;display:block;border-radius:3px;pointer-events:none}
+.ptbl td.netc i[data-s="up"]{background:var(--accent-soft)}
+.ptbl td.netc i[data-s="down"]{background:var(--down-soft)}
+/* the current-month row is tinted with the same token the up bar uses, so
+   there the bar is drawn from the solid accent at low opacity instead */
+.ptbl tr.cur td.netc i[data-s="up"]{background:var(--accent);opacity:.26}
+.ptbl tr.fut td.netc i{opacity:.45}
+.ptbl td.netc span{position:relative}
+.ptbl th.netc{padding-right:10px}
 .ptbl td:first-child{font-family:var(--body);color:var(--ink);font-weight:500}
 .ptbl tr.fut td{color:var(--faint)}
 .ptbl tr.fut td:first-child{color:var(--faint);font-weight:400}
@@ -357,6 +371,10 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .sig.na{color:var(--faint);font-weight:500}
 .ptbl tr[data-m]{cursor:pointer}
 .ptbl tr[data-m]:hover td{background:var(--sunken)}
+.ptbl tbody tr:not(.tot) td{border-bottom-color:color-mix(in srgb,var(--line) 55%,transparent)}
+@supports not (color: color-mix(in srgb, red 50%, transparent)){
+  .ptbl tbody tr:not(.tot) td{border-bottom-color:var(--line)}
+}
 
 /* charts */
 .pleg{display:flex;gap:6px 15px;flex-wrap:wrap;font-size:12px;color:var(--ink-2)}
@@ -1063,16 +1081,27 @@ function statementCard(ys,T){
   var c=pcard("c9","Monthly cash flow — "+view.year,"Click a month to open it on the Month View page. Faint rows are projections at today's figures and are not counted.");
   var w=el("div","ptbl-wrap"), tb=el("table","ptbl"), hr=el("tr");
   ["Month","Rental income","Operating costs","Mortgage","Net cash flow"]
-    .forEach(function(h){ hr.appendChild(el("th",null,h)); });
+    .forEach(function(h){ hr.appendChild(el("th",h==="Net cash flow"?"netc":null,h)); });
   var th=el("thead"); th.appendChild(hr); tb.appendChild(th);
   var bd=el("tbody"), n=new Date();
+  /* one scale for the column, the largest month either way */
+  var netMax=1;
+  ys.forEach(function(x){ if(Math.abs(x.net)>netMax) netMax=Math.abs(x.net); });
   ys.forEach(function(x){
     var tr=el("tr"+"", x.fut?"fut":(view.year===n.getFullYear()&&x.m===n.getMonth()?"cur":""));
     tr.dataset.m=x.m; tr.title="Open "+MONTHS[x.m]+" "+view.year;
     tr.onclick=function(){ view.month=x.m; view.page="month"; render(); scrollTo(0,0); };
     function td(v,cls){ var d=el("td",cls||null,v); tr.appendChild(d); return d; }
     td(MONTHS[x.m]); td(money(x.income)); td(money(x.opex)); td(money(x.mortgage));
-    td(money(x.net),x.net<0?"neg":"");
+    var nc=el("td","netc"+(x.net<0?" neg":""));
+    if(x.net){
+      var fill=el("i");
+      fill.dataset.s=x.net<0?"down":"up";
+      fill.style.width="calc("+(Math.abs(x.net)/netMax*100).toFixed(2)+"% - 8px)";
+      nc.appendChild(fill);
+    }
+    nc.appendChild(el("span",null,money(x.net)));
+    tr.appendChild(nc);
     bd.appendChild(tr);
   });
   var tt=el("tr","tot");
