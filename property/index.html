@@ -339,50 +339,6 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;bord
 .peqnote{grid-column:1/-1;text-align:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-top:2px}
 
 /* statement table */
-/* ---- the year as twelve cards ---- */
-.mseg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.mseg button{font:500 11.5px var(--body);padding:4px 11px;border:0;background:var(--surface);
-  color:var(--muted);cursor:pointer}
-.mseg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink)}
-.mseg button+button{border-left:1px solid var(--line)}
-
-.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:11px;margin-top:2px}
-.mcard{position:relative;text-align:left;font:inherit;color:inherit;cursor:pointer;
-  background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 14px 12px;
-  display:flex;flex-direction:column;gap:9px;
-  transition:transform .12s,box-shadow .16s,border-color .16s}
-.mcard:hover{transform:translateY(-2px);box-shadow:var(--shadow-2);border-color:var(--line-2)}
-.mcard:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.mcard[data-cur="1"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
-.mcard[data-fut="1"]{background:transparent;border-style:dashed}
-.mcard[data-fut="1"] .mnet,.mcard[data-fut="1"] .mfig{color:var(--faint)}
-.mcard[data-fut="1"] .mfig b{color:var(--faint)}
-.mcard[data-fut="1"] .mtrack i{opacity:.38}
-
-.mmon{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
-  color:var(--faint);display:flex;justify-content:space-between;align-items:center;gap:6px}
-.mtag{font-size:9px;letter-spacing:.08em;padding:1px 6px;border-radius:999px;
-  background:var(--sunken);color:var(--faint)}
-.mnet{font-family:var(--display);font-size:21px;font-weight:800;letter-spacing:-.03em;
-  line-height:1;font-variant-numeric:tabular-nums;color:var(--ink)}
-.mnet[data-sign="down"]{color:var(--down)}
-
-.mtrack{position:relative;height:6px;border-radius:3px;background:var(--sunken);overflow:hidden}
-.mtrack i{position:absolute;top:0;bottom:0;left:0;display:block;border-radius:3px}
-.mtrack i[data-s="up"]{background:var(--up)}
-.mtrack i[data-s="down"]{background:var(--down)}
-
-.mfig{display:flex;justify-content:space-between;gap:8px;font-family:var(--mono);font-size:10.5px;
-  color:var(--muted);font-variant-numeric:tabular-nums}
-.mfig b{font-weight:400;color:var(--ink-2)}
-
-.mtot{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 18px;margin-top:13px;padding-top:12px;
-  border-top:1px solid var(--line-2)}
-.mtot .k{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
-.mtot .v{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
-.mtot .v[data-sign="down"]{color:var(--down)}
-.mtot .grow{flex:1 1 10px}
-@media (prefers-reduced-motion:reduce){ .mcard{transition:none} }
 .ptbl-wrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
 .ptbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:760px}
 .ptbl th{font:500 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:right;padding:7px 8px;border-bottom:1px solid var(--line-2);white-space:nowrap}
@@ -792,7 +748,7 @@ var storageInfo={engine:"connecting…",bytes:null,persisted:null};
 var editing=null, draft={};
 var quickDraft={};
 var now=new Date();
-var view={page:"dash", prop:"all", stmt:"cards", year:now.getFullYear(), month:now.getMonth(),
+var view={page:"dash", prop:"all", year:now.getFullYear(), month:now.getMonth(),
           docProp:null, docFolder:null, docYear:null};
 
 function $(s){ return document.querySelector(s); }
@@ -1122,26 +1078,7 @@ function renderDash(parent){
 
 /* month-by-month statement, running total, expense ratio and a signal */
 function statementCard(ys,T){
-  var c=pcard("c9","Monthly cash flow — "+view.year,"Click a month to open it on the Month View page. Faded months are projections at today's figures and are not counted.");
-
-  /* Cards by default: twelve months of near identical figures are a wall in a
-     table, and what you actually look for is the month that broke the run.
-     The table is still a click away for reading the columns against each
-     other. */
-  var seg=el("div","mseg");
-  [["cards","Cards"],["table","Table"]].forEach(function(o){
-    var b2=el("button",null,o[1]); b2.type="button";
-    b2.setAttribute("aria-pressed",view.stmt===o[0]?"true":"false");
-    b2.onclick=function(){ view.stmt=o[0]; render(); };
-    seg.appendChild(b2);
-  });
-  var bar=el("div","mtot"); bar.style.cssText="margin:0 0 13px;padding:0;border:0";
-  bar.appendChild(el("span","grow"));
-  bar.appendChild(seg);
-  c.appendChild(bar);
-
-  if(view.stmt!=="table"){ c.appendChild(monthCards(ys,T)); return c; }
-
+  var c=pcard("c9","Monthly cash flow — "+view.year,"Click a month to open it on the Month View page. Faint rows are projections at today's figures and are not counted.");
   var w=el("div","ptbl-wrap"), tb=el("table","ptbl"), hr=el("tr");
   ["Month","Rental income","Operating costs","Mortgage","Net cash flow"]
     .forEach(function(h){ hr.appendChild(el("th",h==="Net cash flow"?"netc":null,h)); });
@@ -2485,79 +2422,6 @@ function wireDocModal(){
     }
     step(0);
   };
-}
-
-/* The year, a card a month. The net is the headline because it is the
-   number that decides anything; rent in and costs out sit under it, and the
-   bar gives the month its size against the best month of the year. */
-function monthCards(ys,T){
-  var wrap=el("div");
-  var grid=el("div","mgrid"), n=new Date();
-  var netMax=1;
-  ys.forEach(function(x){ if(Math.abs(x.net)>netMax) netMax=Math.abs(x.net); });
-
-  ys.forEach(function(x){
-    var out=x.opex+x.mortgage, down=x.net<0;
-    var card=el("button","mcard"); card.type="button";
-    card.dataset.cur=(view.year===n.getFullYear()&&x.m===n.getMonth())?"1":"0";
-    card.dataset.fut=x.fut?"1":"0";
-
-    var top=el("div","mmon");
-    top.appendChild(el("span",null,MONTHS[x.m]));
-    if(x.fut) top.appendChild(el("span","mtag","proj."));
-    else if(card.dataset.cur==="1") top.appendChild(el("span","mtag","now"));
-    card.appendChild(top);
-
-    var net=el("div","mnet",money(x.net));
-    if(down) net.dataset.sign="down";
-    card.appendChild(net);
-
-    var track=el("div","mtrack");
-    var fill=el("i");
-    fill.dataset.s=down?"down":"up";
-    fill.style.width=Math.max(2,Math.abs(x.net)/netMax*100).toFixed(1)+"%";
-    track.appendChild(fill);
-    card.appendChild(track);
-
-    var figs=el("div","mfig");
-    var fin=el("span"); fin.appendChild(document.createTextNode("in "));
-    fin.appendChild(el("b",null,money(x.income))); figs.appendChild(fin);
-    var fout=el("span"); fout.appendChild(document.createTextNode("out "));
-    fout.appendChild(el("b",null,money(out))); figs.appendChild(fout);
-    card.appendChild(figs);
-
-    card.setAttribute("aria-label",MONTHS[x.m]+" "+view.year+(x.fut?" (projected)":"")+
-      ": "+money(x.income)+" in, "+money(out)+" out, "+money(x.net)+
-      (down?" short":" kept")+". Opens the month.");
-    card.onclick=function(){ view.month=x.m; view.page="month"; render(); scrollTo(0,0); };
-    card.onmousemove=function(ev){
-      showTip(ev,MONTHS[x.m]+" "+view.year+(x.fut?" · projected":""),[
-        {k:"Rental income",   v:money(x.income)},
-        {k:"Operating costs", v:money(x.opex)},
-        {k:"Mortgage",        v:money(x.mortgage)},
-        {k:down?"Short by":"Net cash flow", v:money(Math.abs(x.net)),
-         c:down?"var(--down)":"var(--up)"}
-      ]);
-    };
-    card.onmouseleave=hideTip;
-    grid.appendChild(card);
-  });
-  wrap.appendChild(grid);
-
-  var done=ys.filter(function(x){ return !x.fut; });
-  var tot=el("div","mtot");
-  function pair(k,v,sign){
-    tot.appendChild(el("span","k",k));
-    var e2=el("span","v",money(v)); if(sign) e2.dataset.sign=sign;
-    tot.appendChild(e2);
-  }
-  pair(done.length===12?"Rent in":"Rent in · YTD",T.income);
-  pair("Costs out",T.opex+T.mortgage);
-  pair("Net",T.net,T.net<0?"down":null);
-  tot.appendChild(el("span","grow"));
-  tot.appendChild(el("span","k",done.length+" month"+(done.length===1?"":"s")+" counted"));
-  wrap.appendChild(tot);
-  return wrap;
 }
 
 /* ============================ cloud ============================ */
