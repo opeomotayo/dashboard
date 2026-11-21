@@ -1828,7 +1828,7 @@ var DOC_FOLDERS=[
   {id:"certificates", label:"Certificates",        months:0,  hint:"Gas safety, EICR, EPC, HMO licence and fire safety."},
   {id:"repairs",    label:"Repairs",               months:0,  hint:"Quotes, invoices and completion notes."},
   {id:"inventory",  label:"Inventories",           months:0,  hint:"Check-in and check-out schedules of condition."},
-  {id:"tenancy",    label:"Tenancies & management",months:0,  hint:"Tenancy agreements, renewals and agency contracts."}
+  {id:"tenancy",    label:"Rental agreements",     months:0,  hint:"Tenancy agreements, renewals and agency contracts."}
 ];
 /* Certificates share a drawer but not a lifespan, so each one carries its
    kind and the term that kind normally runs. */
@@ -2207,7 +2207,9 @@ function openDoc(d){
   docFiles=[];
   $("#dFileList").hidden=true; $("#dFileList").textContent="";
   var f=folderMeta(docDraft.folder);
-  $("#dTitle").textContent=(d?"Edit ":"Add ")+f.label.toLowerCase().replace(/ &.*/,"")+" document";
+  /* the folder names are plural now, so folding one into the sentence read
+     as "Add insurances document"; the subtitle already says which drawer */
+  $("#dTitle").textContent=d?"Edit document":"Add document";
   $("#dSub").textContent=propName(docDraft.propId)+" · "+f.label;
   $("#dName").value=docDraft.name||"";
   $("#dLink").value=docDraft.link||"";
