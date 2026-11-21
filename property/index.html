@@ -1224,7 +1224,13 @@ function renderPageNav(){
   [["dash","Dashboard"],["month","Properties"],["docs","Documents"]].forEach(function(p){
     var b=el("button",null,p[1]); b.type="button";
     b.setAttribute("aria-pressed",view.page===p[0]?"true":"false");
-    b.onclick=function(){ view.page=p[0]; render(); };
+    b.onclick=function(){
+      view.page=p[0];
+      /* the tab means the Documents home, not whichever folder or year you
+         happened to be inside when you last left it */
+      if(p[0]==="docs"){ view.docFolder=null; view.docYear=null; }
+      render();
+    };
     box.appendChild(b);
   });
 }
